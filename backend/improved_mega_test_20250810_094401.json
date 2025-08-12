@@ -1,0 +1,134 @@
+{
+  "session_id": "improved-1754811839",
+  "start_time": "2025-08-10T09:43:59.533544",
+  "end_time": "2025-08-10T09:44:01.166318",
+  "total_tests": 16,
+  "passed_tests": 16,
+  "failed_tests": 0,
+  "success_rate": 100.0,
+  "phases": {
+    "Basic System": {
+      "tests": [
+        {
+          "name": "Backend Health",
+          "status": "passed",
+          "details": "Status: healthy",
+          "timestamp": "2025-08-10T09:43:59.544241"
+        },
+        {
+          "name": "Locations API",
+          "status": "passed",
+          "details": "3 locations found (list format)",
+          "timestamp": "2025-08-10T09:43:59.552571"
+        }
+      ],
+      "success_rate": 0.0
+    },
+    "User Management": {
+      "tests": [
+        {
+          "name": "User Creation: Káról",
+          "status": "passed",
+          "details": "User created",
+          "timestamp": "2025-08-10T09:43:59.830035"
+        },
+        {
+          "name": "Authentication: Káról",
+          "status": "passed",
+          "details": "Token received",
+          "timestamp": "2025-08-10T09:44:00.091722"
+        },
+        {
+          "name": "User Creation: Anna",
+          "status": "passed",
+          "details": "User created",
+          "timestamp": "2025-08-10T09:44:00.344613"
+        },
+        {
+          "name": "Authentication: Anna",
+          "status": "passed",
+          "details": "Token received",
+          "timestamp": "2025-08-10T09:44:00.596682"
+        },
+        {
+          "name": "User Creation: Béla",
+          "status": "passed",
+          "details": "User created",
+          "timestamp": "2025-08-10T09:44:00.843758"
+        },
+        {
+          "name": "Authentication: Béla",
+          "status": "passed",
+          "details": "Token received",
+          "timestamp": "2025-08-10T09:44:01.117473"
+        }
+      ],
+      "success_rate": 0.0
+    },
+    "Credit System": {
+      "tests": [
+        {
+          "name": "Credit Packages",
+          "status": "passed",
+          "details": "4 packages available (list format)",
+          "timestamp": "2025-08-10T09:44:01.119032"
+        },
+        {
+          "name": "Credit Balance: Káról",
+          "status": "passed",
+          "details": "Balance: 0",
+          "timestamp": "2025-08-10T09:44:01.122438"
+        },
+        {
+          "name": "Credit Purchase: Káról",
+          "status": "passed",
+          "details": "Credits added",
+          "timestamp": "2025-08-10T09:44:01.127185"
+        }
+      ],
+      "success_rate": 0.0
+    },
+    "Booking System": {
+      "tests": [
+        {
+          "name": "Availability Check",
+          "status": "passed",
+          "details": "7 slots available",
+          "timestamp": "2025-08-10T09:44:01.134620"
+        },
+        {
+          "name": "Booking Created: Káról",
+          "status": "passed",
+          "details": "Session: 09005824-52d4-4bc6-a0b6-2b576bf09bd8",
+          "timestamp": "2025-08-10T09:44:01.146055"
+        }
+      ],
+      "success_rate": 0.0
+    },
+    "Social & Results": {
+      "tests": [
+        {
+          "name": "Friend Request",
+          "status": "passed",
+          "details": "Káról → Anna",
+          "timestamp": "2025-08-10T09:44:01.156029"
+        },
+        {
+          "name": "Social Profile",
+          "status": "passed",
+          "details": "Profile accessible for Káról",
+          "timestamp": "2025-08-10T09:44:01.162235"
+        },
+        {
+          "name": "Leaderboard",
+          "status": "passed",
+          "details": "7 leaderboards available",
+          "timestamp": "2025-08-10T09:44:01.166300"
+        }
+      ],
+      "success_rate": 0.0
+    }
+  },
+  "improvements": [],
+  "errors": []
+}

@@ -1,0 +1,142 @@
+{
+  "session_id": "improved-1754760679",
+  "start_time": "2025-08-09T19:31:19.457517",
+  "end_time": "2025-08-09T19:31:20.209105",
+  "total_tests": 8,
+  "passed_tests": 1,
+  "failed_tests": 7,
+  "success_rate": 12.5,
+  "phases": {
+    "Basic System": {
+      "tests": [
+        {
+          "name": "Backend Health",
+          "status": "failed",
+          "error": "Backend not healthy",
+          "timestamp": "2025-08-09T19:31:19.464526"
+        },
+        {
+          "name": "Locations API",
+          "status": "failed",
+          "error": "No response received",
+          "timestamp": "2025-08-09T19:31:19.471544"
+        }
+      ],
+      "success_rate": 0.0
+    },
+    "User Management": {
+      "tests": [
+        {
+          "name": "User Creation: Káról",
+          "status": "failed",
+          "error": {
+            "error": "database_error",
+            "message": "User creation failed"
+          },
+          "timestamp": "2025-08-09T19:31:19.732497"
+        },
+        {
+          "name": "User Creation: Anna",
+          "status": "failed",
+          "error": {
+            "error": "database_error",
+            "message": "User creation failed"
+          },
+          "timestamp": "2025-08-09T19:31:19.969245"
+        },
+        {
+          "name": "User Creation: Béla",
+          "status": "failed",
+          "error": {
+            "error": "database_error",
+            "message": "User creation failed"
+          },
+          "timestamp": "2025-08-09T19:31:20.205034"
+        }
+      ],
+      "success_rate": 0.0
+    },
+    "Credit System": {
+      "tests": [
+        {
+          "name": "Credit Packages",
+          "status": "passed",
+          "details": "4 packages available (list format)",
+          "timestamp": "2025-08-09T19:31:20.207656"
+        }
+      ],
+      "success_rate": 0.0
+    },
+    "Booking System": {
+      "tests": [
+        {
+          "name": "Availability Check",
+          "status": "failed",
+          "error": "Not authenticated",
+          "timestamp": "2025-08-09T19:31:20.209078"
+        },
+        {
+          "name": "Booking Test",
+          "status": "failed",
+          "error": "No authenticated users with sufficient credits",
+          "timestamp": "2025-08-09T19:31:20.209094"
+        }
+      ],
+      "success_rate": 0.0
+    }
+  },
+  "improvements": [],
+  "errors": [
+    {
+      "name": "Backend Health",
+      "status": "failed",
+      "error": "Backend not healthy",
+      "timestamp": "2025-08-09T19:31:19.464526"
+    },
+    {
+      "name": "Locations API",
+      "status": "failed",
+      "error": "No response received",
+      "timestamp": "2025-08-09T19:31:19.471544"
+    },
+    {
+      "name": "User Creation: Káról",
+      "status": "failed",
+      "error": {
+        "error": "database_error",
+        "message": "User creation failed"
+      },
+      "timestamp": "2025-08-09T19:31:19.732497"
+    },
+    {
+      "name": "User Creation: Anna",
+      "status": "failed",
+      "error": {
+        "error": "database_error",
+        "message": "User creation failed"
+      },
+      "timestamp": "2025-08-09T19:31:19.969245"
+    },
+    {
+      "name": "User Creation: Béla",
+      "status": "failed",
+      "error": {
+        "error": "database_error",
+        "message": "User creation failed"
+      },
+      "timestamp": "2025-08-09T19:31:20.205034"
+    },
+    {
+      "name": "Availability Check",
+      "status": "failed",
+      "error": "Not authenticated",
+      "timestamp": "2025-08-09T19:31:20.209078"
+    },
+    {
+      "name": "Booking Test",
+      "status": "failed",
+      "error": "No authenticated users with sufficient credits",
+      "timestamp": "2025-08-09T19:31:20.209094"
+    }
+  ]
+}
