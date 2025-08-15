@@ -1,0 +1,34 @@
+LFA Legacy GO - Database Configuration Report
+============================================
+Check Date: 2025 Aug 15 Pén 12:46:47 CEST
+Service: lfa-legacy-go-backend
+Region: us-central1
+Project: lfa-legacy-go
+
+DATABASE CONFIGURATION:
+======================
+DATABASE_URL: Not configured
+Cloud SQL Instances: None
+Service URL: https://lfa-legacy-go-backend-tv6u4m3szq-uc.a.run.app
+
+LIVE SERVICE STATUS:
+===================
+{
+  "status": "healthy",
+  "service": "LFA Legacy GO API",
+  "version": "3.0.0",
+  "environment": "production",
+  "platform": "google_cloud_run",
+  "database": "connected",
+  "routers_active": 10,
+  "routers_expected": 10,
+  "location": "backend/app/main.py",
+  "port": "8080",
+  "revision": "lfa-legacy-go-backend-00006-ssq",
+  "service_name": "lfa-legacy-go-backend"
+}
+
+RECOMMENDATIONS:
+===============
+⚠️ Setup required: ./setup-cloud-sql-postgres.sh
+

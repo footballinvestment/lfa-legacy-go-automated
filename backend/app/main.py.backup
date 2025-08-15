@@ -1,0 +1,418 @@
+# backend/app/main.py
+# TELJES JAVÍTOTT FÁJL - LFA Legacy GO FastAPI Application
+
+import logging
+import os
+from datetime import datetime
+from typing import Dict, Any
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI, Request, HTTPException, Depends
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import JSONResponse
+
+# Database imports
+from .database import engine, get_db, init_database, get_db_health, Base
+from sqlalchemy.orm import Session
+
+# BIZTONSÁGOS: Import CSAK a core modelleket
+from .models import User, UserSession, UserViolation, ModerationLog, UserReport
+
+# Opcionális modellek - ha léteznek
+try:
+    from .models import Location, GameDefinition
+    HAS_LOCATION_MODELS = True
+except ImportError:
+    HAS_LOCATION_MODELS = False
+
+try:
+    from .models import Tournament, TournamentParticipant
+    HAS_TOURNAMENT_MODELS = True
+except ImportError:
+    HAS_TOURNAMENT_MODELS = False
+
+try:
+    from .models import WeatherData, WeatherRule, LocationWeather
+    HAS_WEATHER_MODELS = True
+except ImportError:
+    HAS_WEATHER_MODELS = False
+
+try:
+    from .models import GameResult
+    HAS_GAME_RESULT_MODELS = True
+except ImportError:
+    HAS_GAME_RESULT_MODELS = False
+
+# Router imports - ezek biztos léteznek
+from .routers import (
+    auth, credits, social, locations, booking, 
+    tournaments, weather, game_results, admin, health
+)
+
+# Logging configuration
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+
+# Global exception handler middleware
+class GlobalExceptionMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        try:
+            response = await call_next(request)
+            return response
+        except Exception as exc:
+            logger.error(f"Global exception on {request.url}: {str(exc)}")
+            return JSONResponse(
+                status_code=500,
+                content={"detail": "Internal server error", "error": str(exc)}
+            )
+
+
+# Application lifespan manager
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    logger.info("Starting LFA Legacy GO API Server with Complete Game System...")
+    
+    # Initialize database with all models
+    try:
+        # JAVÍTOTT: Explicit table creation for all models
+        Base.metadata.create_all(bind=engine)
+        logger.info("Database tables created successfully")
+        
+        # Initialize default data with error handling
+        try:
+            await initialize_default_data()
+            logger.info("Default data initialized successfully")
+        except Exception as e:
+            logger.warning(f"Default data initialization failed: {str(e)}")
+            logger.info("Application will continue without default data")
+        
+        # Initialize game results system
+        logger.info("Game Results System initialized successfully")
+        
+        logger.info("Application startup complete")
+        
+    except Exception as e:
+        logger.error(f"Failed to initialize application: {str(e)}")
+        logger.info("Application will continue with minimal functionality")
+        # Don't raise - let the app start anyway
+    
+    yield
+    
+    # Shutdown
+    logger.info("Application shutdown")
+
+
+# Create FastAPI application
+app = FastAPI(
+    title="LFA Legacy GO API",
+    description="Complete Location-based Football Gaming Platform API",
+    version="3.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    lifespan=lifespan
+)
+
+# Add middleware
+app.add_middleware(GlobalExceptionMiddleware)
+
+# 🚀 RAILWAY DEPLOYMENT: Dynamic CORS configuration
+RAILWAY_DOMAIN = os.getenv("RAILWAY_STATIC_URL", "")
+PRODUCTION_DOMAINS = [
+    "https://glittering-unicorn-b00443.netlify.app",  # Netlify frontend
+    f"https://{RAILWAY_DOMAIN}" if RAILWAY_DOMAIN else "",  # Railway backend domain
+    "https://*.railway.app",  # All Railway domains
+]
+
+# Development domains
+DEV_DOMAINS = [
+    "http://localhost:3000",
+    "http://localhost:50777", 
+    "http://192.168.1.129:8000"
+]
+
+# Combine domains and filter out empty ones
+ALLOWED_ORIGINS = [domain for domain in (PRODUCTION_DOMAINS + DEV_DOMAINS) if domain]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["*"],
+)
+
+app.add_middleware(
+    TrustedHostMiddleware, 
+    allowed_hosts=["*"]
+)
+
+
+# Default data initialization
+async def initialize_default_data():
+    """Initialize default locations and game definitions"""
+    from sqlalchemy.orm import Session
+    
+    db = next(get_db())
+    try:
+        # Initialize locations if we have the models
+        if HAS_LOCATION_MODELS:
+            existing_locations = db.query(Location).count()
+            existing_games = db.query(GameDefinition).count()
+            
+            logger.info(f"Found {existing_locations} existing locations")
+            logger.info(f"Found {existing_games} existing game definitions")
+            
+            # Initialize locations if needed
+            if existing_locations == 0:
+                await initialize_locations(db)
+            
+            # Initialize game definitions if needed  
+            if existing_games == 0:
+                await initialize_game_definitions(db)
+        else:
+            logger.info("Location models not available - using mock data")
+            
+        # Initialize weather rules
+        await initialize_weather_system()
+        
+    except Exception as e:
+        logger.error(f"Error initializing default data: {str(e)}")
+    finally:
+        db.close()
+
+
+async def initialize_locations(db: Session):
+    """Initialize default locations"""
+    if not HAS_LOCATION_MODELS:
+        return
+        
+    default_locations = [
+        {
+            "id": 1,
+            "name": "Városliget Football Park", 
+            "address": "Budapest, Városliget, 1146",
+            "latitude": 47.5186, "longitude": 19.0774,
+            "capacity": 20, "available_games": ["GAME1", "GAME2", "GAME3"],
+            "facilities": ["changing_rooms", "showers", "parking", "lighting"],
+            "operating_hours": {"weekday": "06:00-22:00", "weekend": "07:00-21:00"}
+        },
+        {
+            "id": 2, 
+            "name": "Margitsziget Sports Center",
+            "address": "Budapest, Margitsziget, 1138", 
+            "latitude": 47.5273, "longitude": 19.0438,
+            "capacity": 16, "available_games": ["GAME1", "GAME2"],
+            "facilities": ["changing_rooms", "equipment_rental", "cafe"],
+            "operating_hours": {"weekday": "07:00-21:00", "weekend": "08:00-20:00"}
+        },
+        {
+            "id": 3,
+            "name": "Pest Central Football Hub",
+            "address": "Budapest, Belváros, 1052",
+            "latitude": 47.4919, "longitude": 19.0503, 
+            "capacity": 12, "available_games": ["GAME2", "GAME3"],
+            "facilities": ["changing_rooms", "parking"],
+            "operating_hours": {"weekday": "06:00-23:00", "weekend": "07:00-22:00"}
+        }
+    ]
+    
+    for loc_data in default_locations:
+        location = Location(**loc_data)
+        db.add(location)
+    
+    db.commit()
+    logger.info("Default locations initialized")
+
+
+async def initialize_game_definitions(db: Session):
+    """Initialize default game definitions"""
+    if not HAS_LOCATION_MODELS:
+        return
+        
+    default_games = [
+        {
+            "game_id": "GAME1", "name": "Quick Skills Challenge",
+            "description": "Fast-paced technical skills testing", 
+            "duration_minutes": 30, "min_players": 1, "max_players": 4,
+            "difficulty_level": 2, "credit_cost": 3, "xp_reward": 15,
+            "equipment_needed": ["cones", "balls"], "coach_required": True
+        },
+        {
+            "game_id": "GAME2", "name": "Team Tactics Training", 
+            "description": "Strategic team play development",
+            "duration_minutes": 60, "min_players": 4, "max_players": 10,
+            "difficulty_level": 3, "credit_cost": 5, "xp_reward": 25, 
+            "equipment_needed": ["goals", "bibs", "balls"], "coach_required": True
+        },
+        {
+            "game_id": "GAME3", "name": "Championship Preparation",
+            "description": "Advanced competitive training session",
+            "duration_minutes": 90, "min_players": 6, "max_players": 16,
+            "difficulty_level": 4, "credit_cost": 8, "xp_reward": 40,
+            "equipment_needed": ["full_pitch", "goals", "timing_system"], "coach_required": True
+        }
+    ]
+    
+    for game_data in default_games:
+        game_def = GameDefinition(**game_data)
+        db.add(game_def)
+    
+    db.commit()
+    logger.info("Default game definitions initialized")
+
+
+async def initialize_weather_system():
+    """Initialize weather system with mock data warning"""
+    weather_api_key = os.getenv("WEATHER_API_KEY")
+    if not weather_api_key:
+        logger.warning("⚠️ Weather API service not available - using mock data")
+        logger.info("💡 Set WEATHER_API_KEY environment variable to enable real weather data")
+    
+    logger.info("Creating default weather rules...")
+    # Weather rules will be created on demand
+    logger.info("Weather rules initialization skipped - will be created on demand")
+
+
+# Include routers with prefixes - JAVÍTOTT router regisztráció
+print("🔗 Registering API routers...")
+
+if health is not None:
+    app.include_router(health.router, tags=["Health"])
+    print("✅ Health router registered")
+
+if auth is not None:
+    app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
+    print("✅ Auth router registered at /api/auth")
+
+if credits is not None:
+    app.include_router(credits.router, prefix="/api/credits", tags=["Credits"])
+    print("✅ Credits router registered at /api/credits")
+
+if social is not None:
+    app.include_router(social.router, prefix="/api/social", tags=["Social"])
+    print("✅ Social router registered at /api/social")
+
+if locations is not None:
+    app.include_router(locations.router, prefix="/api/locations", tags=["Locations"])
+    print("✅ Locations router registered at /api/locations")
+
+if booking is not None:
+    app.include_router(booking.router, prefix="/api/booking", tags=["Booking"])
+    print("✅ Booking router registered at /api/booking")
+
+if tournaments is not None:
+    app.include_router(tournaments.router, prefix="/api/tournaments", tags=["Tournaments"])
+    print("✅ Tournaments router registered at /api/tournaments")
+
+if weather is not None:
+    app.include_router(weather.router, prefix="/api/weather", tags=["Weather"])
+    print("✅ Weather router registered at /api/weather")
+
+if game_results is not None:
+    app.include_router(game_results.router, prefix="/api/game-results", tags=["Game Results"])
+    print("✅ Game Results router registered at /api/game-results")
+
+if admin is not None:
+    app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
+    print("✅ Admin router registered at /api/admin")
+
+print("🚀 Router registration complete!")
+
+
+# Root endpoint
+@app.get("/")
+async def root():
+    """Root endpoint with system information"""
+    db_health = get_db_health()
+    
+    # 🚀 RAILWAY DEPLOYMENT: Environment info
+    railway_env = os.getenv("RAILWAY_ENVIRONMENT", "local")
+    railway_url = os.getenv("RAILWAY_STATIC_URL", "localhost:8000")
+    
+    return {
+        "message": "🚀 LFA Legacy GO API Server",
+        "version": "3.0.0", 
+        "status": "operational",
+        "environment": railway_env,
+        "deployment": {
+            "platform": "Railway" if railway_env != "local" else "Local",
+            "url": f"https://{railway_url}" if railway_env != "local" else "http://localhost:8000",
+            "cors_origins": len(ALLOWED_ORIGINS)
+        },
+        "timestamp": datetime.utcnow().isoformat(),
+        "database": db_health,
+        "features": {
+            "authentication": "JWT-based",
+            "credit_system": "Multi-package with bonuses",
+            "social_features": "Friends and challenges", 
+            "booking_system": "Real-time reservations",
+            "tournaments": "Bracket management",
+            "weather_integration": "Game suitability checking",
+            "game_results": "Performance tracking",
+            "admin_panel": "User and moderation management"
+        },
+        "available_models": {
+            "user_system": True,
+            "moderation_system": True,
+            "location_system": HAS_LOCATION_MODELS,
+            "tournament_system": HAS_TOURNAMENT_MODELS,
+            "weather_system": HAS_WEATHER_MODELS,
+            "game_results_system": HAS_GAME_RESULT_MODELS
+        },
+        "endpoints": {
+            "health": "/health",
+            "docs": "/docs", 
+            "auth": "/api/auth/*",
+            "credits": "/api/credits/*",
+            "social": "/api/social/*", 
+            "locations": "/api/locations/*",
+            "booking": "/api/booking/*",
+            "tournaments": "/api/tournaments/*",
+            "weather": "/api/weather/*",
+            "game_results": "/api/game-results/*",
+            "admin": "/api/admin/*"
+        }
+    }
+
+
+# Additional health endpoint for monitoring
+@app.get("/health")
+async def health_check():
+    """Enhanced health check endpoint"""
+    db_health = get_db_health()
+    
+    return {
+        "status": "healthy" if db_health["status"] == "healthy" else "degraded",
+        "timestamp": datetime.utcnow().isoformat(),
+        "version": "3.0.0",
+        "database": db_health,
+        "services": {
+            "authentication": "operational",
+            "credit_system": "operational", 
+            "social_features": "operational",
+            "booking_system": "operational",
+            "tournament_system": "operational",
+            "weather_system": "operational" if os.getenv("WEATHER_API_KEY") else "mock_mode",
+            "game_results": "operational",
+            "admin_system": "operational"
+        }
+    }
+
+
+# Run with: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(
+        "app.main:app", 
+        host="0.0.0.0", 
+        port=8000, 
+        reload=True,
+        log_level="info"
+    )

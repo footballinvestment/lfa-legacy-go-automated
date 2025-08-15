@@ -105,8 +105,8 @@ class Tournament(Base):
     
     # === RELATIONSHIPS - JAVÍTOTT VERZIÓ overlaps paraméterekkel ===
     location = relationship("Location", back_populates="tournaments")
-    organizer = relationship("User", foreign_keys=[organizer_id], overlaps="organized_tournaments")
-    winner = relationship("User", foreign_keys=[winner_id], overlaps="won_tournaments")
+    organizer = relationship("User", foreign_keys=[organizer_id])
+    winner = relationship("User", foreign_keys=[winner_id])
     participants = relationship("TournamentParticipant", back_populates="tournament", cascade="all, delete-orphan")
     matches = relationship("TournamentMatch", back_populates="tournament", cascade="all, delete-orphan")
     bracket = relationship("TournamentBracket", back_populates="tournament", uselist=False, cascade="all, delete-orphan")
@@ -223,7 +223,7 @@ class TournamentParticipant(Base):
     
     # Relationships
     tournament = relationship("Tournament", back_populates="participants")
-    user = relationship("User")
+    # user = relationship("User", foreign_keys=[user_id])  # Temporarily disabled
     
     # Unique constraint
     __table_args__ = (
@@ -315,9 +315,9 @@ class TournamentMatch(Base):
     
     # Relationships
     tournament = relationship("Tournament", back_populates="matches")
-    player1 = relationship("User", foreign_keys=[player1_id])
-    player2 = relationship("User", foreign_keys=[player2_id])
-    winner = relationship("User", foreign_keys=[winner_id])
+    # player1 = relationship("User", foreign_keys=[player1_id])  # Temporarily disabled
+    # player2 = relationship("User", foreign_keys=[player2_id])  # Temporarily disabled
+    # winner = relationship("User", foreign_keys=[winner_id])  # Temporarily disabled
     
     def __repr__(self):
         return f"<TournamentMatch(id='{self.match_id}', tournament={self.tournament_id}, round={self.round_number})>"
@@ -447,7 +447,7 @@ class UserTournamentAchievement(Base):
     progress_data = Column(JSON, default=lambda: {})
     
     # Relationships
-    user = relationship("User")
+    # user = relationship("User", foreign_keys=[user_id])  # Temporarily disabled
     achievement = relationship("TournamentAchievement")
     tournament = relationship("Tournament")
     

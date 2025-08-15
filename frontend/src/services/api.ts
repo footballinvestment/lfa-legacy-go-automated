@@ -30,6 +30,8 @@ export class ApiService {
 
     const response = await fetch(url, {
       ...options,
+      mode: 'cors',
+      credentials: 'include',
       headers,
     });
 
@@ -141,12 +143,8 @@ export interface AuthResponse {
 
 export class AuthService extends ApiService {
   async login(credentials: LoginRequest): Promise<AuthResponse> {
-    const formData = new FormData();
-    formData.append("username", credentials.username);
-    formData.append("password", credentials.password);
-
-    // FIXED: Use uploadFile method for FormData
-    return this.uploadFile("/api/auth/login", formData);
+    // Send JSON data instead of FormData
+    return this.post("/api/auth/login", credentials);
   }
 
   async register(userData: RegisterRequest): Promise<AuthResponse> {

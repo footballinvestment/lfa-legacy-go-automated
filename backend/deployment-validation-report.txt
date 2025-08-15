@@ -1,0 +1,45 @@
+LFA Legacy GO - Deployment Validation Report
+===========================================
+Validation Date: 2025 Aug 15 Pén 12:48:17 CEST
+Service URL: https://lfa-legacy-go-backend-tv6u4m3szq-uc.a.run.app
+Total Tests: 34
+Passed Tests: 30
+Failed Tests: 4
+Success Rate: 88%
+
+DETAILED RESULTS:
+================
+✅ Basic Connectivity: 200
+✅ Health Check: 200
+✅ API Documentation: 200
+✅ Active Routers: 10/10
+
+PERFORMANCE METRICS:
+===================
+Response Time: 0.281249s
+DNS Resolution: 0.002033s
+Connection Time: 0.016147s
+
+HEALTH CHECK DETAILS:
+====================
+{
+  "status": "healthy",
+  "service": "LFA Legacy GO API",
+  "version": "3.0.0",
+  "environment": "production",
+  "platform": "google_cloud_run",
+  "database": "connected",
+  "routers_active": 10,
+  "routers_expected": 10,
+  "location": "backend/app/main.py",
+  "port": "8080",
+  "revision": "lfa-legacy-go-backend-00006-ssq",
+  "service_name": "lfa-legacy-go-backend"
+}
+
+RECOMMENDATIONS:
+===============
+⚠️ Some tests failed. Review the issues above.
+🔧 Check service logs: gcloud logging read "resource.type=\"cloud_run_revision\"" --limit=50
+🔄 Consider redeploying if critical issues are found.
+

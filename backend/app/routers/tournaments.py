@@ -22,7 +22,7 @@ from ..services.tournament_service import (
 from ..routers.auth import get_current_user
 
 # Initialize router
-router = APIRouter(prefix="/api/tournaments", tags=["Tournaments"])
+router = APIRouter(tags=["Tournaments"])
 
 # === PYDANTIC SCHEMAS ===
 
@@ -470,7 +470,22 @@ async def register_for_tournament(
     🎯 Register for tournament
     """
     try:
+        # 🔧 JAVÍTÁS: Add detailed logging for debug
         tournament_service = TournamentService(db)
+        tournament = tournament_service.get_tournament(tournament_id)
+        
+        if not tournament:
+            raise HTTPException(status_code=404, detail="Tournament not found")
+        
+        # 🔧 JAVÍTÁS: Log validation details
+        print(f"DEBUG: Registration attempt for tournament {tournament_id}")
+        print(f"DEBUG: Tournament '{tournament.name}' - Status: {tournament.status}")
+        print(f"DEBUG: Registration open: {tournament.is_registration_open}")
+        print(f"DEBUG: Tournament full: {tournament.is_full}")
+        print(f"DEBUG: Entry fee: {tournament.entry_fee_credits} credits")
+        print(f"DEBUG: User '{current_user.username}' has {current_user.credits} credits")
+        print(f"DEBUG: User level: {current_user.level}, Tournament min level: {tournament.min_level}")
+        
         success = tournament_service.register_participant(tournament_id, current_user.id)
         
         if success:
@@ -478,14 +493,33 @@ async def register_for_tournament(
                 "message": "Successfully registered for tournament",
                 "tournament_id": tournament_id,
                 "user_id": current_user.id,
-                "credits_charged": tournament_service.get_tournament(tournament_id).entry_fee_credits
+                "credits_charged": tournament.entry_fee_credits
             }
         else:
             raise HTTPException(status_code=400, detail="Registration failed")
             
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        # 🔧 JAVÍTÁS: Enhanced error logging with context
+        error_msg = str(e)
+        print(f"DEBUG: Registration validation failed: {error_msg}")
+        print(f"DEBUG: Tournament ID: {tournament_id}, User: {current_user.username}")
+        
+        # Provide more specific error messages
+        if "not found" in error_msg.lower():
+            raise HTTPException(status_code=404, detail=error_msg)
+        elif "closed" in error_msg.lower():
+            raise HTTPException(status_code=400, detail=f"Registration is closed for this tournament")
+        elif "full" in error_msg.lower():
+            raise HTTPException(status_code=400, detail=f"Tournament is full - no more spots available")
+        elif "already registered" in error_msg.lower():
+            raise HTTPException(status_code=400, detail=f"You are already registered for this tournament")
+        elif "insufficient credits" in error_msg.lower():
+            tournament = tournament_service.get_tournament(tournament_id)
+            raise HTTPException(status_code=400, detail=f"Insufficient credits. Need {tournament.entry_fee_credits} credits but you have {current_user.credits}")
+        else:
+            raise HTTPException(status_code=400, detail=error_msg)
     except Exception as e:
+        print(f"DEBUG: Unexpected error in tournament registration: {str(e)}")
         raise HTTPException(
             status_code=500,  # 🔧 JAVÍTÁS
             detail=f"Error registering for tournament: {str(e)}"
@@ -684,4 +718,44 @@ async def get_tournament_analytics(
         raise HTTPException(
             status_code=500,  # 🔧 JAVÍTÁS
             detail=f"Error fetching analytics: {str(e)}"
+        )
+
+@router.get("/{tournament_id}/bracket")
+async def get_tournament_bracket(
+    tournament_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    🏆 Get tournament bracket
+    """
+    try:
+        tournament = db.query(Tournament).filter(Tournament.id == tournament_id).first()
+        if not tournament:
+            raise HTTPException(status_code=404, detail="Tournament not found")
+        
+        bracket_data = None
+        current_round = 0
+        total_rounds = 0
+        
+        if tournament.bracket:
+            bracket_data = tournament.bracket.structure
+            current_round = tournament.bracket.current_round
+            total_rounds = tournament.bracket.total_rounds
+        
+        return {
+            "tournament_id": tournament.id,
+            "tournament_name": tournament.name,
+            "format": tournament.format.value,
+            "status": tournament.status.value,
+            "current_round": current_round,
+            "total_rounds": total_rounds,
+            "bracket": bracket_data or {"message": "Bracket not yet generated"}
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error fetching bracket: {str(e)}"
         )

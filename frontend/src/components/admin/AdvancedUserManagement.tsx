@@ -37,6 +37,7 @@ import {
   Divider,
   FormControlLabel,
   Tooltip,
+  CircularProgress,
   LinearProgress,
 } from '@mui/material';
 import {
@@ -64,6 +65,9 @@ import {
   Clear,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
+import UserDetailModal from './UserDetailModal';
+import { moderationApi } from '../../services/moderationApi';
+import type { BulkUserOperation, BulkOperationResult } from '../../types/moderation';
 
 interface UserProfile {
   id: string;
@@ -102,7 +106,7 @@ interface UserViolation {
   actionTaken?: string;
 }
 
-interface BulkOperation {
+interface BulkOperationLocal {
   type: 'suspend' | 'activate' | 'ban' | 'promote' | 'demote' | 'delete' | 'export';
   userIds: string[];
   reason?: string;
@@ -139,7 +143,12 @@ const AdvancedUserManagement: React.FC = () => {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [loading, setLoading] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
+  const [bulkOperationOpen, setBulkOperationOpen] = useState(false);
+  const [bulkOperationType, setBulkOperationType] = useState<string>('');
+  const [bulkOperationReason, setBulkOperationReason] = useState('');
+  const [bulkOperationProgress, setBulkOperationProgress] = useState<BulkOperationResult | null>(null);
+  const [bulkOperationInProgress, setBulkOperationInProgress] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const [userDetailOpen, setUserDetailOpen] = useState(false);
   const [sortBy, setSortBy] = useState<keyof UserProfile>('registrationDate');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
@@ -244,23 +253,122 @@ const AdvancedUserManagement: React.FC = () => {
     }
   };
 
-  const handleBulkOperation = (operation: BulkOperation['type']) => {
+  const handleBulkOperationStart = (operation: BulkOperationLocal['type']) => {
     if (selectedUsers.length === 0) {
       setSnackbarMessage('Please select users first');
       setSnackbarOpen(true);
       return;
     }
 
-    setLoading(true);
-    
-    setTimeout(() => {
-      console.log(`Performing ${operation} on users:`, selectedUsers);
-      setSnackbarMessage(`${operation} operation completed on ${selectedUsers.length} users`);
+    setBulkOperationType(operation);
+    setBulkOperationReason('');
+    setBulkOperationOpen(true);
+    setBulkMenuAnchor(null);
+  };
+
+  const executeBulkOperation = async () => {
+    if (!bulkOperationType || selectedUsers.length === 0) return;
+
+    setBulkOperationInProgress(true);
+    setBulkOperationProgress(null);
+
+    try {
+      // Convert string IDs to numbers for API
+      const userIds = selectedUsers.map(id => parseInt(id));
+      
+      // Handle export operation separately
+      if (bulkOperationType === 'export') {
+        // Create CSV export of selected users
+        const selectedUserData = users.filter(u => selectedUsers.includes(u.id));
+        const csvContent = [
+          ['ID', 'Name', 'Email', 'Status', 'Role', 'Level', 'Games', 'Win Rate', 'Last Login'],
+          ...selectedUserData.map(u => [
+            u.id,
+            u.fullName,
+            u.email,
+            u.status,
+            u.role,
+            u.level.toString(),
+            u.gameStats.tournamentsPlayed.toString(),
+            `${u.gameStats.winRate}%`,
+            new Date(u.lastLogin).toLocaleDateString()
+          ])
+        ].map(row => row.join(',')).join('\\n');
+        
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `selected_users_${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+        
+        setBulkOperationProgress({
+          results: Object.fromEntries(selectedUsers.map(id => [id, { status: 'ok', message: 'Exported successfully' }])),
+          summary: {
+            total: selectedUsers.length,
+            success_count: selectedUsers.length,
+            error_count: 0
+          }
+        });
+        return;
+      }
+
+      // Map operation types to backend format
+      const operationMap: { [key: string]: BulkUserOperation['action'] } = {
+        'activate': 'unsuspend',
+        'suspend': 'suspend',
+        'ban': 'ban',
+        'promote': 'add_role',
+        'demote': 'remove_role',
+        'delete': 'delete'
+      };
+
+      const mappedAction = operationMap[bulkOperationType];
+      if (!mappedAction) {
+        throw new Error(`Unknown bulk operation type: ${bulkOperationType}`);
+      }
+
+      const bulkOperation: BulkUserOperation = {
+        action: mappedAction,
+        user_ids: userIds,
+        params: {
+          ...(bulkOperationReason && { reason: bulkOperationReason }),
+          ...(mappedAction === 'add_role' && { role: 'moderator' }),
+          ...(mappedAction === 'remove_role' && { role: 'moderator' })
+        }
+      };
+
+      const result = await moderationApi.bulkUserOperation(bulkOperation);
+      setBulkOperationProgress(result);
+      
+      // Show success message
+      const successCount = result.summary.success_count;
+      const totalCount = result.summary.total;
+      setSnackbarMessage(`Bulk ${bulkOperationType} completed: ${successCount}/${totalCount} users processed successfully`);
       setSnackbarOpen(true);
-      setSelectedUsers([]);
-      setLoading(false);
-      setBulkMenuAnchor(null);
-    }, 1500);
+      
+      // Clear selection after successful operation
+      if (successCount > 0) {
+        setSelectedUsers([]);
+      }
+      
+    } catch (error) {
+      console.error('Bulk operation failed:', error);
+      setSnackbarMessage(`Bulk operation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setSnackbarOpen(true);
+      setBulkOperationProgress(null);
+    } finally {
+      setBulkOperationInProgress(false);
+    }
+  };
+
+  const closeBulkOperationModal = () => {
+    setBulkOperationOpen(false);
+    setBulkOperationType('');
+    setBulkOperationReason('');
+    setBulkOperationProgress(null);
+    setBulkOperationInProgress(false);
   };
 
   const handleUserAction = (action: string, userId: string) => {
@@ -368,7 +476,7 @@ const AdvancedUserManagement: React.FC = () => {
                   <Box sx={{ display: 'flex', gap: 0.5 }}>
                     <Tooltip title="View Details">
                       <IconButton size="small" onClick={() => {
-                        setSelectedUser(user);
+                        setSelectedUserId(parseInt(user.id));
                         setUserDetailOpen(true);
                       }}>
                         <Visibility fontSize="small" />
@@ -485,7 +593,7 @@ const AdvancedUserManagement: React.FC = () => {
                   <Box sx={{ display: 'flex', gap: 0.5 }}>
                     <IconButton size="small" onClick={(e) => {
                       e.stopPropagation();
-                      setSelectedUser(user);
+                      setSelectedUserId(parseInt(user.id));
                       setUserDetailOpen(true);
                     }}>
                       <Visibility fontSize="small" />
@@ -640,27 +748,27 @@ const AdvancedUserManagement: React.FC = () => {
         open={Boolean(bulkMenuAnchor)}
         onClose={() => setBulkMenuAnchor(null)}
       >
-        <MenuItem onClick={() => handleBulkOperation('activate')}>
+        <MenuItem onClick={() => handleBulkOperationStart('activate')}>
           <CheckCircle sx={{ mr: 1 }} /> Activate Users
         </MenuItem>
-        <MenuItem onClick={() => handleBulkOperation('suspend')}>
+        <MenuItem onClick={() => handleBulkOperationStart('suspend')}>
           <Block sx={{ mr: 1 }} /> Suspend Users
         </MenuItem>
-        <MenuItem onClick={() => handleBulkOperation('ban')}>
+        <MenuItem onClick={() => handleBulkOperationStart('ban')}>
           <Security sx={{ mr: 1 }} /> Ban Users
         </MenuItem>
         <Divider />
-        <MenuItem onClick={() => handleBulkOperation('promote')}>
+        <MenuItem onClick={() => handleBulkOperationStart('promote')}>
           <Star sx={{ mr: 1 }} /> Promote to Moderator
         </MenuItem>
-        <MenuItem onClick={() => handleBulkOperation('demote')}>
+        <MenuItem onClick={() => handleBulkOperationStart('demote')}>
           <Star sx={{ mr: 1 }} /> Demote to User
         </MenuItem>
         <Divider />
-        <MenuItem onClick={() => handleBulkOperation('export')}>
+        <MenuItem onClick={() => handleBulkOperationStart('export')}>
           <Download sx={{ mr: 1 }} /> Export Selected
         </MenuItem>
-        <MenuItem onClick={() => handleBulkOperation('delete')} sx={{ color: 'error.main' }}>
+        <MenuItem onClick={() => handleBulkOperationStart('delete')} sx={{ color: 'error.main' }}>
           <Delete sx={{ mr: 1 }} /> Delete Users
         </MenuItem>
       </Menu>
@@ -721,29 +829,173 @@ const AdvancedUserManagement: React.FC = () => {
         </Box>
       </Menu>
 
-      {/* User Detail Dialog Placeholder */}
-      <Dialog
+      {/* User Detail Modal */}
+      <UserDetailModal
+        userId={selectedUserId}
         open={userDetailOpen}
-        onClose={() => setUserDetailOpen(false)}
-        maxWidth="lg"
+        onClose={() => {
+          setUserDetailOpen(false);
+          setSelectedUserId(null);
+        }}
+        onUserUpdate={(updatedUser) => {
+          console.log('User updated:', updatedUser);
+          // Refresh the user list here in a real implementation
+        }}
+      />
+
+      {/* Bulk Operation Confirmation Modal */}
+      <Dialog
+        open={bulkOperationOpen}
+        onClose={closeBulkOperationModal}
+        maxWidth="md"
         fullWidth
       >
         <DialogTitle>
-          User Details - {selectedUser?.fullName}
+          {bulkOperationProgress ? 'Bulk Operation Results' : `Confirm Bulk ${bulkOperationType}`}
         </DialogTitle>
         <DialogContent>
-          <Typography>User detail modal will be implemented in the next component.</Typography>
-          {selectedUser && (
+          {!bulkOperationProgress ? (
+            <Box>
+              <Alert severity="warning" sx={{ mb: 2 }}>
+                You are about to {bulkOperationType} {selectedUsers.length} selected users. This action cannot be undone.
+              </Alert>
+              
+              <Typography variant="h6" gutterBottom>
+                Selected Users ({selectedUsers.length}):
+              </Typography>
+              
+              <Box sx={{ maxHeight: 200, overflowY: 'auto', mb: 2 }}>
+                {selectedUsers.slice(0, 20).map(userId => {
+                  const user = users.find(u => u.id === userId);
+                  return user ? (
+                    <Box key={userId} sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 0.5 }}>
+                      <Avatar sx={{ width: 24, height: 24, fontSize: '0.75rem' }}>
+                        {user.fullName.charAt(0)}
+                      </Avatar>
+                      <Typography variant="body2">
+                        {user.fullName} ({user.email})
+                      </Typography>
+                    </Box>
+                  ) : null;
+                })}
+                {selectedUsers.length > 20 && (
+                  <Typography variant="body2" color="text.secondary">
+                    ...and {selectedUsers.length - 20} more users
+                  </Typography>
+                )}
+              </Box>
+              
+              {(['suspend', 'ban', 'delete'].includes(bulkOperationType)) && (
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={3}
+                  label="Reason (optional)"
+                  value={bulkOperationReason}
+                  onChange={(e) => setBulkOperationReason(e.target.value)}
+                  placeholder="Provide a reason for this action..."
+                  sx={{ mt: 2 }}
+                />
+              )}
+            </Box>
+          ) : (
+            <Box>
+              <Alert 
+                severity={bulkOperationProgress.summary.error_count === 0 ? 'success' : 'warning'} 
+                sx={{ mb: 2 }}
+              >
+                Operation completed: {bulkOperationProgress.summary.success_count} successful, {bulkOperationProgress.summary.error_count} failed
+              </Alert>
+              
+              <Typography variant="h6" gutterBottom>
+                Results Summary:
+              </Typography>
+              
+              <Grid container spacing={2} sx={{ mb: 2 }}>
+                <Grid item xs={4}>
+                  <Paper sx={{ p: 2, textAlign: 'center' }}>
+                    <Typography variant="h4" color="text.secondary">
+                      {bulkOperationProgress.summary.total}
+                    </Typography>
+                    <Typography variant="body2">Total</Typography>
+                  </Paper>
+                </Grid>
+                <Grid item xs={4}>
+                  <Paper sx={{ p: 2, textAlign: 'center' }}>
+                    <Typography variant="h4" color="success.main">
+                      {bulkOperationProgress.summary.success_count}
+                    </Typography>
+                    <Typography variant="body2">Success</Typography>
+                  </Paper>
+                </Grid>
+                <Grid item xs={4}>
+                  <Paper sx={{ p: 2, textAlign: 'center' }}>
+                    <Typography variant="h4" color="error.main">
+                      {bulkOperationProgress.summary.error_count}
+                    </Typography>
+                    <Typography variant="body2">Failed</Typography>
+                  </Paper>
+                </Grid>
+              </Grid>
+              
+              {bulkOperationProgress.summary.error_count > 0 && (
+                <Box>
+                  <Typography variant="subtitle1" gutterBottom>
+                    Failed Operations:
+                  </Typography>
+                  <Box sx={{ maxHeight: 200, overflowY: 'auto' }}>
+                    {Object.entries(bulkOperationProgress.results)
+                      .filter(([_, result]) => result.status === 'failed')
+                      .map(([userId, result]) => {
+                        const user = users.find(u => u.id === userId);
+                        return (
+                          <Box key={userId} sx={{ mb: 1, p: 1, bgcolor: 'error.light', borderRadius: 1 }}>
+                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                              {user?.fullName || `User ${userId}`}
+                            </Typography>
+                            <Typography variant="caption" color="error.dark">
+                              {result.message}
+                            </Typography>
+                          </Box>
+                        );
+                      })
+                    }
+                  </Box>
+                </Box>
+              )}
+            </Box>
+          )}
+          
+          {bulkOperationInProgress && (
             <Box sx={{ mt: 2 }}>
-              <Typography variant="body2">Email: {selectedUser.email}</Typography>
-              <Typography variant="body2">Status: {selectedUser.status}</Typography>
-              <Typography variant="body2">Role: {selectedUser.role}</Typography>
-              <Typography variant="body2">Level: {selectedUser.level}</Typography>
+              <Typography variant="body2" gutterBottom>
+                Processing bulk operation...
+              </Typography>
+              <LinearProgress />
             </Box>
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setUserDetailOpen(false)}>Close</Button>
+          {!bulkOperationProgress ? (
+            <>
+              <Button onClick={closeBulkOperationModal}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={executeBulkOperation} 
+                color="primary" 
+                variant="contained"
+                disabled={bulkOperationInProgress}
+                startIcon={bulkOperationInProgress ? <CircularProgress size={20} /> : undefined}
+              >
+                {bulkOperationInProgress ? 'Processing...' : `Confirm ${bulkOperationType}`}
+              </Button>
+            </>
+          ) : (
+            <Button onClick={closeBulkOperationModal} color="primary" variant="contained">
+              Close
+            </Button>
+          )}
         </DialogActions>
       </Dialog>
 

@@ -15,7 +15,7 @@ from ..models.user import User
 from .auth import get_current_user
 
 # Initialize router and logger
-router = APIRouter(prefix="/api/credits", tags=["credits"])
+router = APIRouter(tags=["credits"])
 logger = logging.getLogger(__name__)
 
 # JAVÍTOTT Credit packages configuration

@@ -1,0 +1,16 @@
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "backend/Dockerfile"
+
+[deploy]
+startCommand = "python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+
+[environments.production]
+[environments.production.variables]
+DEBUG = "false"
+API_TITLE = "LFA Legacy GO API"
+API_VERSION = "3.0.0"
+ACCESS_TOKEN_EXPIRE_MINUTES = "43200"
+SECRET_KEY = "lfa-legacy-go-jwt-secret-key-2024-production-ready"

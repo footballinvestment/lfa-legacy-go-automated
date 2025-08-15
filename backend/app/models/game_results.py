@@ -120,9 +120,9 @@ class GameResult(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
     # === RELATIONSHIPS - JAVÍTOTT VERZIÓ overlaps paraméterrel ===
-    player = relationship("User", foreign_keys=[player_id])
-    recorded_by = relationship("User", foreign_keys=[recorded_by_id], overlaps="coached_results")
-    verified_by = relationship("User", foreign_keys=[verified_by_id])
+    # player = relationship("User", foreign_keys=[player_id])  # Temporarily disabled
+    # recorded_by = relationship("User", foreign_keys=[recorded_by_id], overlaps="coached_results")  # Temporarily disabled
+    # verified_by = relationship("User", foreign_keys=[verified_by_id])  # Temporarily disabled
     location = relationship("Location")
     game_session = relationship("GameSession", foreign_keys=[game_session_id])
     tournament = relationship("Tournament", foreign_keys=[tournament_id])
@@ -341,7 +341,7 @@ class PlayerStatistics(Base):
     statistics_version = Column(Integer, default=1)  # For schema evolution
     
     # Relationships
-    user = relationship("User", back_populates="player_statistics")
+    # user = relationship("User")  # Temporarily disabled due to mapper issues
     
     # Unique constraint
     __table_args__ = (
@@ -521,7 +521,7 @@ class Leaderboard(Base):
     last_updated = Column(DateTime(timezone=True), server_default=func.now(), index=True)
     
     # Relationships
-    user = relationship("User", back_populates="leaderboard_entries")
+    # user = relationship("User")  # Temporarily disabled due to mapper issues
     
     # Indexes and constraints
     __table_args__ = (

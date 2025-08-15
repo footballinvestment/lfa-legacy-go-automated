@@ -1,0 +1,89 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  annotations:
+    run.googleapis.com/client-name: gcloud
+    run.googleapis.com/client-version: 534.0.0
+    run.googleapis.com/ingress: all
+    run.googleapis.com/ingress-status: all
+    run.googleapis.com/operation-id: 103e0a83-3676-48df-a2cd-c5934e362c10
+    run.googleapis.com/urls: '["https://lfa-legacy-go-backend-376491487980.us-central1.run.app","https://lfa-legacy-go-backend-tv6u4m3szq-uc.a.run.app"]'
+    serving.knative.dev/creator: plscallmegiorgio@gmail.com
+    serving.knative.dev/lastModifier: plscallmegiorgio@gmail.com
+  creationTimestamp: '2025-08-15T06:02:37.175520Z'
+  generation: 6
+  labels:
+    cloud.googleapis.com/location: us-central1
+  name: lfa-legacy-go-backend
+  namespace: '376491487980'
+  resourceVersion: AAY8ZRbIaLw
+  selfLink: /apis/serving.knative.dev/v1/namespaces/376491487980/services/lfa-legacy-go-backend
+  uid: be0b090a-bacd-46c0-a48b-70935610c742
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/maxScale: '100'
+        run.googleapis.com/client-name: gcloud
+        run.googleapis.com/client-version: 534.0.0
+        run.googleapis.com/execution-environment: gen2
+        run.googleapis.com/startup-cpu-boost: 'true'
+      labels:
+        client.knative.dev/nonce: vectrjsizi
+        run.googleapis.com/startupProbeType: Default
+    spec:
+      containerConcurrency: 80
+      containers:
+      - env:
+        - name: ENVIRONMENT
+          value: production
+        - name: API_TITLE
+          value: LFA Legacy GO API
+        - name: API_VERSION
+          value: 3.0.0
+        - name: DEBUG
+          value: 'false'
+        - name: SECRET_KEY
+          value: lfa-legacy-go-jwt-secret-key-2024-production-ready
+        - name: ACCESS_TOKEN_EXPIRE_MINUTES
+          value: '43200'
+        image: gcr.io/lfa-legacy-go/lfa-legacy-go-backend
+        ports:
+        - containerPort: 8080
+          name: http1
+        resources:
+          limits:
+            cpu: '1'
+            memory: 1Gi
+        startupProbe:
+          failureThreshold: 1
+          periodSeconds: 240
+          tcpSocket:
+            port: 8080
+          timeoutSeconds: 240
+      serviceAccountName: 376491487980-compute@developer.gserviceaccount.com
+      timeoutSeconds: 300
+  traffic:
+  - latestRevision: true
+    percent: 100
+status:
+  address:
+    url: https://lfa-legacy-go-backend-tv6u4m3szq-uc.a.run.app
+  conditions:
+  - lastTransitionTime: '2025-08-15T10:45:31.860156Z'
+    status: 'True'
+    type: Ready
+  - lastTransitionTime: '2025-08-15T10:45:30.594002Z'
+    status: 'True'
+    type: ConfigurationsReady
+  - lastTransitionTime: '2025-08-15T10:45:31.821546Z'
+    status: 'True'
+    type: RoutesReady
+  latestCreatedRevisionName: lfa-legacy-go-backend-00006-ssq
+  latestReadyRevisionName: lfa-legacy-go-backend-00006-ssq
+  observedGeneration: 6
+  traffic:
+  - latestRevision: true
+    percent: 100
+    revisionName: lfa-legacy-go-backend-00006-ssq
+  url: https://lfa-legacy-go-backend-tv6u4m3szq-uc.a.run.app

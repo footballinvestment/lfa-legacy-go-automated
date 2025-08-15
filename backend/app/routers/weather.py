@@ -21,7 +21,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/weather", tags=["Weather"])
+router = APIRouter(tags=["Weather"])
 
 # === PYDANTIC MODELS ===
 

@@ -1,0 +1,151 @@
+# backend/app/database.py
+# ENHANCED RAILWAY DEPLOYMENT - SQLite Fallback Database Configuration
+
+import os
+from sqlalchemy import create_engine, MetaData, text
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+# 🚀 RAILWAY DEPLOYMENT: Enhanced database configuration with better fallback
+def get_database_config():
+    """Get database configuration for Railway deployment"""
+    
+    database_url = os.getenv("DATABASE_URL")
+    
+    if database_url and not database_url.startswith("sqlite"):
+        print(f"🔗 Using PostgreSQL: {database_url[:50]}...")
+        return database_url, "postgresql"
+    elif database_url and database_url.startswith("sqlite"):
+        print(f"🔗 Using SQLite from URL: {database_url[:50]}...")
+        return database_url, "sqlite"
+    else:
+        # Railway fallback - use /app/data for persistence
+        railway_env = os.getenv("RAILWAY_ENVIRONMENT")
+        
+        if railway_env:
+            # Production Railway environment - ensure data directory exists
+            data_dir = "/app/data"
+            if not os.path.exists(data_dir):
+                os.makedirs(data_dir, exist_ok=True)
+            db_path = "/app/data/lfa_legacy_go.db"
+            print(f"🔗 Railway SQLite fallback: {db_path}")
+        else:
+            # Local development
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            backend_dir = os.path.dirname(current_dir)
+            db_path = os.path.join(backend_dir, "lfa_legacy_go.db")
+            print(f"🔗 Local SQLite: {db_path}")
+        
+        return f"sqlite:///{db_path}", "sqlite"
+
+# Get database configuration
+DATABASE_URL, DB_TYPE = get_database_config()
+
+print(f"🔗 Database Type: {DB_TYPE}")
+print(f"🔗 Database URL: {DATABASE_URL[:80]}...")
+
+# Create SQLAlchemy engine with production optimizations
+if DB_TYPE == "sqlite":
+    engine = create_engine(
+        DATABASE_URL,
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+        echo=False  # Set to True for SQL debugging
+    )
+    print("📊 Database ready: SQLite")
+else:
+    # PostgreSQL configuration for Railway
+    engine = create_engine(
+        DATABASE_URL, 
+        pool_pre_ping=True,
+        pool_recycle=300,  # Recycle connections every 5 minutes
+        pool_size=20,      # Connection pool size
+        max_overflow=0,    # Don't allow overflow connections
+        echo=False
+    )
+    print("📊 Database ready: PostgreSQL")
+
+# Create SessionLocal class
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+# Create Base class - KRITIKUS: Ez ugyanaz legyen minden modellben
+Base = declarative_base()
+metadata = MetaData()
+
+# Database Dependency for FastAPI
+def get_db():
+    """Database session dependency for FastAPI endpoints"""
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+# Enhanced connection test with better error handling
+def test_db_connection():
+    """Test database connection with detailed reporting"""
+    try:
+        with engine.connect() as connection:
+            # Test query based on database type
+            if DB_TYPE == "sqlite":
+                result = connection.execute(text("SELECT sqlite_version()"))
+                version = result.fetchone()[0]
+                print(f"✅ SQLite connection verified - Version: {version}")
+            else:
+                result = connection.execute(text("SELECT version()"))
+                version = result.fetchone()[0]
+                print(f"✅ PostgreSQL connection verified - Version: {version[:50]}...")
+            
+            return {
+                "status": "healthy",
+                "database_type": DB_TYPE,
+                "connection": "active",
+                "version": version[:100] if version else "unknown"
+            }
+    except Exception as e:
+        error_msg = str(e)
+        print(f"❌ Database connection failed: {error_msg}")
+        return {
+            "status": "error",
+            "database_type": DB_TYPE,
+            "connection": "failed",
+            "error": error_msg
+        }
+
+def get_db_health():
+    """Get database health status"""
+    return test_db_connection()
+
+# Enhanced startup logging
+def log_database_startup():
+    """Log database startup information"""
+    print("🚀 DATABASE STARTUP INFORMATION:")
+    print(f"   Environment: {os.getenv('RAILWAY_ENVIRONMENT', 'local')}")
+    print(f"   Database Type: {DB_TYPE}")
+    print(f"   DATABASE_URL exists: {bool(os.getenv('DATABASE_URL'))}")
+    print(f"   Using fallback: {not bool(os.getenv('DATABASE_URL'))}")
+    
+    # Test connection
+    health = test_db_connection()
+    print(f"   Connection Status: {health['status']}")
+    
+    return health
+
+def init_database():
+    """Initialize database tables - compatibility function"""
+    try:
+        Base.metadata.create_all(bind=engine)
+        print("✅ Database tables initialized")
+        return True
+    except Exception as e:
+        print(f"❌ Database initialization failed: {e}")
+        return False
+
+# Call startup logging when module is imported
+if __name__ != "__main__":
+    log_database_startup()

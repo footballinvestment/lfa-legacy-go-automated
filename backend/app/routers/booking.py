@@ -15,7 +15,7 @@ from ..models.location import Location, GameDefinition, GameSession, SessionStat
 from ..routers.auth import get_current_user
 
 # Initialize router and logger
-router = APIRouter(prefix="/api/booking", tags=["Real-Time Booking with Weather"])
+router = APIRouter(tags=["Real-Time Booking with Weather"])
 logger = logging.getLogger(__name__)
 
 # === JAVÍTOTT PYDANTIC MODELS ===
@@ -154,6 +154,9 @@ async def create_booking_session(
         
         try:
             start_time = datetime.fromisoformat(start_time_str.replace('Z', '+00:00'))
+            # Ensure start_time is timezone-aware (assume UTC if naive)
+            if start_time.tzinfo is None:
+                start_time = start_time.replace(tzinfo=timezone.utc)
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid datetime format")
         
@@ -170,13 +173,17 @@ async def create_booking_session(
                 detail=f"Insufficient credits. Need {credits_needed}, have {current_user.credits}"
             )
         
-        # JAVÍTOTT: Check if slot is available - helyes field nevek
+        # JAVÍTOTT: Check if slot is available - helyes field nevek + timezone fix
         end_time = start_time + timedelta(minutes=booking_request.duration_minutes)
+        
+        # Convert to naive datetime for database comparison (database stores naive datetimes)
+        start_time_naive = start_time.replace(tzinfo=None)
+        end_time_naive = end_time.replace(tzinfo=None)
         
         existing_session = db.query(GameSession).filter(
             GameSession.location_id == booking_request.location_id,
-            GameSession.scheduled_start < end_time,
-            GameSession.scheduled_end > start_time,
+            GameSession.scheduled_start < end_time_naive,
+            GameSession.scheduled_end > start_time_naive,
             GameSession.status.in_(['scheduled', 'confirmed', 'in_progress'])
         ).first()
         
@@ -197,9 +204,7 @@ async def create_booking_session(
         # JAVÍTOTT: Create new game session - helyes field nevek
         session_id = str(uuid.uuid4())
         
-        # JAVÍTÁS: Convert timezone-aware datetime to naive for database storage
-        start_time_naive = start_time.replace(tzinfo=None)
-        end_time_naive = end_time.replace(tzinfo=None)
+        # Use the already-defined naive datetimes for database storage
         
         new_session = GameSession(
             session_id=session_id,

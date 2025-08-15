@@ -1,428 +1,371 @@
-# === backend/app/main.py ===
-# TELJES JAVÍTOTT LFA Legacy GO - FastAPI Main Application with Weather API Integration
+#!/usr/bin/env python3
+"""
+LFA Legacy GO - Google Cloud Run Optimized
+Location: backend/app/main.py
+"""
 
 import os
-import logging
-from datetime import datetime
-from fastapi import FastAPI, Request, HTTPException
+import sys
+import uvicorn
+import signal
+from pathlib import Path
+
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from contextlib import asynccontextmanager
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
-# Database
-from .database import engine, SessionLocal, Base
+# Database imports
+from app.database import engine, Base, create_tables, verify_database_connection
 
-# Import all models to ensure they are registered with SQLAlchemy
-from .models import (
-    User, UserSession, FriendRequest, Friendship, Challenge, UserBlock,
-    Location, GameDefinition, GameSession,
-    Tournament, TournamentParticipant, TournamentMatch, TournamentBracket,
-    TournamentAchievement, UserTournamentAchievement,
-    # Weather models
-    LocationWeather, WeatherForecast, WeatherAlert, GameWeatherSuitability,
-    # Game Results Models
-    GameResult, PlayerStatistics, Leaderboard,
-    GameResultStatus, PerformanceLevel, SkillCategory
-)
+# === ROUTER IMPORTS ===
+# Import all routers with error handling
 
-# Import location initialization functions
-from .models.location import create_default_locations, create_default_games
-
-# Routers
-from .routers import auth, credits, social, locations, booking, tournaments
-from .routers import weather
-from .routers import game_results
-
-# Services
-from .services.weather_service import WeatherAPIService
-from .services.game_result_service import GameResultService
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-# Environment detection
-TEST_MODE = os.getenv("TEST_MODE", "false").lower() == "true"
-DEBUG_MODE = os.getenv("DEBUG", "false").lower() == "true"
-
-# JAVÍTOTT: Weather API Service Global Variable
-weather_api_service = None
-
-if TEST_MODE:
-    print("🧪 Running in TEST MODE - enhanced logging enabled")
-    logging.getLogger().setLevel(logging.DEBUG)
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """Application startup and shutdown events"""
-    global weather_api_service
-    
-    logger.info("Starting LFA Legacy GO API Server with Complete Game System...")
-    
-    # Initialize database
+def safe_import_router(module_name, router_name="router"):
+    """Safely import routers with error handling"""
     try:
-        # Create all tables
-        Base.metadata.create_all(bind=engine)
-        logger.info("Database tables created successfully")
-        
-        # Initialize default data
-        db = SessionLocal()
-        try:
-            # Check if locations exist
-            existing_locations = db.query(Location).count()
-            if existing_locations == 0:
-                logger.info("No locations found, creating default locations...")
-                create_default_locations(db)
-                locations_count = db.query(Location).count()
-                logger.info(f"Default locations initialized: {locations_count} locations")
-            else:
-                logger.info(f"Found {existing_locations} existing locations")
+        # Direct relative import without package parameter
+        if module_name == "auth":
+            from app.routers.auth import router
+        elif module_name == "credits":
+            from app.routers.credits import router
+        elif module_name == "social":
+            from app.routers.social import router
+        elif module_name == "locations":
+            from app.routers.locations import router
+        elif module_name == "booking":
+            from app.routers.booking import router
+        elif module_name == "tournaments":
+            from app.routers.tournaments import router
+        elif module_name == "weather":
+            from app.routers.weather import router
+        elif module_name == "game_results":
+            from app.routers.game_results import router
+        elif module_name == "admin":
+            from app.routers.admin import router
+        elif module_name == "health":
+            from app.routers.health import router
+        else:
+            print(f"❌ Unknown router: {module_name}")
+            return None
             
-            # Check if game definitions exist
-            existing_games = db.query(GameDefinition).count()
-            if existing_games == 0:
-                logger.info("No game definitions found, creating default games...")
-                create_default_games(db)
-                games_count = db.query(GameDefinition).count()
-                logger.info(f"Default games initialized: {games_count} games")
-            else:
-                logger.info(f"Found {existing_games} existing game definitions")
-                
-        except Exception as e:
-            logger.error(f"Error initializing default data: {str(e)}")
-            db.rollback()
-        finally:
-            db.close()
-        
-        # JAVÍTOTT: Weather API Service Initialization
-        try:
-            weather_api_key = os.getenv("WEATHER_API_KEY")
-            if weather_api_key:
-                weather_api_service = WeatherAPIService(weather_api_key)
-                logger.info("✅ Weather API service initialized successfully")
-                logger.info(f"🌤️ Weather API Key configured: {weather_api_key[:10]}...")
-            else:
-                logger.info("⚠️ Weather API service not available - using mock data")
-                logger.info("💡 Set WEATHER_API_KEY environment variable to enable real weather data")
-        except Exception as e:
-            logger.warning(f"❌ Weather API service initialization failed: {str(e)}")
-            logger.info("⚠️ Weather API service not available - using mock data")
-        
-        # Initialize weather rules
-        try:
-            db = SessionLocal()
-            existing_rules = db.query(GameWeatherSuitability).count()
-            if existing_rules == 0:
-                logger.info("Creating default weather rules...")
-                logger.info("Weather rules initialization skipped - will be created on demand")
-            else:
-                logger.info(f"Weather rules already exist: {existing_rules} rules")
-        except Exception as e:
-            logger.error(f"Weather rules initialization failed: {str(e)}")
-        finally:
-            try:
-                if 'db' in locals():
-                    db.close()
-            except:
-                pass
-        
-        # Initialize Game Results System
-        logger.info("Game Results System initialized successfully")
-        
+        print(f"✅ Successfully imported {module_name} router")
+        return router
     except Exception as e:
-        logger.error(f"Startup error: {str(e)}")
-        raise
-    
-    logger.info("Application startup complete")
-    
-    yield
-    
-    # Shutdown
-    logger.info("Application shutdown")
+        print(f"❌ Failed to import {module_name} router: {e}")
+        return None
 
-# Initialize FastAPI app
+# Import all available routers
+auth_router = safe_import_router("auth")
+credits_router = safe_import_router("credits") 
+social_router = safe_import_router("social")
+locations_router = safe_import_router("locations")
+booking_router = safe_import_router("booking")
+tournaments_router = safe_import_router("tournaments")
+weather_router = safe_import_router("weather")
+game_results_router = safe_import_router("game_results")
+admin_router = safe_import_router("admin")
+health_router = safe_import_router("health")
+
+# === FASTAPI APPLICATION SETUP ===
+
+# Rate limiting setup
+limiter = Limiter(key_func=get_remote_address)
+
 app = FastAPI(
-    title="LFA Legacy GO API",
-    description="Complete Football Gaming Platform with Game Results Tracking",
-    version="2.0.0",
+    title=os.getenv("API_TITLE", "LFA Legacy GO API - Protected"),
+    description="🛡️ Spam-Protected Football Training Platform",
+    version=os.getenv("API_VERSION", "3.1.0"),
     docs_url="/docs",
     redoc_url="/redoc",
-    lifespan=lifespan
+    openapi_url="/openapi.json",
+    debug=os.getenv("DEBUG", "false").lower() == "true"
 )
 
-# CORS middleware
+# Add rate limiting
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# === CORS CONFIGURATION ===
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify allowed origins
+    allow_origins=[
+        "https://lfa-legacy-go.netlify.app",              # Netlify frontend
+        "https://*.run.app",                              # Cloud Run domains
+        "http://localhost:3000",                          # Local frontend
+        "http://localhost:3001", 
+        "http://localhost:8000",                          # Local backend
+        "http://localhost:8001",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:8000",
+        "http://127.0.0.1:8001"
+    ],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"],
+    allow_headers=[
+        "Accept",
+        "Accept-Language", 
+        "Content-Language",
+        "Content-Type",
+        "Authorization",
+        "X-Requested-With",
+        "Origin",
+        "Access-Control-Request-Method",
+        "Access-Control-Request-Headers"
+    ],
+    expose_headers=["*"],
+    max_age=600,
 )
 
-# Global exception handler with enhanced error details
-@app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception):
-    """Enhanced global exception handler with detailed error responses"""
-    logger.error(f"Global exception on {request.url}: {str(exc)}")
-    
-    # Enhanced error response for tests and debugging
-    error_response = {
-        "error": "internal_server_error",
-        "message": "Internal server error occurred",
-        "timestamp": datetime.utcnow().isoformat()
-    }
-    
-    # Add debug info in test mode
-    if TEST_MODE or DEBUG_MODE:
-        error_response["debug"] = {
-            "exception_type": type(exc).__name__,
-            "exception_details": str(exc),
-            "request_url": str(request.url),
-            "request_method": request.method
-        }
-    
-    return JSONResponse(
-        status_code=500,
-        content=error_response
-    )
+# === ROOT ENDPOINTS ===
 
-# ENHANCED HEALTH CHECK ENDPOINT
+@app.options("/{full_path:path}")
+async def options_handler():
+    """Handle CORS preflight OPTIONS requests"""
+    from fastapi import Response
+    return Response(status_code=200)
+
+@app.get("/")
+async def root():
+    """Root endpoint with comprehensive application status"""
+    return {
+        "message": "LFA Legacy GO API - Google Cloud Run",
+        "status": "running",
+        "version": os.getenv("API_VERSION", "3.0.0"),
+        "environment": os.getenv("ENVIRONMENT", "production"),
+        "platform": "google_cloud_run",
+        "port": os.getenv("PORT", "8080"),
+        "location": "backend/app/main.py",
+        "routers_loaded": get_loaded_routers_count(),
+        "database_status": "connected",
+        "scaling": "automatic",
+        "features": [
+            "Authentication System", "Credit Purchase System", "Social Features",
+            "Location Management", "Booking System", "Tournament Management",
+            "Weather Integration", "Game Results Tracking", "Admin Panel",
+            "Health Monitoring"
+        ]
+    }
+
 @app.get("/health")
 async def health_check():
-    """
-    Enhanced health check endpoint with comprehensive system status
-    JAVÍTOTT: Proper error handling and detailed component status
-    """
-    # Initialize response structure
-    health_status = {
-        "status": "unknown",
-        "version": "2.0.0",
-        "timestamp": datetime.utcnow().isoformat(),
-        "components": {},
-        "database": {},
-        "weather_system": {},
-        "game_results_system": {},
-        "performance": {}
-    }
-    
-    # Track overall health
-    component_health = []
-    
+    """Enhanced health check endpoint for Cloud Run"""
     try:
-        # Test database connection
-        db = SessionLocal()
-        try:
-            # Test basic database operations
-            user_count = db.query(User).count()
-            location_count = db.query(Location).count()
-            weather_data_count = db.query(WeatherForecast).count()
-            game_results_count = db.query(GameResult).count()
-            player_statistics_count = db.query(PlayerStatistics).count()
-            
-            health_status["database"] = {
-                "status": "healthy",
-                "users": user_count,
-                "locations": location_count,
-                "weather_forecasts": weather_data_count,
-                "game_results": game_results_count,
-                "player_statistics": player_statistics_count,
-                "connection": "active"
-            }
-            component_health.append(True)
-        except Exception as e:
-            component_health.append(False)
-            health_status["database"] = {
-                "status": "error",
-                "error": str(e)
-            }
-        finally:
-            db.close()
+        db_status = verify_database_connection()
+        router_count = get_loaded_routers_count()
         
-        # Weather system health
-        try:
-            global weather_api_service
-            if weather_api_service is not None:
-                health_status["weather_system"] = {
-                    "api_service": "active",
-                    "api_key_configured": bool(os.getenv("WEATHER_API_KEY")),
-                    "status": "healthy"
-                }
-            else:
-                health_status["weather_system"] = {
-                    "api_service": "mock_data",
-                    "api_key_configured": bool(os.getenv("WEATHER_API_KEY")),
-                    "status": "limited"
-                }
-            component_health.append(True)
-        except Exception as e:
-            component_health.append(False)
-            health_status["weather_system"] = {
-                "status": "error",
-                "error": str(e)
-            }
-        
-        # Game results system health
-        try:
-            health_status["game_results_system"] = {
-                "leaderboard_generation": True,
-                "statistics_tracking": True,
-                "skill_analysis": True,
-                "status": "healthy"
-            }
-            component_health.append(True)
-        except Exception as e:
-            component_health.append(False)
-            health_status["game_results_system"] = {
-                "status": "error",
-                "error": str(e)
-            }
-        
-        # System performance info
-        health_status["performance"] = {
-            "uptime": "healthy",
-            "memory_usage": "normal",
-            "response_time": "optimal",
-            "test_mode": TEST_MODE,
-            "debug_mode": DEBUG_MODE
+        return {
+            "status": "healthy",
+            "service": "LFA Legacy GO API",
+            "version": os.getenv("API_VERSION", "3.0.0"),
+            "environment": os.getenv("ENVIRONMENT", "production"),
+            "platform": "google_cloud_run",
+            "database": "connected" if db_status else "disconnected",
+            "routers_active": router_count,
+            "routers_expected": 10,
+            "location": "backend/app/main.py",
+            "port": os.getenv("PORT", "8080"),
+            "revision": os.getenv("K_REVISION", "unknown"),
+            "service_name": os.getenv("K_SERVICE", "unknown")
         }
-        
-        # Component status summary
-        healthy_components = sum(component_health)
-        total_components = len(component_health)
-        
-        health_status["components"] = {
-            "total": total_components,
-            "healthy": healthy_components,
-            "unhealthy": total_components - healthy_components,
-            "systems": [
-                "authentication",
-                "credit_purchase", 
-                "social_features",
-                "locations_booking",
-                "tournament_system",
-                "weather_integration",
-                "game_results_tracking"
-            ]
-        }
-        
-        # Overall status determination
-        if healthy_components == total_components:
-            health_status["status"] = "healthy"
-        elif healthy_components >= total_components * 0.7:
-            health_status["status"] = "degraded"
-        else:
-            health_status["status"] = "unhealthy"
-        
-        return health_status
-        
     except Exception as e:
-        logger.error(f"Health check failed: {str(e)}")
         return JSONResponse(
             status_code=503,
             content={
                 "status": "unhealthy",
-                "error": {
-                    "type": "health_check_failed",
-                    "message": str(e),
-                    "timestamp": datetime.utcnow().isoformat()
-                },
-                "version": "2.0.0"
+                "error": str(e),
+                "service": "LFA Legacy GO API",
+                "platform": "google_cloud_run"
             }
         )
 
-# JAVÍTOTT: Include routers - CLEAN PREFIX HANDLING
-app.include_router(auth.router, tags=["Authentication"])
-app.include_router(credits.router, tags=["Credits"])
-app.include_router(social.router, tags=["Social"])
-app.include_router(locations.router, tags=["Locations"])
-app.include_router(booking.router, tags=["Booking"])
-app.include_router(tournaments.router, tags=["Tournaments"])
-app.include_router(weather.router, tags=["Weather"])
-app.include_router(game_results.router, tags=["Game Results"])
+def get_loaded_routers_count():
+    """Count successfully loaded routers"""
+    routers = [
+        auth_router, credits_router, social_router, locations_router,
+        booking_router, tournaments_router, weather_router, 
+        game_results_router, admin_router, health_router
+    ]
+    return len([r for r in routers if r is not None])
 
-# Root endpoint
-@app.get("/")
-async def root():
-    """API root endpoint with system information"""
-    return {
-        "message": "LFA Legacy GO API Server",
-        "version": "2.0.0", 
-        "status": "running",
-        "test_mode": TEST_MODE,
-        "debug_mode": DEBUG_MODE,
-        "weather_api_enabled": weather_api_service is not None,
-        "features": [
-            "Complete Game Results Tracking",
-            "Weather Integration" + (" (Active)" if weather_api_service else " (Mock Data)"),
-            "Tournament System",
-            "Social Features",
-            "Enhanced Booking",
-            "User Authentication",
-            "Credit System"
-        ],
-        "endpoints": {
-            "docs": "/docs",
-            "redoc": "/redoc",
-            "health": "/health",
-            "version": "/version"
-        },
-        "timestamp": datetime.utcnow().isoformat()
-    }
+# === ROUTER REGISTRATION ===
 
-# Version endpoint
-@app.get("/version")
-async def get_version():
-    """Get API version information"""
-    return {
-        "version": "2.0.0",
-        "build": "weather-integration-fixed",
-        "build_date": "2025-08-10",
-        "environment": {
-            "test_mode": TEST_MODE,
-            "debug_mode": DEBUG_MODE,
-            "weather_api_active": weather_api_service is not None
-        },
-        "components": {
-            "fastapi": "latest",
-            "sqlalchemy": "latest",
-            "pydantic": "latest",
-            "weather_service": "active" if weather_api_service else "mock"
-        }
-    }
-
-# Test endpoint for development
-@app.get("/test")
-async def test_endpoint():
-    """Test endpoint for development and debugging"""
-    if not (TEST_MODE or DEBUG_MODE):
-        raise HTTPException(status_code=404, detail="Endpoint not available in production")
+def register_all_routers():
+    """Register all available routers with comprehensive error handling"""
     
-    return {
-        "message": "Test endpoint active",
-        "timestamp": datetime.utcnow().isoformat(),
-        "environment": {
-            "test_mode": TEST_MODE,
-            "debug_mode": DEBUG_MODE,
-            "weather_api_key_set": bool(os.getenv("WEATHER_API_KEY")),
-            "weather_service_active": weather_api_service is not None
-        }
-    }
-
-# Error test endpoint for development
-@app.get("/test/error")
-async def test_error():
-    """Test error handling for development"""
-    if not (TEST_MODE or DEBUG_MODE):
-        raise HTTPException(status_code=404, detail="Endpoint not available in production")
+    router_configs = [
+        (auth_router, "/api/auth", "Authentication", "JWT-based user authentication system"),
+        (credits_router, "/api/credits", "Credits", "Credit purchase and management system"),
+        (social_router, "/api/social", "Social", "Friend requests and social features"),
+        (locations_router, "/api/locations", "Locations", "Location and venue management"),
+        (booking_router, "/api/booking", "Booking", "Game session booking system"),
+        (tournaments_router, "/api/tournaments", "Tournaments", "Tournament management system"),
+        (weather_router, "/api/weather", "Weather", "Weather integration service"),
+        (game_results_router, "/api/game-results", "Game Results", "Game statistics and results tracking"),
+        (admin_router, "/api/admin", "Administration", "Admin panel and moderation tools"),
+        (health_router, "/api/health", "Health", "System health monitoring")
+    ]
     
-    raise Exception("This is a test error for debugging purposes")
+    loaded_count = 0
+    failed_routers = []
+    
+    for router, prefix, name, description in router_configs:
+        if router is not None:
+            try:
+                app.include_router(router, prefix=prefix, tags=[name])
+                print(f"✅ Registered {name} router at {prefix} - {description}")
+                loaded_count += 1
+            except Exception as e:
+                print(f"❌ Failed to register {name} router: {e}")
+                failed_routers.append(name)
+        else:
+            print(f"⚠️ Skipped {name} router (import failed)")
+            failed_routers.append(name)
+    
+    print(f"🚀 Successfully loaded {loaded_count}/10 routers")
+    
+    if failed_routers:
+        print(f"⚠️ Failed routers: {', '.join(failed_routers)}")
+    
+    return loaded_count
+
+# === DATABASE INITIALIZATION ===
+
+def initialize_database():
+    """Initialize database tables and verify connection"""
+    try:
+        print("🗄️ Initializing database...")
+        
+        # Create all tables
+        create_tables()
+        print("✅ Database tables created/verified")
+        
+        # Verify connection
+        if verify_database_connection():
+            print("✅ Database connection verified")
+            return True
+        else:
+            print("❌ Database connection failed")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Database initialization error: {e}")
+        return False
+
+# === APPLICATION STARTUP ===
+
+@app.on_event("startup")
+async def startup_event():
+    """Complete application startup sequence"""
+    print("🚀 LFA Legacy GO API Starting on Google Cloud Run...")
+    print("=" * 60)
+    print(f"📍 Location: backend/app/main.py")
+    print(f"🌍 Environment: {os.getenv('ENVIRONMENT', 'production')}")
+    print(f"🔧 Port: {os.getenv('PORT', '8080')}")
+    print(f"☁️ Platform: Google Cloud Run")
+    print(f"🔄 Revision: {os.getenv('K_REVISION', 'unknown')}")
+    print("=" * 60)
+    
+    try:
+        db_success = initialize_database()
+        if not db_success:
+            print("⚠️ Database initialization failed, but continuing...")
+        
+        router_count = register_all_routers()
+        
+        print("=" * 60)
+        print(f"✅ Cloud Run startup complete!")
+        print(f"🔥 {router_count}/10 routers active")
+        print(f"🌐 Available at: https://<service-url>.run.app")
+        print("=" * 60)
+        
+    except Exception as e:
+        print(f"❌ Critical startup error: {e}")
+        print("🚨 Application may not function properly!")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Application shutdown sequence"""
+    print("🛑 LFA Legacy GO API shutting down...")
+
+# === EXCEPTION HANDLERS ===
+
+@app.exception_handler(404)
+async def not_found_handler(request, exc):
+    """Custom 404 handler with helpful information"""
+    return JSONResponse(
+        status_code=404,
+        content={
+            "status": "error",
+            "code": 404,
+            "message": "Endpoint not found",
+            "suggestion": "Check the API documentation",
+            "available_endpoints": {
+                "documentation": "/docs",
+                "health_check": "/health", 
+                "authentication": "/api/auth",
+                "credits": "/api/credits",
+                "social": "/api/social",
+                "locations": "/api/locations",
+                "booking": "/api/booking",
+                "tournaments": "/api/tournaments",
+                "weather": "/api/weather",
+                "game_results": "/api/game-results",
+                "admin": "/api/admin"
+            }
+        }
+    )
+
+@app.exception_handler(500)
+async def internal_error_handler(request, exc):
+    """Custom 500 handler"""
+    return JSONResponse(
+        status_code=500,
+        content={
+            "status": "error", 
+            "code": 500,
+            "message": "Internal server error",
+            "service": "LFA Legacy GO API",
+            "suggestion": "Check server logs for details"
+        }
+    )
+
+# === CLOUD RUN OPTIMIZED STARTUP ===
+def handle_signals():
+    """Handle Cloud Run shutdown signals gracefully"""
+    def signal_handler(signum, frame):
+        print(f"🔔 Received signal {signum}, shutting down gracefully...")
+        sys.exit(0)
+    
+    signal.signal(signal.SIGTERM, signal_handler)
+    signal.signal(signal.SIGINT, signal_handler)
 
 if __name__ == "__main__":
-    import uvicorn
+    port = int(os.getenv("PORT", 8080))  # Cloud Run uses 8080 default
+    host = "0.0.0.0"  # Required for Cloud Run
+    
+    handle_signals()
+    
+    print("☁️ Google Cloud Run Deployment Starting...")
+    print("=" * 70)
+    print(f"📍 Application: LFA Legacy GO API")
+    print(f"🌍 Host: {host}")
+    print(f"🔌 Port: {port}")
+    print(f"☁️ Platform: Google Cloud Run")
+    print("=" * 70)
+    
     uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True,
-        log_level="debug" if DEBUG_MODE else "info"
+        "app.main:app",
+        host=host,
+        port=port,
+        log_level="info",
+        access_log=True,
+        workers=1,
+        loop="uvloop",
+        http="httptools",
+        reload=False,
+        timeout_keep_alive=30
     )

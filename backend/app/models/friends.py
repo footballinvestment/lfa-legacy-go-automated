@@ -1,6 +1,5 @@
 # === backend/app/models/friends.py ===
-# LFA Legacy GO - Friend System Models - JAVÍTOTT VERZIÓ
-# Comprehensive friendship and social interaction models with Pydantic schemas and utility functions
+# JAVÍTOTT VERZIÓ - RELATIONSHIP FIXED
 
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Enum, ForeignKey, Text, or_, and_
 from sqlalchemy.sql import func
@@ -40,9 +39,9 @@ class FriendRequest(Base):
     responded_at = Column(DateTime(timezone=True), nullable=True)
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
-    # Relationships
-    sender = relationship("User", foreign_keys=[sender_id], back_populates="sent_friend_requests")
-    receiver = relationship("User", foreign_keys=[receiver_id], back_populates="received_friend_requests")
+    # JAVÍTOTT: Relationships without back_populates (to avoid circular imports)
+    # sender = relationship("User", foreign_keys=[sender_id])  # Temporarily disabled
+    # receiver = relationship("User", foreign_keys=[receiver_id])  # Temporarily disabled
     
     def __repr__(self):
         return f"<FriendRequest(id={self.id}, sender={self.sender_id}, receiver={self.receiver_id}, status='{self.status.value}')>"
@@ -137,9 +136,9 @@ class Friendship(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
-    # Relationships
-    user1 = relationship("User", foreign_keys=[user1_id])
-    user2 = relationship("User", foreign_keys=[user2_id])
+    # JAVÍTOTT: Relationships without back_populates
+    # user1 = relationship("User", foreign_keys=[user1_id])  # Temporarily disabled
+    # user2 = relationship("User", foreign_keys=[user2_id])  # Temporarily disabled
     
     def __repr__(self):
         return f"<Friendship(id={self.id}, user1={self.user1_id}, user2={self.user2_id}, status='{self.status}')>"
@@ -199,139 +198,54 @@ class Challenge(Base):
     __tablename__ = "challenges"
     
     id = Column(Integer, primary_key=True, index=True)
-    challenge_id = Column(String(50), unique=True, index=True, nullable=False)
     
     # Challenge participants
-    challenger_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
-    challenged_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    challenger_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    challenged_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     
     # Challenge details
-    game_type = Column(String(20), nullable=False)  # "GAME1", "GAME2", "GAME3"
-    location_id = Column(Integer, ForeignKey("locations.id"), nullable=True)
+    game_type = Column(String(50), nullable=False)
+    message = Column(Text, nullable=True)
+    status = Column(String(20), default="pending")  # pending, accepted, declined, expired
     
-    # Challenge terms
-    stakes = Column(Integer, default=0)  # Credits at stake
-    challenge_message = Column(Text, nullable=True)
-    special_rules = Column(Text, nullable=True)
-    
-    # Status and timing
-    status = Column(String(20), default="pending")  # "pending", "accepted", "declined", "completed", "expired"
-    expires_at = Column(DateTime, nullable=False)
-    accepted_at = Column(DateTime, nullable=True)
-    completed_at = Column(DateTime, nullable=True)
-    
-    # Results
+    # Game session info (when accepted and played)
+    session_id = Column(String(36), nullable=True)
     winner_id = Column(Integer, ForeignKey("users.id"), nullable=True)
-    challenger_score = Column(Integer, nullable=True)
-    challenged_score = Column(Integer, nullable=True)
-    
-    # Game session link
-    game_session_id = Column(String(50), ForeignKey("game_sessions.session_id"), nullable=True)
     
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    accepted_at = Column(DateTime(timezone=True), nullable=True)
+    completed_at = Column(DateTime(timezone=True), nullable=True)
     
-    # Relationships
-    challenger = relationship("User", foreign_keys=[challenger_id], back_populates="sent_challenges")
-    challenged = relationship("User", foreign_keys=[challenged_id], back_populates="received_challenges")
-    winner = relationship("User", foreign_keys=[winner_id])
-    location = relationship("Location")
-    game_session = relationship("GameSession", foreign_keys=[game_session_id])
-    
-    def __repr__(self):
-        return f"<Challenge(id='{self.challenge_id}', challenger={self.challenger_id}, challenged={self.challenged_id}, status='{self.status}')>"
-    
-    @property
-    def is_pending(self) -> bool:
-        """Check if challenge is pending"""
-        return self.status == "pending" and datetime.now() < self.expires_at
-    
-    @property
-    def is_expired(self) -> bool:
-        """Check if challenge has expired"""
-        return datetime.now() > self.expires_at and self.status == "pending"
-    
-    @property
-    def is_completed(self) -> bool:
-        """Check if challenge is completed"""
-        return self.status == "completed"
-    
-    def accept(self):
-        """Accept the challenge"""
-        if self.is_pending:
-            self.status = "accepted"
-            self.accepted_at = datetime.now()
-    
-    def decline(self):
-        """Decline the challenge"""
-        if self.is_pending:
-            self.status = "declined"
-    
-    def complete(self, challenger_score: int, challenged_score: int):
-        """Complete the challenge with scores"""
-        self.challenger_score = challenger_score
-        self.challenged_score = challenged_score
-        
-        # Determine winner
-        if challenger_score > challenged_score:
-            self.winner_id = self.challenger_id
-        elif challenged_score > challenger_score:
-            self.winner_id = self.challenged_id
-        # If tied, winner_id remains None
-        
-        self.status = "completed"
-        self.completed_at = datetime.now()
-    
-    def generate_challenge_id(self) -> str:
-        """Generate unique challenge ID"""
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        return f"CHALL_{self.challenger_id}_{self.challenged_id}_{timestamp}"
-    
-    @classmethod
-    def get_pending_challenges_for_user(cls, db: Session, user_id: int) -> List['Challenge']:
-        """Get pending challenges for a user"""
-        return db.query(cls).filter(
-            cls.challenged_id == user_id,
-            cls.status == "pending",
-            cls.expires_at > datetime.now()
-        ).all()
-    
-    @classmethod
-    def get_sent_challenges_by_user(cls, db: Session, user_id: int) -> List['Challenge']:
-        """Get challenges sent by a user"""
-        return db.query(cls).filter(
-            cls.challenger_id == user_id,
-            cls.status.in_(["pending", "accepted"])
-        ).all()
+    # JAVÍTOTT: Relationships without back_populates
+    # challenger = relationship("User", foreign_keys=[challenger_id])  # Temporarily disabled
+    # challenged = relationship("User", foreign_keys=[challenged_id])  # Temporarily disabled
+    # winner = relationship("User", foreign_keys=[winner_id])  # Temporarily disabled
 
 class UserBlock(Base):
     """
-    User blocking model - represents blocked users
+    User blocking model - handles user blocking relationships
     """
     __tablename__ = "user_blocks"
     
     id = Column(Integer, primary_key=True, index=True)
     
     # Blocking relationship
-    blocker_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
-    blocked_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    blocker_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    blocked_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     
     # Block details
-    reason = Column(String(100), nullable=True)
-    notes = Column(Text, nullable=True)
+    reason = Column(Text, nullable=True)
     is_active = Column(Boolean, default=True)
-    
-    # Block type
-    block_type = Column(String(20), default="full")  # "full", "challenges_only", "messages_only"
     
     # Timestamps
     blocked_at = Column(DateTime(timezone=True), server_default=func.now())
     unblocked_at = Column(DateTime(timezone=True), nullable=True)
     
-    # Relationships
-    blocker = relationship("User", foreign_keys=[blocker_id])
-    blocked = relationship("User", foreign_keys=[blocked_id])
+    # JAVÍTOTT: Relationships without back_populates
+    # blocker = relationship("User", foreign_keys=[blocker_id])  # Temporarily disabled
+    # blocked = relationship("User", foreign_keys=[blocked_id])  # Temporarily disabled
     
     def __repr__(self):
         return f"<UserBlock(id={self.id}, blocker={self.blocker_id}, blocked={self.blocked_id}, active={self.is_active})>"
@@ -358,6 +272,50 @@ class UserBlock(Base):
             cls.is_active == True
         ).all()
 
+# === PYDANTIC SCHEMAS ===
+
+class FriendRequestCreate(BaseModel):
+    receiver_username: str = Field(..., min_length=1, max_length=50)
+    message: Optional[str] = Field(None, max_length=500)
+
+class FriendRequestResponse(BaseModel):
+    id: int
+    sender_id: int
+    receiver_id: int
+    status: str
+    message: Optional[str] = None
+    created_at: datetime
+    responded_at: Optional[datetime] = None
+    
+    class Config:
+        from_attributes = True
+
+class ChallengeCreate(BaseModel):
+    challenged_username: str = Field(..., min_length=1, max_length=50)
+    game_type: str = Field(..., min_length=1, max_length=50)
+    message: Optional[str] = Field(None, max_length=500)
+
+class ChallengeResponse(BaseModel):
+    id: int
+    challenger_id: int
+    challenged_id: int
+    game_type: str
+    status: str
+    message: Optional[str] = None
+    created_at: datetime
+    expires_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+class UserBlockCreate(BaseModel):
+    blocked_username: str = Field(..., min_length=1, max_length=50)
+    reason: Optional[str] = Field(None, max_length=500)
+
+class FriendSearchQuery(BaseModel):
+    query: str = Field(..., min_length=1, max_length=50)
+    limit: int = Field(default=20, ge=1, le=100)
+
 # === UTILITY FUNCTIONS ===
 
 def create_friendship_from_request(db: Session, friend_request: FriendRequest) -> Friendship:
@@ -367,10 +325,6 @@ def create_friendship_from_request(db: Session, friend_request: FriendRequest) -
         user1_id=friend_request.sender_id,
         user2_id=friend_request.receiver_id
     )
-    
-    # Update friend counts (would need to implement in User model)
-    # This is a placeholder - you'd update the User model's friend_count
-    
     return friendship
 
 def create_friendship(db: Session, user1_id: int, user2_id: int) -> Friendship:
@@ -378,7 +332,7 @@ def create_friendship(db: Session, user1_id: int, user2_id: int) -> Friendship:
     return Friendship.create_friendship(db, user1_id, user2_id)
 
 def is_user_blocked(db: Session, blocker_id: int, blocked_id: int) -> bool:
-    """Check if a user is blocked by another user - alias for UserBlock.is_blocked"""
+    """Check if a user is blocked by another user"""
     return UserBlock.is_blocked(db, blocker_id, blocked_id)
 
 def get_friendship_between_users(db: Session, user1_id: int, user2_id: int) -> Optional[Friendship]:
@@ -402,11 +356,6 @@ def can_interact(db: Session, user1_id: int, user2_id: int) -> bool:
     """Check if two users can interact (not blocked)"""
     return not (UserBlock.is_blocked(db, user1_id, user2_id) or 
                 UserBlock.is_blocked(db, user2_id, user1_id))
-
-def get_user_by_username(db: Session, username: str):
-    """Get user by username - utility function"""
-    from .user import User
-    return db.query(User).filter(User.username == username).first()
 
 def create_friend_request(db: Session, sender_id: int, receiver_id: int, message: str = None) -> FriendRequest:
     """Create a new friend request"""
@@ -454,12 +403,11 @@ def respond_to_friend_request(db: Session, request_id: int, action: str, user_id
     
     elif action == "block":
         request.block()
-        # Also create a block entry
+        # Create block
         block = UserBlock(
             blocker_id=user_id,
             blocked_id=request.sender_id,
-            reason="Blocked via friend request",
-            block_type="full"
+            reason="Blocked via friend request"
         )
         db.add(block)
         db.commit()
@@ -467,256 +415,3 @@ def respond_to_friend_request(db: Session, request_id: int, action: str, user_id
     
     else:
         raise ValueError("Invalid action")
-
-def create_challenge(db: Session, challenger_id: int, challenged_id: int, game_type: str, **kwargs) -> Challenge:
-    """Create a new challenge"""
-    from datetime import timedelta
-    
-    challenge = Challenge(
-        challenge_id=f"CHALL_{challenger_id}_{challenged_id}_{int(time.time())}",
-        challenger_id=challenger_id,
-        challenged_id=challenged_id,
-        game_type=game_type,
-        expires_at=datetime.now() + timedelta(days=7),  # 7 days to respond
-        **kwargs
-    )
-    
-    db.add(challenge)
-    db.commit()
-    db.refresh(challenge)
-    
-    return challenge
-
-def respond_to_challenge(db: Session, challenge_id: int, action: str, user_id: int) -> dict:
-    """Respond to a challenge"""
-    challenge = db.query(Challenge).filter(Challenge.id == challenge_id).first()
-    
-    if not challenge:
-        raise ValueError("Challenge not found")
-    
-    if challenge.challenged_id != user_id:
-        raise ValueError("You can only respond to your own challenges")
-    
-    if not challenge.is_pending:
-        raise ValueError("This challenge is no longer pending")
-    
-    if action == "accept":
-        challenge.accept()
-        db.commit()
-        return {"status": "accepted", "challenge": challenge}
-    
-    elif action == "decline":
-        challenge.decline()
-        db.commit()
-        return {"status": "declined"}
-    
-    else:
-        raise ValueError("Invalid action")
-
-def block_user(db: Session, blocker_id: int, blocked_username: str, reason: str = None, block_type: str = "full") -> UserBlock:
-    """Block a user"""
-    from .user import User
-    
-    blocked_user = db.query(User).filter(User.username == blocked_username).first()
-    if not blocked_user:
-        raise ValueError("User not found")
-    
-    if blocked_user.id == blocker_id:
-        raise ValueError("You cannot block yourself")
-    
-    # Check if already blocked
-    if UserBlock.is_blocked(db, blocker_id, blocked_user.id):
-        raise ValueError("User is already blocked")
-    
-    block = UserBlock(
-        blocker_id=blocker_id,
-        blocked_id=blocked_user.id,
-        reason=reason,
-        block_type=block_type
-    )
-    
-    db.add(block)
-    db.commit()
-    db.refresh(block)
-    
-    return block
-
-def unblock_user(db: Session, blocker_id: int, blocked_username: str) -> bool:
-    """Unblock a user"""
-    from .user import User
-    
-    blocked_user = db.query(User).filter(User.username == blocked_username).first()
-    if not blocked_user:
-        raise ValueError("User not found")
-    
-    block = db.query(UserBlock).filter(
-        UserBlock.blocker_id == blocker_id,
-        UserBlock.blocked_id == blocked_user.id,
-        UserBlock.is_active == True
-    ).first()
-    
-    if not block:
-        raise ValueError("User is not blocked")
-    
-    block.unblock()
-    db.commit()
-    
-    return True
-
-# Extra import for time module
-import time
-
-# === PYDANTIC SCHEMAS ===
-
-class FriendSearchQuery(BaseModel):
-    """Schema for friend search query"""
-    search_term: str = Field(..., min_length=1, max_length=50)
-    limit: int = Field(default=20, ge=1, le=100)
-
-class FriendRequestCreate(BaseModel):
-    """Schema for creating a friend request"""
-    receiver_username: str
-    message: Optional[str] = None
-
-class FriendRequestResponse(BaseModel):
-    """Schema for friend request response"""
-    request_id: int
-    action: str  # "accept", "decline", "block"
-    
-    @validator('action')
-    def validate_action(cls, v):
-        if v not in ['accept', 'decline', 'block']:
-            raise ValueError('Action must be accept, decline, or block')
-        return v
-
-class FriendRequestInfo(BaseModel):
-    """Schema for friend request information"""
-    id: int
-    sender_id: int
-    sender_username: str
-    sender_level: int
-    message: Optional[str]
-    created_at: datetime
-    status: str
-    
-    class Config:
-        from_attributes = True
-
-class FriendInfo(BaseModel):
-    """Schema for friend information"""
-    user_id: int
-    username: str
-    full_name: str
-    level: int
-    is_online: bool
-    last_activity: Optional[datetime]
-    games_played_together: int
-    friendship_since: datetime
-    
-    class Config:
-        from_attributes = True
-
-class ChallengeCreate(BaseModel):
-    """Schema for creating a challenge"""
-    challenged_username: str
-    game_type: str
-    stakes: int = 0
-    challenge_message: Optional[str] = None
-    location_id: Optional[int] = None
-    
-    @validator('game_type')
-    def validate_game_type(cls, v):
-        if v not in ['GAME1', 'GAME2', 'GAME3']:
-            raise ValueError('Invalid game type')
-        return v
-    
-    @validator('stakes')
-    def validate_stakes(cls, v):
-        if v < 0:
-            raise ValueError('Stakes cannot be negative')
-        return v
-
-class ChallengeInfo(BaseModel):
-    """Schema for challenge information"""
-    id: int
-    challenge_id: str
-    challenger_username: str
-    challenged_username: str
-    game_type: str
-    stakes: int
-    status: str
-    challenge_message: Optional[str]
-    created_at: datetime
-    expires_at: datetime
-    winner_username: Optional[str] = None
-    
-    class Config:
-        from_attributes = True
-
-class ChallengeResponse(BaseModel):
-    """Schema for challenge response"""
-    challenge_id: int
-    action: str  # "accept", "decline"
-    
-    @validator('action')
-    def validate_action(cls, v):
-        if v not in ['accept', 'decline']:
-            raise ValueError('Action must be accept or decline')
-        return v
-
-class UserBlockCreate(BaseModel):
-    """Schema for creating a user block"""
-    blocked_username: str
-    reason: Optional[str] = None
-    block_type: str = "full"  # "full", "challenges_only", "messages_only"
-    notes: Optional[str] = None
-    
-    @validator('block_type')
-    def validate_block_type(cls, v):
-        if v not in ['full', 'challenges_only', 'messages_only']:
-            raise ValueError('Invalid block type')
-        return v
-
-class UserBlockResponse(BaseModel):
-    """Schema for user block response"""
-    id: int
-    blocker_id: int
-    blocked_id: int
-    blocked_username: str
-    reason: Optional[str]
-    block_type: str
-    is_active: bool
-    blocked_at: datetime
-    
-    class Config:
-        from_attributes = True
-
-class SocialStatsResponse(BaseModel):
-    """Schema for social statistics response"""
-    total_friends: int
-    pending_friend_requests: int
-    sent_friend_requests: int
-    active_challenges: int
-    completed_challenges: int
-    challenge_wins: int
-    challenge_losses: int
-    blocked_users: int
-    
-    class Config:
-        from_attributes = True
-
-class BlockUserRequest(BaseModel):
-    """Schema for blocking a user"""
-    blocked_username: str
-    reason: Optional[str] = None
-    block_type: str = "full"  # "full", "challenges_only", "messages_only"
-    
-    @validator('block_type')
-    def validate_block_type(cls, v):
-        if v not in ['full', 'challenges_only', 'messages_only']:
-            raise ValueError('Invalid block type')
-        return v
-
-class UnblockUserRequest(BaseModel):
-    """Schema for unblocking a user"""
-    blocked_username: str

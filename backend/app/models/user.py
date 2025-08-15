@@ -1,543 +1,400 @@
-# === backend/app/models/user.py ===
-# LFA Legacy GO - Enhanced User Models - TELJES JAVÍTOTT VERZIÓ
-# 🔧 MINDEN JAVÍTÁS: UserSession device_type, User update_last_activity, bookings relationship, TokenData, SQLAlchemy overlaps
+# backend/app/models/user.py
+# MINDEN LEHETSÉGES SCHEMA - Teljes auth compatibility
 
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, JSON, Float, Text, ForeignKey, desc, UniqueConstraint, Index
-from sqlalchemy.sql import func
+from sqlalchemy import Column, Integer, String, Boolean, Text, DateTime, JSON, Float, ForeignKey
 from sqlalchemy.orm import relationship
-from datetime import datetime, timedelta
+from sqlalchemy.sql import func
+from datetime import datetime
 from ..database import Base
-from passlib.context import CryptContext
-from typing import Optional, Dict, List
-from pydantic import BaseModel, validator
 
-# Password hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Pydantic imports
+from pydantic import BaseModel, Field, ConfigDict
+from typing import Optional, Dict, Any, List, Union
+
+# =============================================================================
+# SQLAlchemy Models
+# =============================================================================
 
 class User(Base):
-    """
-    Enhanced User model with social features, gaming statistics, tournament support, and game results tracking
-    🔧 JAVÍTVA: update_last_activity method és bookings relationship hozzáadva
-    """
     __tablename__ = "users"
-    
-    # Basic Information
+
+    # Primary fields
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(50), unique=True, index=True, nullable=False)
     email = Column(String(100), unique=True, index=True, nullable=False)
-    full_name = Column(String(100), nullable=False)
-    display_name = Column(String(100), nullable=True)
-    
-    # Authentication
     hashed_password = Column(String(255), nullable=False)
-    is_active = Column(Boolean, default=True)
-    user_type = Column(String(20), default="user")
     
-    # Gaming Profile
+    # Profile fields (matching database schema)
+    full_name = Column(String(100), nullable=False)
+    display_name = Column(String(100))
+    bio = Column(Text)
+    profile_picture = Column(String(200))
+    favorite_position = Column(String(50))
+    
+    # Status and verification (matching database schema)
+    is_active = Column(Boolean, default=True)
+    user_type = Column(String(20), default='user')
+    is_premium = Column(Boolean, default=False)
+    premium_expires_at = Column(DateTime)
+    
+    # Game statistics (matching database schema)
     level = Column(Integer, default=1)
     xp = Column(Integer, default=0)
     credits = Column(Integer, default=5)
-    
-    # Enhanced Skills System
-    skills = Column(JSON, default=lambda: {
-        "accuracy": 0,
-        "power": 0,
-        "speed": 0,
-        "technique": 0
-    })
-    
-    # Game Statistics - Enhanced
     games_played = Column(Integer, default=0)
     games_won = Column(Integer, default=0)
     total_playtime_minutes = Column(Integer, default=0)
-    best_scores = Column(JSON, default=lambda: {})
-    
-    # Achievement System
-    achievements = Column(JSON, default=lambda: [])
+    best_scores = Column(JSON)
     achievement_points = Column(Integer, default=0)
+    total_score = Column(Float, default=0.0)
+    average_performance = Column(Float, default=0.0)
+    skill_ratings = Column(JSON)
     
-    # Social Features
+    # Skills (JSON)
+    skills = Column(JSON, default=lambda: {
+        "shooting": 0, "passing": 0, "dribbling": 0, 
+        "defending": 0, "goalkeeping": 0
+    })
+    
+    # Social stats (matching database schema)
     friend_count = Column(Integer, default=0)
     challenge_wins = Column(Integer, default=0)
     challenge_losses = Column(Integer, default=0)
     
-    # Premium Features
-    is_premium = Column(Boolean, default=False)
-    premium_expires_at = Column(DateTime, nullable=True)
-    
-    # Enhanced Activity Tracking
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    last_login = Column(DateTime, nullable=True)
-    last_activity = Column(DateTime, nullable=True)  # 🔧 JAVÍTVA: Field hozzáadva
-    
-    # Enhanced Profile Features
-    bio = Column(Text, nullable=True)
-    privacy_settings = Column(JSON, default=lambda: {
-        "profile_visibility": "friends",
-        "show_online_status": True,
-        "allow_friend_requests": True
-    })
-    
-    # Purchase History & Tracking
+    # Purchase statistics (matching database schema)
     total_credits_purchased = Column(Integer, default=0)
     total_bonus_earned = Column(Integer, default=0)
-    last_purchase_date = Column(DateTime, nullable=True)
-    transaction_history = Column(JSON, default=lambda: [])
+    last_purchase_date = Column(DateTime)
+    transaction_history = Column(JSON)
     
-    # Game Results Integration
-    total_score = Column(Float, default=0.0)
-    average_performance = Column(Float, default=0.0)
-    skill_ratings = Column(JSON, default=lambda: {
-        "accuracy": 1200,
-        "speed": 1200,
-        "technique": 1200,
-        "consistency": 1200
-    })
+    # Achievements and preferences (matching database schema)
+    achievements = Column(JSON)
+    privacy_settings = Column(JSON)
     
-    # Profile Customization
-    profile_picture = Column(String(200), nullable=True)
-    favorite_position = Column(String(50), nullable=True)
-    
-    # === RELATIONSHIPS - 🔧 JAVÍTOTT OVERLAPS MEGOLDÁSOKKAL ===
-    
-    # User sessions
-    sessions = relationship("UserSession", back_populates="user", cascade="all, delete-orphan")
-    
-    # 🔧 JAVÍTÁS: HIÁNYZÓ BOOKINGS RELATIONSHIP HOZZÁADVA
-    bookings = relationship("GameSession", foreign_keys="[GameSession.booked_by_id]", back_populates="booked_by")
-    
-    # Social relationships - JAVÍTOTT OVERLAPS
-    sent_friend_requests = relationship(
-        "FriendRequest", 
-        foreign_keys="[FriendRequest.sender_id]", 
-        back_populates="sender",
-        overlaps="receiver,received_friend_requests"
-    )
-    received_friend_requests = relationship(
-        "FriendRequest", 
-        foreign_keys="[FriendRequest.receiver_id]", 
-        back_populates="receiver",
-        overlaps="sender,sent_friend_requests"
-    )
-    
-    # Challenge relationships - JAVÍTOTT OVERLAPS  
-    sent_challenges = relationship(
-        "Challenge", 
-        foreign_keys="[Challenge.challenger_id]", 
-        back_populates="challenger",
-        overlaps="challenged,received_challenges,winner,won_challenges"
-    )
-    received_challenges = relationship(
-        "Challenge", 
-        foreign_keys="[Challenge.challenged_id]", 
-        back_populates="challenged",
-        overlaps="challenger,sent_challenges,winner,won_challenges"
-    )
-    won_challenges = relationship(
-        "Challenge", 
-        foreign_keys="[Challenge.winner_id]", 
-        back_populates="winner",
-        overlaps="challenger,sent_challenges,challenged,received_challenges"
-    )
-    
-    # Game results relationship - JAVÍTOTT OVERLAPS
-    game_results = relationship(
-        "GameResult", 
-        foreign_keys="[GameResult.recorded_by_id]", 
-        back_populates="recorded_by",
-        overlaps="user"
-    )
-    
-    # Player statistics
-    player_statistics = relationship("PlayerStatistics", back_populates="user")
-    
-    # Tournament relationships  
-    tournament_participations = relationship("TournamentParticipant", back_populates="user")
-    tournament_achievements = relationship("UserTournamentAchievement", back_populates="user")
-    
-    # Leaderboard entries
-    leaderboard_entries = relationship("Leaderboard", back_populates="user")
-    
-    def __repr__(self):
-        return f"<User(id={self.id}, username='{self.username}', level={self.level})>"
-    
-    # 🔧 JAVÍTÁS: update_last_activity method hozzáadása
-    def update_last_activity(self):
-        """Update the user's last activity timestamp"""
-        self.last_activity = datetime.utcnow()
-    
-    # === AUTHENTICATION METHODS ===
-    
-    @staticmethod
-    def hash_password(password: str) -> str:
-        """Hash a password"""
-        return pwd_context.hash(password)
-    
-    def verify_password(self, password: str) -> bool:
-        """Verify a password"""
-        return pwd_context.verify(password, self.hashed_password)
-    
-    def set_password(self, password: str):
-        """Set user password"""
-        self.hashed_password = self.hash_password(password)
-    
-    # Enhanced User Methods
-    @property
-    def win_rate(self) -> float:
-        """Calculate user's win rate"""
-        if self.games_played == 0:
-            return 0.0
-        return round((self.games_won / self.games_played) * 100, 2)
-    
-    @property
-    def total_achievements(self) -> int:
-        """Get total number of achievements"""
-        return len(self.achievements) if self.achievements else 0
-    
-    @property
-    def skill_average(self) -> float:
-        """Calculate average skill level"""
-        if not self.skills:
-            return 0.0
-        return round(sum(self.skills.values()) / len(self.skills), 1)
-    
-    @property
-    def is_premium_active(self) -> bool:
-        """Check if premium subscription is active"""
-        if not self.is_premium or not self.premium_expires_at:
-            return False
-        return datetime.utcnow() < self.premium_expires_at
-    
-    # === GAMING PROGRESSION ===
-    
-    def add_xp(self, xp_amount: int):
-        """Add XP and handle level progression"""
-        self.xp += xp_amount
-        
-        # Check for level up (simple progression: level = sqrt(xp/100))
-        new_level = max(1, int((self.xp / 100) ** 0.5) + 1)
-        if new_level > self.level:
-            old_level = self.level
-            self.level = new_level
-            
-            # Award credits for leveling up
-            credits_reward = (new_level - old_level) * 2
-            self.credits += credits_reward
-            
-            return {"leveled_up": True, "new_level": new_level, "credits_awarded": credits_reward}
-        
-        return {"leveled_up": False}
-    
-    def add_credits(self, amount: int, source: str = "purchase"):
-        """Add credits to user account"""
-        self.credits += amount
-        
-        if source == "purchase":
-            self.total_credits_purchased += amount
-            self.last_purchase_date = datetime.utcnow()
-    
-    def add_achievement(self, achievement_id: str, achievement_data: dict):
-        """Add achievement to user"""
-        if not self.achievements:
-            self.achievements = []
-        
-        # Check if achievement already exists
-        existing = [a for a in self.achievements if a.get("id") == achievement_id]
-        if not existing:
-            achievement_data["earned_at"] = datetime.utcnow().isoformat()
-            self.achievements.append(achievement_data)
-            self.achievement_points += achievement_data.get("points", 10)
+    # Timestamps (matching database schema)
+    created_at = Column(DateTime, default=func.current_timestamp())
+    last_login = Column(DateTime)
+    last_activity = Column(DateTime)
 
-# 🔧 JAVÍTÁS: UserSession model device_type kezelés javítása
+    # RELATIONSHIPS
+    # sessions = relationship("UserSession", back_populates="user", cascade="all, delete-orphan")  # Temporarily disabled
+    violations = relationship("UserViolation", foreign_keys="UserViolation.user_id", back_populates="user", cascade="all, delete-orphan")
+
+    def to_dict(self):
+        """Convert user to dictionary"""
+        return {
+            "id": self.id,
+            "username": self.username,
+            "email": self.email,
+            "name": self.name,
+            "bio": self.bio,
+            "location": self.location,
+            "avatar_url": self.avatar_url,
+            "is_active": self.is_active,
+            "is_verified": self.is_verified,
+            "user_type": self.user_type,
+            "status": self.status,
+            "level": self.level,
+            "xp": self.xp,
+            "credits": self.credits,
+            "games_played": self.games_played,
+            "games_won": self.games_won,
+            "total_score": self.total_score,
+            "skills": self.skills or {},
+            "friends_count": self.friends_count,
+            "challenges_sent": self.challenges_sent,
+            "challenges_won": self.challenges_won,
+            "total_purchases": self.total_purchases,
+            "total_spent": float(self.total_spent) if self.total_spent else 0.0,
+            "achievements": self.achievements or [],
+            "preferences": self.preferences or {},
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            "last_login": self.last_login.isoformat() if self.last_login else None,
+            "last_active": self.last_active.isoformat() if self.last_active else None,
+        }
+
+
 class UserSession(Base):
-    """
-    User session model for tracking authentication sessions
-    🔧 JAVÍTVA: device_type field és constructor kezelés
-    """
     __tablename__ = "user_sessions"
-    
+
     id = Column(Integer, primary_key=True, index=True)
-    
-    # User reference
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
-    
-    # Session identification
+    user_id = Column(Integer, ForeignKey("users.id"), index=True, nullable=False)
     session_token = Column(String(255), unique=True, index=True, nullable=False)
-    
-    # Device and location information
-    ip_address = Column(String(45), nullable=True)  # IPv6 support
-    user_agent = Column(Text, nullable=True)
-    device_type = Column(String(20), default="web")  # 🔧 JAVÍTVA: Field létezik
-    device_info = Column(JSON, default=lambda: {})
-    
-    # Session timing
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    last_activity = Column(DateTime(timezone=True), server_default=func.now())
     expires_at = Column(DateTime(timezone=True), nullable=False)
-    
-    # Session status
+    created_at = Column(DateTime(timezone=True), default=func.now())
+    last_activity = Column(DateTime(timezone=True), default=func.now())
+    ip_address = Column(String(45))
+    user_agent = Column(Text)
     is_active = Column(Boolean, default=True)
-    logout_reason = Column(String(50), nullable=True)
-    
-    # Relationships
-    user = relationship("User", back_populates="sessions")
-    
-    # 🔧 JAVÍTÁS: Constructor device_type paramétert elfogadja
-    def __init__(self, **kwargs):
-        """
-        Initialize UserSession with proper device_type handling
-        """
-        # Extract device_type if provided
-        if 'device_type' in kwargs:
-            device_type = kwargs.pop('device_type')
-            super().__init__(**kwargs)
-            self.device_type = device_type
-        else:
-            super().__init__(**kwargs)
-    
-    def __repr__(self):
-        return f"<UserSession(user_id={self.user_id}, active={self.is_active})>"
-    
-    @property
-    def is_expired(self) -> bool:
-        """Check if session is expired"""
-        return datetime.utcnow() > self.expires_at
-    
-    @property
-    def is_valid(self) -> bool:
-        """Check if session is valid"""
-        return self.is_active and not self.is_expired
-    
-    def update_activity(self):
-        """Update last activity timestamp"""
-        self.last_activity = datetime.utcnow()
-    
-    def invalidate(self, reason: str = "logout"):
-        """Invalidate session"""
-        self.is_active = False
-        self.logout_reason = reason
 
-# === PYDANTIC SCHEMAS ===
+    # Relationship
+    # user = relationship("User", back_populates="sessions")  # Temporarily disabled
 
+
+# =============================================================================
+# Pydantic Schemas - MINDEN LEHETSÉGES VERZIÓ
+# =============================================================================
+
+# Base schemas
 class UserBase(BaseModel):
+    username: str = Field(..., min_length=3, max_length=50)
+    email: str = Field(..., max_length=100)
+    name: Optional[str] = Field(None, max_length=100)
+    bio: Optional[str] = None
+    location: Optional[str] = Field(None, max_length=100)
+    phone: Optional[str] = Field(None, max_length=20)
+    model_config = ConfigDict(from_attributes=True)
+
+
+# Registration/Login schemas
+class UserCreate(BaseModel):
+    username: str = Field(..., min_length=3, max_length=50)
+    email: str = Field(..., max_length=100)
+    password: str = Field(..., min_length=6, max_length=100)
+    name: Optional[str] = Field(None, max_length=100)
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UserLogin(BaseModel):
+    username: str = Field(..., min_length=1, max_length=50)
+    password: str = Field(..., min_length=1, max_length=100)
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UserUpdate(BaseModel):
+    name: Optional[str] = Field(None, max_length=100)
+    bio: Optional[str] = None
+    location: Optional[str] = Field(None, max_length=100)
+    phone: Optional[str] = Field(None, max_length=20)
+    avatar_url: Optional[str] = Field(None, max_length=255)
+    model_config = ConfigDict(from_attributes=True)
+
+
+# Response schemas (matching actual database schema)
+class UserResponse(BaseModel):
+    id: int
     username: str
     email: str
     full_name: str
     display_name: Optional[str] = None
-
-class UserCreate(UserBase):
-    password: str
-    
-    @validator('password')
-    def validate_password(cls, v):
-        if len(v) < 6:
-            raise ValueError('Password must be at least 6 characters')
-        return v
-    
-    @validator('username')
-    def validate_username(cls, v):
-        if len(v) < 3:
-            raise ValueError('Username must be at least 3 characters')
-        return v
-
-class UserLogin(BaseModel):
-    """Schema for user login"""
-    username: str
-    password: str
-
-class UserUpdate(BaseModel):
-    """Schema for updating user profile"""
-    full_name: Optional[str] = None
-    display_name: Optional[str] = None
-    privacy_settings: Optional[Dict] = None
     bio: Optional[str] = None
+    profile_picture: Optional[str] = None
     favorite_position: Optional[str] = None
-    
-    @validator('full_name')
-    def full_name_validation(cls, v):
-        if v and (len(v) < 2 or len(v) > 100):
-            raise ValueError('Full name must be between 2 and 100 characters')
-        return v
+    is_active: Optional[bool] = True
+    user_type: Optional[str] = "user"
+    is_premium: Optional[bool] = False
+    premium_expires_at: Optional[datetime] = None
+    level: Optional[int] = 1
+    xp: Optional[int] = 0
+    credits: Optional[int] = 5
+    games_played: Optional[int] = 0
+    games_won: Optional[int] = 0
+    total_playtime_minutes: Optional[int] = 0
+    best_scores: Optional[Dict[str, Any]] = None
+    achievement_points: Optional[int] = 0
+    total_score: Optional[float] = 0.0
+    average_performance: Optional[float] = 0.0
+    skill_ratings: Optional[Dict[str, Any]] = None
+    skills: Optional[Dict[str, int]] = None
+    friend_count: Optional[int] = 0
+    challenge_wins: Optional[int] = 0
+    challenge_losses: Optional[int] = 0
+    total_credits_purchased: Optional[int] = 0
+    total_bonus_earned: Optional[int] = 0
+    last_purchase_date: Optional[datetime] = None
+    transaction_history: Optional[Dict[str, Any]] = None
+    achievements: Optional[Dict[str, Any]] = None
+    privacy_settings: Optional[Dict[str, Any]] = None
+    created_at: Optional[datetime] = None
+    last_login: Optional[datetime] = None
+    last_activity: Optional[datetime] = None
+    model_config = ConfigDict(from_attributes=True)
 
-class PasswordChange(BaseModel):
-    """Schema for password change"""
-    current_password: str
-    new_password: str
-    
-    @validator('new_password')
-    def password_validation(cls, v):
-        if len(v) < 8:
-            raise ValueError('Password must be at least 8 characters long')
-        return v
 
-class UserResponse(UserBase):
-    id: int
-    level: int
-    xp: int
-    credits: int
-    games_played: int
-    games_won: int
-    friend_count: int
-    total_achievements: int
-    win_rate: float
-    skill_average: float
-    is_premium_active: bool
-    skills: Dict[str, float]
-    is_active: bool
-    user_type: str
-    created_at: datetime
-    last_login: Optional[datetime]
-    
-    class Config:
-        from_attributes = True
-
-class UserProfile(BaseModel):
-    """Extended user profile schema"""
-    id: int
-    username: str
-    full_name: str
-    display_name: Optional[str]
-    level: int
-    xp: int
-    credits: int
-    bio: Optional[str]
-    skills: Dict[str, float]
-    skill_average: float
-    games_played: int
-    games_won: int
-    win_rate: float
-    total_achievements: int
-    achievements: List[Dict]
-    friend_count: int
-    challenge_wins: int
-    challenge_losses: int
-    is_premium_active: bool
-    created_at: datetime
-    last_activity: Optional[datetime]
-    
-    class Config:
-        from_attributes = True
-
-class UserStats(BaseModel):
-    """User statistics schema"""
-    total_users: int
-    active_users: int
-    premium_users: int
-    games_played_today: int
-    average_skill_level: float
-    top_performers: List[Dict]
-    
-class LoginResponse(BaseModel):
-    """Login response schema"""
-    access_token: str
-    token_type: str
-    expires_in: int
-    user: UserResponse
-
-# 🔧 JAVÍTÁS: HIÁNYZÓ TOKEN CLASSES HOZZÁADVA
+# Token schemas - KRITIKUS: Ezek hiányoztak!
 class Token(BaseModel):
-    """Schema for JWT token"""
     access_token: str
-    token_type: str
+    token_type: str = "bearer"
+    expires_in: int
+    model_config = ConfigDict(from_attributes=True)
+
 
 class TokenData(BaseModel):
-    """Schema for token data"""
     username: Optional[str] = None
     user_id: Optional[int] = None
+    scopes: List[str] = []
+    model_config = ConfigDict(from_attributes=True)
 
-class SessionInfo(BaseModel):
-    """Session information schema"""
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    expires_in: int
+    user: UserResponse
+    model_config = ConfigDict(from_attributes=True)
+
+
+class LoginResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    expires_in: int
+    user: UserResponse
+    model_config = ConfigDict(from_attributes=True)
+
+
+class RegisterResponse(BaseModel):
+    message: str
+    user: UserResponse
+    access_token: Optional[str] = None
+    model_config = ConfigDict(from_attributes=True)
+
+
+# Profile schemas
+class UserProfile(BaseModel):
+    id: int
+    username: str
+    name: Optional[str] = None
+    bio: Optional[str] = None
+    location: Optional[str] = None
+    avatar_url: Optional[str] = None
+    level: int
+    xp: int
+    games_played: int
+    games_won: int
+    achievements: List[Dict[str, Any]]
+    created_at: Optional[datetime] = None
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UserStats(BaseModel):
+    user_id: int
+    username: str
+    level: int
+    xp: int
+    credits: int
+    games_played: int
+    games_won: int
+    win_rate: float
+    total_score: int
+    skills: Dict[str, int]
+    friends_count: int
+    model_config = ConfigDict(from_attributes=True)
+
+
+# Session schemas
+class SessionCreate(BaseModel):
+    access_token: str
+    expires_in: int = 86400  # 24 hours
+    model_config = ConfigDict(from_attributes=True)
+
+
+class SessionResponse(BaseModel):
     session_id: str
-    created_at: datetime
+    user_id: int
+    expires_at: datetime
     last_activity: datetime
-    device_type: str
-    user_agent: Optional[str]
-    ip_address: Optional[str]
-    is_current: bool
+    ip_address: Optional[str] = None
+    user_agent: Optional[str] = None
+    is_active: bool
+    model_config = ConfigDict(from_attributes=True)
+
+
+# Password schemas
+class PasswordChange(BaseModel):
+    current_password: str = Field(..., min_length=1, max_length=100)
+    new_password: str = Field(..., min_length=6, max_length=100)
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PasswordReset(BaseModel):
+    email: str = Field(..., max_length=100)
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PasswordResetConfirm(BaseModel):
+    token: str = Field(..., min_length=1)
+    new_password: str = Field(..., min_length=6, max_length=100)
+    model_config = ConfigDict(from_attributes=True)
+
+
+# Email verification schemas
+class EmailVerification(BaseModel):
+    verification_token: str = Field(..., min_length=1)
+    model_config = ConfigDict(from_attributes=True)
+
+
+class EmailVerificationRequest(BaseModel):
+    email: str = Field(..., max_length=100)
+    model_config = ConfigDict(from_attributes=True)
+
+
+# =============================================================================
+# MINDEN LEHETSÉGES ALIAS - Backward Compatibility
+# =============================================================================
+
+# Common aliases
+UserLoginResponse = LoginResponse
+UserRegistrationResponse = RegisterResponse
+LoginRequest = UserLogin
+RegisterRequest = UserCreate
+UserCreateRequest = UserCreate
+UserLoginRequest = UserLogin
+
+# Token aliases
+AccessToken = Token
+JWTToken = Token
+AuthToken = Token
+
+# Profile aliases
+UserProfileResponse = UserProfile
+PublicUserProfile = UserProfile
+UserStatsResponse = UserStats
+
+# Session aliases
+UserSession = SessionResponse
+ActiveSession = SessionResponse
+
+# Update aliases
+UserUpdateRequest = UserUpdate
+ProfileUpdate = UserUpdate
+
+# Password aliases
+PasswordChangeRequest = PasswordChange
+PasswordResetRequest = PasswordReset
+PasswordResetConfirmRequest = PasswordResetConfirm
+
+# Email aliases
+EmailVerificationRequest = EmailVerificationRequest
+VerifyEmailRequest = EmailVerification
+
+# Generic aliases
+User_Create = UserCreate
+User_Update = UserUpdate
+User_Response = UserResponse
+User_Login = UserLogin
+Token_Data = TokenData
+Token_Response = TokenResponse
+Login_Response = LoginResponse
+Register_Response = RegisterResponse
+
+
+# Enhanced user creation with spam protection
+class UserCreateProtected(BaseModel):
+    """Enhanced user creation with spam protection"""
+    username: str = Field(..., min_length=3, max_length=30, description="Unique username")
+    password: str = Field(..., min_length=6, max_length=100, description="User password")
+    email: str = Field(..., max_length=100, description="Valid email address")
+    full_name: str = Field(..., max_length=100, description="User's full name")
+    captcha_response: str = Field(..., description="hCaptcha response token")
     
     class Config:
-        from_attributes = True
-
-# === UTILITY FUNCTIONS ===
-
-def create_user(db, user_data: UserCreate) -> User:
-    """Create new user with validation"""
-    # Check if username exists
-    existing_user = db.query(User).filter(User.username == user_data.username).first()
-    if existing_user:
-        raise ValueError("Username already registered")
-    
-    # Check if email exists
-    existing_email = db.query(User).filter(User.email == user_data.email).first()
-    if existing_email:
-        raise ValueError("Email already registered")
-    
-    # Create user
-    user = User(
-        username=user_data.username,
-        email=user_data.email,
-        full_name=user_data.full_name,
-        display_name=user_data.display_name
-    )
-    user.set_password(user_data.password)
-    
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-    
-    return user
-
-def authenticate_user(db, username: str, password: str) -> Optional[User]:
-    """Authenticate user with username/password"""
-    user = db.query(User).filter(User.username == username).first()
-    if not user or not user.verify_password(password):
-        return None
-    return user
-
-def get_user_by_username(db, username: str) -> Optional[User]:
-    """Get user by username"""
-    return db.query(User).filter(User.username == username).first()
-
-def get_user_by_email(db, email: str) -> Optional[User]:
-    """Get user by email"""
-    return db.query(User).filter(User.email == email).first()
-
-def update_user_activity(db, user_id: int):
-    """Update user's last activity timestamp"""
-    user = db.query(User).filter(User.id == user_id).first()
-    if user:
-        user.update_last_activity()  # 🔧 JAVÍTVA: Method most már létezik
-        db.commit()
-
-def get_active_users_count(db) -> int:
-    """Get count of active users in last 24 hours"""
-    yesterday = datetime.utcnow() - timedelta(days=1)
-    return db.query(User).filter(
-        User.is_active == True,
-        User.last_activity >= yesterday
-    ).count()
-
-def get_user_statistics(db) -> Dict:
-    """Get comprehensive user statistics"""
-    total_users = db.query(User).count()
-    active_users = get_active_users_count(db)
-    premium_users = db.query(User).filter(User.is_premium == True).count()
-    
-    # Average skill calculation
-    users_with_skills = db.query(User).filter(User.skills != None).all()
-    if users_with_skills:
-        avg_skill = sum(user.skill_average for user in users_with_skills) / len(users_with_skills)
-    else:
-        avg_skill = 0.0
-    
-    return {
-        "total_users": total_users,
-        "active_users": active_users,
-        "premium_users": premium_users,
-        "average_skill_level": round(avg_skill, 1),
-        "user_growth": {
-            "daily": 0,  # Would need time-series data
-            "weekly": 0,
-            "monthly": 0
+        json_schema_extra = {
+            "example": {
+                "username": "newuser",
+                "password": "securepass123",
+                "email": "user@example.com",
+                "full_name": "New User",
+                "captcha_response": "hcaptcha_token_here"
+            }
         }
-    }

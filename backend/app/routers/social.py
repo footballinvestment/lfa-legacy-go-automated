@@ -20,7 +20,7 @@ from ..models.friends import (
 from ..routers.auth import get_current_user
 
 # Initialize router and logger
-router = APIRouter(prefix="/api/social", tags=["social"])
+router = APIRouter(tags=["social"])
 logger = logging.getLogger(__name__)
 
 # === PROFILE ENDPOINT - JAVÍTOTT FRIENDSHIP STATUS ===

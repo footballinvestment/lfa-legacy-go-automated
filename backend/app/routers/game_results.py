@@ -15,7 +15,7 @@ from ..models.user import User
 from ..routers.auth import get_current_user
 
 # Initialize router and logger
-router = APIRouter(prefix="/api/game-results", tags=["Game Results"])
+router = APIRouter(tags=["Game Results"])
 logger = logging.getLogger(__name__)
 
 # === PYDANTIC SCHEMAS ===

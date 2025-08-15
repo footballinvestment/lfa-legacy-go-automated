@@ -1,0 +1,64 @@
+LFA Legacy GO - Cloud Run Deployment Success Report
+==================================================
+Deployment Date: 2025 Aug 15 Pén 12:45:57 CEST
+Total Deployment Time: 171 seconds
+Authenticated User: plscallmegiorgio@gmail.com
+
+SERVICE INFORMATION:
+==================
+Project ID: lfa-legacy-go
+Service Name: lfa-legacy-go-backend
+Region: us-central1
+Service URL: https://lfa-legacy-go-backend-tv6u4m3szq-uc.a.run.app
+
+ENDPOINTS:
+=========
+🏠 Root: https://lfa-legacy-go-backend-tv6u4m3szq-uc.a.run.app/
+🏥 Health: https://lfa-legacy-go-backend-tv6u4m3szq-uc.a.run.app/health
+📚 API Docs: https://lfa-legacy-go-backend-tv6u4m3szq-uc.a.run.app/docs
+🔧 OpenAPI: https://lfa-legacy-go-backend-tv6u4m3szq-uc.a.run.app/openapi.json
+
+PERFORMANCE METRICS:
+===================
+Docker Build Time: 110 seconds
+Deployment Time: 27 seconds
+Total Automation Time: 171 seconds
+
+VALIDATION RESULTS:
+==================
+Root Endpoint: HTTP 200
+Health Check: HTTP 200
+API Documentation: HTTP 200
+
+CONFIGURATION:
+=============
+Memory: 1Gi
+CPU: 1 core (with boost)
+Concurrency: 80
+Min Instances: 0
+Max Instances: 100
+Timeout: 300 seconds
+Platform: Cloud Run Gen2
+
+ENVIRONMENT VARIABLES:
+=====================
+ENVIRONMENT=production
+API_TITLE=LFA Legacy GO API
+API_VERSION=3.0.0
+DEBUG=false
+SECRET_KEY=[CONFIGURED]
+ACCESS_TOKEN_EXPIRE_MINUTES=43200
+
+NEXT STEPS:
+===========
+1. Update Netlify frontend environment variable:
+   REACT_APP_API_URL=https://lfa-legacy-go-backend-tv6u4m3szq-uc.a.run.app
+
+2. Test frontend integration
+
+3. Monitor service performance in Google Cloud Console
+
+TROUBLESHOOTING:
+===============
+View logs: gcloud logging read "resource.type=\"cloud_run_revision\"" --limit=50
+Service status: gcloud run services describe lfa-legacy-go-backend --region=us-central1

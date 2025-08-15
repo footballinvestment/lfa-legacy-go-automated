@@ -11,6 +11,9 @@ from typing import Optional, List, Dict
 from enum import Enum as PyEnum
 from pydantic import BaseModel, validator, Field
 
+# Import User for relationship references
+# Deferred import to avoid circular imports
+
 # === LOCATION ENUMS ===
 
 class LocationType(str, PyEnum):
@@ -403,7 +406,7 @@ class GameSession(Base):
     # Relationships
     location = relationship("Location", back_populates="game_sessions")
     game_definition = relationship("GameDefinition", back_populates="game_sessions")
-    booked_by = relationship("User", back_populates="bookings")
+    # booked_by = relationship("User")  # Temporarily disabled due to mapper issues
     
     def __repr__(self):
         return f"<GameSession(id='{self.session_id}', status='{self.status.value}', location_id={self.location_id})>"

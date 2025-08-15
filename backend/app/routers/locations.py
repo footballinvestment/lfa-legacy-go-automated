@@ -18,7 +18,7 @@ from ..models.location import (
 from ..routers.auth import get_current_user
 
 # Router setup
-router = APIRouter(prefix="/api/locations", tags=["Locations & Games"])
+router = APIRouter(tags=["Locations & Games"])
 
 # === LOCATION ENDPOINTS ===
 
