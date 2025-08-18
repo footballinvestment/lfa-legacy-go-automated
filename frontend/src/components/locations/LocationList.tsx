@@ -147,48 +147,48 @@ const LocationList: React.FC = () => {
     const safeLocations = Array.isArray(locations) ? locations : [];
 
     return safeLocations.filter((location) => {
+      // Search term filter
       const matchesSearch =
+        !searchTerm ||
         location.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        location.city?.toLowerCase().includes(searchTerm.toLowerCase());
+        location.city?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        location.address?.toLowerCase().includes(searchTerm.toLowerCase());
+
+      // City filter
       const matchesCity = !selectedCity || location.city === selectedCity;
-      const matchesPrice =
-        !priceRange || checkPriceRange(location.price_per_hour, priceRange);
+
+      // Price filter
+      const matchesPrice = (() => {
+        if (!priceRange) return true;
+        const price = location.price_per_hour || 0;
+
+        switch (priceRange) {
+          case "low":
+            return price < 50;
+          case "medium":
+            return price >= 50 && price <= 100;
+          case "high":
+            return price > 100;
+          default:
+            return true;
+        }
+      })();
 
       return matchesSearch && matchesCity && matchesPrice;
     });
   }, [locations, searchTerm, selectedCity, priceRange]);
 
-  const checkPriceRange = (price: number, range: string): boolean => {
-    switch (range) {
-      case "low":
-        return price < 50;
-      case "medium":
-        return price >= 50 && price < 100;
-      case "high":
-        return price >= 100;
-      default:
-        return true;
-    }
-  };
-
-  const handleBookLocation = (locationId: number) => {
-    navigate(`/booking?location=${locationId}`);
-  };
-
-  const clearFilters = () => {
-    setSearchTerm("");
-    setSelectedCity("");
-    setPriceRange("");
-    setFilterOpen(false);
-  };
-
-  // Get unique cities for filter (with safety check)
+  // Get unique cities for filter
   const cities = React.useMemo(() => {
     const safeLocations = Array.isArray(locations) ? locations : [];
     return Array.from(
-      new Set(safeLocations.map((loc) => loc.city).filter(Boolean))
+      new Set(safeLocations.map((location) => location.city).filter(Boolean))
     );
   }, [locations]);
+
+  const handleBookLocation = (locationId: number) => {
+    navigate(`/booking/${locationId}`);
+  };
 
   if (loading) {
     return (
@@ -197,123 +197,85 @@ const LocationList: React.FC = () => {
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-          py: 8,
+          minHeight: "50vh",
         }}
       >
-        <CircularProgress size={60} />
-        <Typography sx={{ ml: 2 }}>Loading locations...</Typography>
+        <CircularProgress />
       </Box>
     );
   }
 
   return (
-    <Box>
+    <Box sx={{ p: 3 }}>
       {/* Header */}
-      <Box sx={{ display: "flex", alignItems: "center", mb: 4 }}>
-        <IconButton onClick={() => navigate("/dashboard")} sx={{ mr: 2 }}>
-          <ArrowBack />
-        </IconButton>
-        <Box sx={{ flex: 1 }}>
-          <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
-            Football Locations ⚽
-          </Typography>
-          <Typography variant="h6" color="text.secondary">
-            Find the perfect pitch for your game
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <IconButton onClick={() => navigate("/dashboard")}>
+            <ArrowBack />
+          </IconButton>
+          <Typography variant="h4" component="h1" fontWeight="bold">
+            Football Locations
           </Typography>
         </Box>
-        {weatherEnabled && (
-          <Chip
-            icon={<WbSunny />}
-            label="Live Weather"
-            color="warning"
-            variant="outlined"
-          />
-        )}
-      </Box>
 
-      {/* Search and Filter Bar */}
-      <Card sx={{ p: 3, mb: 4 }}>
-        <Box
-          sx={{
-            display: "flex",
-            gap: 2,
-            alignItems: "center",
-            flexWrap: "wrap",
-          }}
-        >
-          <TextField
-            placeholder="Search locations..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <Search sx={{ mr: 1, color: "text.secondary" }} />
-              ),
-            }}
-            sx={{ flex: 1, minWidth: 250 }}
-          />
-
-          <Button
-            variant="outlined"
-            startIcon={<FilterList />}
-            onClick={() => setFilterOpen(true)}
-            sx={{ whiteSpace: "nowrap" }}
-          >
-            Filters
-          </Button>
-
-          {(searchTerm || selectedCity || priceRange) && (
-            <Button variant="text" onClick={clearFilters} size="small">
-              Clear All
-            </Button>
+        <Box sx={{ display: "flex", gap: 1 }}>
+          <IconButton onClick={() => setFilterOpen(true)}>
+            <FilterList />
+          </IconButton>
+          {weatherEnabled && (
+            <Chip
+              icon={<WbSunny />}
+              label="Weather Available"
+              color="success"
+              size="small"
+            />
           )}
         </Box>
+      </Box>
 
-        {/* Active Filters */}
-        {(selectedCity || priceRange) && (
-          <Box sx={{ mt: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
-            {selectedCity && (
-              <Chip
-                label={`City: ${selectedCity}`}
-                onDelete={() => setSelectedCity("")}
-                size="small"
-              />
-            )}
-            {priceRange && (
-              <Chip
-                label={`Price: ${priceRange}`}
-                onDelete={() => setPriceRange("")}
-                size="small"
-              />
-            )}
-          </Box>
-        )}
-      </Card>
+      {/* Search Bar */}
+      <TextField
+        fullWidth
+        placeholder="Search locations by name, city, or address..."
+        variant="outlined"
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        InputProps={{
+          startAdornment: <Search sx={{ color: "action.active", mr: 1 }} />,
+        }}
+        sx={{ mb: 3 }}
+      />
 
-      {/* Error State */}
+      {/* Error Alert */}
       {error && (
-        <Alert severity="error" sx={{ mb: 4 }}>
+        <Alert severity="error" sx={{ mb: 3 }}>
           {error}
-          <Button onClick={fetchLocations} sx={{ ml: 2 }}>
-            Retry
-          </Button>
         </Alert>
       )}
 
-      {/* Weather System Status */}
-      {weatherEnabled && (
-        <Accordion sx={{ mb: 4 }}>
+      {/* Weather Preview (if enabled) */}
+      {weatherEnabled && filteredLocations.length > 0 && (
+        <Accordion sx={{ mb: 3 }}>
           <AccordionSummary expandIcon={<ExpandMore />}>
-            <Typography variant="h6">Weather Overview</Typography>
+            <Typography sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <WbSunny />
+              Weather Preview for Top Locations
+            </Typography>
           </AccordionSummary>
           <AccordionDetails>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Real-time weather data is available for all locations to help you
-              plan your games.
+              Current weather conditions at featured locations
             </Typography>
             <Grid container spacing={2}>
               {filteredLocations.slice(0, 3).map((location) => (
-                <Grid item xs={12} md={4} key={`weather-${location.id}`}>
+                <Grid size={{ xs: 12, md: 4 }} key={`weather-${location.id}`}>
                   <WeatherWidget
                     locationId={location.id}
                     locationName={location.name}
@@ -358,7 +320,7 @@ const LocationList: React.FC = () => {
       ) : (
         <Grid container spacing={3}>
           {filteredLocations.map((location) => (
-            <Grid item xs={12} sm={6} md={4} key={location.id}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={location.id}>
               <Card
                 sx={{
                   height: "100%",
@@ -451,15 +413,22 @@ const LocationList: React.FC = () => {
                     location.amenities.length > 0 && (
                       <Box sx={{ mb: 2 }}>
                         <Box
-                          sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}
+                          sx={{
+                            display: "flex",
+                            flexWrap: "wrap",
+                            gap: 0.5,
+                            maxHeight: 60,
+                            overflow: "hidden",
+                          }}
                         >
                           {location.amenities
                             .slice(0, 3)
                             .map((amenity, index) => (
                               <Chip
-                                key={index}
+                                key={`${location.id}-amenity-${index}`}
                                 label={amenity}
                                 size="small"
+                                variant="outlined"
                                 sx={{ fontSize: "0.7rem" }}
                               />
                             ))}
@@ -475,7 +444,7 @@ const LocationList: React.FC = () => {
                       </Box>
                     )}
 
-                  {/* Price and Book Button */}
+                  {/* Price and Availability */}
                   <Box sx={{ mt: "auto" }}>
                     <Box
                       sx={{
@@ -485,16 +454,11 @@ const LocationList: React.FC = () => {
                         mb: 2,
                       }}
                     >
-                      <Typography
-                        variant="h6"
-                        color="primary.main"
-                        sx={{ fontWeight: 700 }}
-                      >
+                      <Typography variant="h6" color="primary">
                         ${location.price_per_hour || 0}/hour
                       </Typography>
                       <Chip
                         label={`${
-                          location.available_slots &&
                           Array.isArray(location.available_slots)
                             ? location.available_slots.length
                             : 0

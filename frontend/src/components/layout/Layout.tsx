@@ -29,6 +29,8 @@ import {
   Logout,
   AccountCircle,
   Menu as MenuIcon,
+  People,
+  Assessment,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -64,6 +66,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const navigationItems = [
     { label: 'Dashboard', href: '/', icon: <DashboardIcon /> },
     { label: 'Tournaments', href: '/tournaments', icon: <EmojiEvents /> },
+    { label: 'Social', href: '/social', icon: <People /> },
+    { label: 'Game Results', href: '/game-results', icon: <Assessment /> },
     { label: 'Profile', href: '/profile', icon: <Person /> },
   ];
 

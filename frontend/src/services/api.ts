@@ -1,117 +1,111 @@
-// src/services/api.ts
-// LFA Legacy GO - Complete API Service with Tournament Integration
+// === frontend/src/services/api.ts ===
+// TELJES JAVÍTOTT API SZOLGÁLTATÁS - 422 HIBA MEGOLDÁS
 
-// Base API Configuration
 const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
 
 export class ApiService {
-  protected baseURL: string;
+  private baseURL: string;
 
   constructor(baseURL: string = API_BASE_URL) {
     this.baseURL = baseURL;
   }
 
-  // FIXED: Changed from private to protected so it can be used in subclasses
-  protected getAuthHeaders(): Record<string, string> {
-    const token = localStorage.getItem("auth_token"); // Fixed: use correct token key
-    return token ? { Authorization: `Bearer ${token}` } : {};
-  }
-
-  protected async request<T>(
+  private async request<T>(
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
     const url = `${this.baseURL}${endpoint}`;
-    const headers = {
-      "Content-Type": "application/json",
-      ...this.getAuthHeaders(),
-      ...options.headers,
+
+    const config: RequestInit = {
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+      ...options,
     };
 
-    const response = await fetch(url, {
-      ...options,
-      mode: 'cors',
-      credentials: 'include',
-      headers,
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
-      throw new Error(
-        errorData?.detail || `HTTP ${response.status}: ${response.statusText}`
-      );
+    // Add auth token if available
+    const token = localStorage.getItem("auth_token");
+    if (token) {
+      config.headers = {
+        ...config.headers,
+        Authorization: `Bearer ${token}`,
+      };
     }
 
-    return response.json();
+    try {
+      const response = await fetch(url, config);
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        let errorMessage = `HTTP ${response.status}`;
+
+        try {
+          const errorJson = JSON.parse(errorData);
+          errorMessage = errorJson.detail || errorJson.message || errorMessage;
+        } catch {
+          errorMessage = errorData || errorMessage;
+        }
+
+        throw new Error(errorMessage);
+      }
+
+      // Handle empty responses
+      if (response.status === 204) {
+        return {} as T;
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error(`API request failed: ${endpoint}`, error);
+      throw error;
+    }
   }
 
-  protected async get<T>(endpoint: string): Promise<T> {
+  async get<T>(endpoint: string): Promise<T> {
     return this.request<T>(endpoint, { method: "GET" });
   }
 
-  protected async post<T>(endpoint: string, data?: any): Promise<T> {
+  async post<T>(endpoint: string, data?: any): Promise<T> {
     return this.request<T>(endpoint, {
       method: "POST",
       body: data ? JSON.stringify(data) : undefined,
     });
   }
 
-  protected async put<T>(endpoint: string, data?: any): Promise<T> {
+  async put<T>(endpoint: string, data?: any): Promise<T> {
     return this.request<T>(endpoint, {
       method: "PUT",
       body: data ? JSON.stringify(data) : undefined,
     });
   }
 
-  protected async delete<T>(endpoint: string): Promise<T> {
+  async delete<T>(endpoint: string): Promise<T> {
     return this.request<T>(endpoint, { method: "DELETE" });
-  }
-
-  // FIXED: Added uploadFile method with proper file handling
-  protected async uploadFile<T>(
-    endpoint: string,
-    formData: FormData
-  ): Promise<T> {
-    const url = `${this.baseURL}${endpoint}`;
-
-    const response = await fetch(url, {
-      method: "POST",
-      body: formData,
-      headers: {
-        ...this.getAuthHeaders(),
-        // Don't set Content-Type for FormData - browser will set it with boundary
-      },
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
-      throw new Error(
-        errorData?.detail || `HTTP ${response.status}: ${response.statusText}`
-      );
-    }
-
-    return response.json();
   }
 }
 
-// === AUTHENTICATION API ===
+// === AUTHENTICATION INTERFACES ===
+
 export interface LoginRequest {
   username: string;
   password: string;
 }
 
+// ✅ JAVÍTOTT: full_name hozzáadva
 export interface RegisterRequest {
   username: string;
-  email: string;
-  full_name: string;
   password: string;
+  email: string;
+  full_name: string; // ✅ KÖTELEZŐ MEZŐ - backend kompatibilitás
+  name?: string; // Optional backward compatibility
 }
 
 export interface User {
   id: number;
   username: string;
   email: string;
-  full_name: string;
+  full_name: string; // ✅ JAVÍTOTT: full_name használata
   display_name?: string;
   level: number;
   xp: number;
@@ -129,6 +123,7 @@ export interface User {
   premium_expires_at?: string;
   user_type: string;
   is_active: boolean;
+  is_admin?: boolean;
   created_at: string;
   last_login?: string;
   last_activity?: string;
@@ -143,12 +138,25 @@ export interface AuthResponse {
 
 export class AuthService extends ApiService {
   async login(credentials: LoginRequest): Promise<AuthResponse> {
-    // Send JSON data instead of FormData
     return this.post("/api/auth/login", credentials);
   }
 
   async register(userData: RegisterRequest): Promise<AuthResponse> {
-    return this.post("/api/auth/register", userData);
+    // ✅ JAVÍTOTT: Full validation
+    if (!userData.full_name || userData.full_name.trim().length === 0) {
+      throw new Error("Full name is required");
+    }
+
+    // ✅ JAVÍTOTT: Ensure full_name is sent
+    const payload = {
+      username: userData.username,
+      password: userData.password,
+      email: userData.email,
+      full_name: userData.full_name.trim(),
+      name: userData.name || userData.full_name, // Backward compatibility
+    };
+
+    return this.post("/api/auth/register", payload);
   }
 
   async getCurrentUser(): Promise<User> {
@@ -162,14 +170,10 @@ export class AuthService extends ApiService {
   async logout(): Promise<void> {
     return this.post("/api/auth/logout");
   }
-
-  // FIXED: Remove clearAuth method since it doesn't exist
-  // async clearAuth(): Promise<void> {
-  //   localStorage.removeItem("auth_token");
-  // }
 }
 
-// === TOURNAMENT API ===
+// === TOURNAMENT INTERFACES ===
+
 export interface Tournament {
   id: number;
   tournament_id: string;
@@ -231,6 +235,7 @@ export interface CreateTournamentRequest {
   prize_distribution: Record<string, number>;
   min_level: number;
   max_level?: number;
+  rules?: Record<string, any>;
 }
 
 export class TournamentService extends ApiService {
@@ -238,111 +243,279 @@ export class TournamentService extends ApiService {
     return this.get("/api/tournaments");
   }
 
-  async getTournamentDetails(tournamentId: number): Promise<TournamentDetails> {
-    return this.get(`/api/tournaments/${tournamentId}`);
+  async getTournament(id: number): Promise<TournamentDetails> {
+    return this.get(`/api/tournaments/${id}`);
   }
 
-  async createTournament(
-    tournament: CreateTournamentRequest
-  ): Promise<Tournament> {
-    return this.post("/api/tournaments", tournament);
+  async createTournament(data: CreateTournamentRequest): Promise<Tournament> {
+    return this.post("/api/tournaments", data);
   }
 
-  async registerForTournament(
-    tournamentId: number
-  ): Promise<{ message: string }> {
+  async registerForTournament(tournamentId: number): Promise<void> {
     return this.post(`/api/tournaments/${tournamentId}/register`);
   }
 
-  async withdrawFromTournament(
-    tournamentId: number
-  ): Promise<{ message: string }> {
+  async withdrawFromTournament(tournamentId: number): Promise<void> {
     return this.delete(`/api/tournaments/${tournamentId}/register`);
   }
-
-  async getTournamentBracket(tournamentId: number): Promise<any> {
-    return this.get(`/api/tournaments/${tournamentId}/bracket`);
-  }
-
-  async getTournamentMatches(tournamentId: number): Promise<any[]> {
-    return this.get(`/api/tournaments/${tournamentId}/matches`);
-  }
-
-  async updateMatchStatus(
-    tournamentId: number,
-    matchId: string,
-    status: string
-  ): Promise<any> {
-    return this.put(
-      `/api/tournaments/${tournamentId}/matches/${matchId}/status`,
-      { status }
-    );
-  }
-
-  async submitMatchResult(
-    tournamentId: number,
-    matchId: string,
-    result: any
-  ): Promise<any> {
-    return this.post(
-      `/api/tournaments/${tournamentId}/matches/${matchId}/result`,
-      result
-    );
-  }
 }
 
-// === WEATHER API ===
-export interface WeatherData {
-  location: string;
-  temperature: number;
-  humidity: number;
-  wind_speed: number;
+// === CREDIT INTERFACES ===
+
+export interface CreditPackage {
+  id: string;
+  name: string;
+  credits: number;
+  bonus_credits: number;
+  price_huf: number;
+  price_usd: number;
+  discount_percentage?: number;
+  popular: boolean;
   description: string;
-  icon: string;
-  feels_like: number;
-  visibility: number;
-  uv_index: number;
-  timestamp: string;
 }
 
-export class WeatherService extends ApiService {
-  async getCurrentWeather(lat?: number, lon?: number): Promise<WeatherData> {
-    const params = lat && lon ? `?lat=${lat}&lon=${lon}` : "";
-    return this.get(`/api/weather/current${params}`);
+export interface CreditTransaction {
+  id: string;
+  transaction_id: string;
+  user_id: number;
+  package_id: string;
+  credits_purchased: number;
+  bonus_credits: number;
+  total_credits: number;
+  price_paid: number;
+  currency: string;
+  payment_method: string;
+  status: string;
+  created_at: string;
+  stripe_payment_intent_id?: string;
+}
+
+export interface PurchaseRequest {
+  package_id: string;
+  payment_method: string;
+}
+
+// === COUPON INTERFACES ===
+
+export interface Coupon {
+  id: number;
+  code: string;
+  name: string;
+  description: string;
+  coupon_type: "fixed" | "percentage";
+  credits_reward: number;
+  discount_percentage?: number;
+  is_active: boolean;
+  expires_at?: string;
+  max_uses?: number;
+  current_uses: number;
+  per_user_limit: number;
+  created_at: string;
+}
+
+export interface CouponRedemptionRequest {
+  coupon_code: string;
+}
+
+export interface CouponRedemptionResponse {
+  success: boolean;
+  message: string;
+  credits_awarded: number;
+  new_balance: number;
+  coupon_name: string;
+  coupon_description: string;
+}
+
+export interface CouponUsage {
+  id: number;
+  coupon_id: number;
+  user_id: number;
+  credits_awarded: number;
+  ip_address: string;
+  user_agent: string;
+  redeemed_at: string;
+  coupon: {
+    code: string;
+    name: string;
+    description: string;
+  };
+}
+
+export class CreditService extends ApiService {
+  async getPackages(): Promise<CreditPackage[]> {
+    return this.get("/api/credits/packages");
   }
 
-  async getForecast(
-    lat?: number,
-    lon?: number,
-    days?: number
-  ): Promise<{
-    location: string;
-    forecast: Array<{
-      date: string;
-      temperature_max: number;
-      temperature_min: number;
-      humidity: number;
-      wind_speed: number;
-      description: string;
-      icon: string;
-      precipitation_chance: number;
-    }>;
-  }> {
-    const params = new URLSearchParams();
-    if (lat) params.append("lat", lat.toString());
-    if (lon) params.append("lon", lon.toString());
-    if (days) params.append("days", days.toString());
+  async getCurrentBalance(): Promise<{ credits: number }> {
+    return this.get("/api/credits/balance");
+  }
 
-    return this.get(`/api/weather/forecast?${params.toString()}`);
+  async getTransactionHistory(): Promise<CreditTransaction[]> {
+    return this.get("/api/credits/history");
+  }
+
+  async purchaseCredits(data: PurchaseRequest): Promise<CreditTransaction> {
+    return this.post("/api/credits/purchase", data);
+  }
+
+  // === COUPON METHODS ===
+
+  async redeemCoupon(couponCode: string): Promise<CouponRedemptionResponse> {
+    return this.post("/api/credits/redeem-coupon", { coupon_code: couponCode });
+  }
+
+  async getAvailableCoupons(): Promise<Coupon[]> {
+    try {
+      // Use the primary user endpoint
+      return await this.get("/api/credits/coupons/available");
+    } catch (error) {
+      console.error("Failed to fetch available coupons:", error);
+      throw error;
+    }
+  }
+
+  async getCouponUsageHistory(): Promise<CouponUsage[]> {
+    return this.get("/api/credits/coupons/my-usage");
+  }
+
+  async validateCoupon(couponCode: string): Promise<{ valid: boolean; message: string; coupon?: Coupon }> {
+    try {
+      const response = await this.get(`/api/credits/validate-coupon?code=${encodeURIComponent(couponCode)}`);
+      return response;
+    } catch (error) {
+      return {
+        valid: false,
+        message: error instanceof Error ? error.message : "Validation failed"
+      };
+    }
+  }
+
+  // Admin-specific coupon methods
+  async getAdminCoupons(): Promise<Coupon[]> {
+    try {
+      return await this.get("/api/credits/admin/coupons");
+    } catch (error) {
+      console.error("Failed to fetch admin coupons:", error);
+      throw error;
+    }
   }
 }
 
-// === BOOKING API ===
+// === SOCIAL INTERFACES ===
+
+export interface FriendRequest {
+  id: number;
+  from_user_id: number;
+  to_user_id: number;
+  from_user: {
+    username: string;
+    full_name: string;
+    level: number;
+  };
+  to_user: {
+    username: string;
+    full_name: string;
+    level: number;
+  };
+  status: string;
+  created_at: string;
+}
+
+export interface Friend {
+  user_id: number;
+  username: string;
+  full_name: string;
+  level: number;
+  is_online: boolean;
+  last_active: string;
+  games_played: number;
+  win_rate: number;
+}
+
+export interface Challenge {
+  id: number;
+  challenger_id: number;
+  challenged_id: number;
+  game_type: string;
+  location_id?: number;
+  status: string;
+  created_at: string;
+  expires_at: string;
+  challenger: {
+    username: string;
+    full_name: string;
+    level: number;
+  };
+  challenged: {
+    username: string;
+    full_name: string;
+    level: number;
+  };
+}
+
+export class SocialService extends ApiService {
+  async searchUsers(query: string): Promise<User[]> {
+    return this.get(`/api/social/search-users?q=${encodeURIComponent(query)}`);
+  }
+
+  async sendFriendRequest(userId: number): Promise<void> {
+    return this.post(`/api/social/friend-request/${userId}`);
+  }
+
+  async respondToFriendRequest(
+    requestId: number,
+    accept: boolean
+  ): Promise<void> {
+    return this.post(`/api/social/friend-request/${requestId}/respond`, {
+      accept,
+    });
+  }
+
+  async getFriendRequests(): Promise<FriendRequest[]> {
+    return this.get("/api/social/friend-requests");
+  }
+
+  async getFriends(): Promise<Friend[]> {
+    return this.get("/api/social/friends");
+  }
+
+  async removeFriend(userId: number): Promise<void> {
+    return this.delete(`/api/social/friends/${userId}`);
+  }
+
+  async sendChallenge(
+    userId: number,
+    gameType: string,
+    locationId?: number
+  ): Promise<Challenge> {
+    return this.post("/api/social/challenge", {
+      challenged_user_id: userId,
+      game_type: gameType,
+      location_id: locationId,
+    });
+  }
+
+  async respondToChallenge(
+    challengeId: number,
+    accept: boolean
+  ): Promise<void> {
+    return this.post(`/api/social/challenge/${challengeId}/respond`, {
+      accept,
+    });
+  }
+
+  async getChallenges(): Promise<Challenge[]> {
+    return this.get("/api/social/challenges");
+  }
+}
+
+// === LOCATION INTERFACES ===
+
 export interface Location {
   id: number;
   name: string;
   address: string;
-  city: string;
+  city?: string; // ✅ HOZZÁADVA
   capacity: number;
   price_per_hour: number;
   rating: number;
@@ -351,240 +524,32 @@ export interface Location {
   image_url?: string;
   latitude?: number;
   longitude?: number;
-  weather_data?: WeatherData;
 }
 
-export interface BookingRequest {
-  location_id: number;
-  scheduled_time: string;
-  duration_hours: number;
-  notes?: string;
-}
-
-export interface Booking {
-  id: number;
-  location: Location;
-  scheduled_time: string;
-  duration_hours: number;
-  total_cost: number;
-  status: string;
-  created_at: string;
-  notes?: string;
-}
-
-export class BookingService extends ApiService {
+export class LocationService extends ApiService {
   async getLocations(): Promise<Location[]> {
     return this.get("/api/locations");
   }
 
-  async getLocationById(id: number): Promise<Location> {
+  async getLocation(id: number): Promise<Location> {
     return this.get(`/api/locations/${id}`);
   }
 
-  async createBooking(booking: BookingRequest): Promise<Booking> {
-    return this.post("/api/booking/create", booking);
-  }
-
-  async getUserBookings(): Promise<Booking[]> {
-    return this.get("/api/booking/my-bookings");
-  }
-
-  async cancelBooking(bookingId: number): Promise<{ message: string }> {
-    return this.delete(`/api/booking/${bookingId}/cancel`);
+  async checkAvailability(locationId: number, date: string): Promise<any> {
+    return this.get(
+      `/api/booking/availability?location_id=${locationId}&date=${date}`
+    );
   }
 }
 
-// === SOCIAL API ===
-export interface Friend {
-  id: number;
-  username: string;
-  full_name: string;
-  level: number;
-  is_online: boolean;
-  last_seen?: string;
-}
+// === EXPORT SERVICES ===
 
-export interface FriendRequest {
-  id: number;
-  from_user: Friend;
-  to_user: Friend;
-  status: "pending" | "accepted" | "rejected";
-  created_at: string;
-}
-
-export class SocialService extends ApiService {
-  async getFriends(): Promise<Friend[]> {
-    return this.get("/api/social/friends");
-  }
-
-  async getFriendRequests(): Promise<FriendRequest[]> {
-    return this.get("/api/social/friend-requests");
-  }
-
-  async sendFriendRequest(username: string): Promise<{ message: string }> {
-    return this.post("/api/social/friend-request", { username });
-  }
-
-  async respondToFriendRequest(
-    requestId: number,
-    accept: boolean
-  ): Promise<{ message: string }> {
-    return this.post(`/api/social/friend-request/${requestId}/respond`, {
-      accept,
-    });
-  }
-
-  async removeFriend(friendId: number): Promise<{ message: string }> {
-    return this.delete(`/api/social/friends/${friendId}`);
-  }
-
-  async searchUsers(query: string): Promise<
-    Array<{
-      id: number;
-      username: string;
-      full_name: string;
-      level: number;
-    }>
-  > {
-    return this.get(`/api/social/search?q=${encodeURIComponent(query)}`);
-  }
-}
-
-// === CREDITS API ===
-export interface CreditTransaction {
-  id: number;
-  amount: number;
-  transaction_type: "purchase" | "spent" | "earned" | "refund";
-  description: string;
-  created_at: string;
-}
-
-export interface CreditPurchaseRequest {
-  package_type: "small" | "medium" | "large" | "premium";
-  payment_method: string;
-}
-
-export class CreditService extends ApiService {
-  async getCreditBalance(): Promise<{ credits: number }> {
-    return this.get("/api/credits/balance");
-  }
-
-  async getCreditHistory(): Promise<CreditTransaction[]> {
-    return this.get("/api/credits/history");
-  }
-
-  async purchaseCredits(purchase: CreditPurchaseRequest): Promise<{
-    message: string;
-    transaction_id: string;
-    credits_added: number;
-    new_balance: number;
-  }> {
-    return this.post("/api/credits/purchase", purchase);
-  }
-
-  async getCreditPackages(): Promise<
-    Array<{
-      type: string;
-      credits: number;
-      price: number;
-      bonus_credits: number;
-      description: string;
-    }>
-  > {
-    return this.get("/api/credits/packages");
-  }
-}
-
-// === GAME RESULTS API ===
-export interface GameResultSubmission {
-  session_id?: string;
-  game_type: string;
-  score: number;
-  completion_time_seconds: number;
-  skill_scores: Record<string, number>;
-  achievements_unlocked: string[];
-  game_data: any;
-  duration_seconds?: number;
-}
-
-export interface UserStatistics {
-  user_id: number;
-  total_games_played: number;
-  total_games_completed: number;
-  win_rate: number;
-  average_score: number;
-  best_score: number;
-  current_win_streak: number;
-  skill_averages: Record<string, number>;
-  game_stats: Record<string, any>;
-}
-
-export class GameResultService extends ApiService {
-  async submitResult(
-    result: GameResultSubmission
-  ): Promise<{ message: string }> {
-    return this.post("/api/game-results/submit", result);
-  }
-
-  async getUserStatistics(userId?: number): Promise<UserStatistics> {
-    const endpoint = userId
-      ? `/api/game-results/statistics/${userId}`
-      : "/api/game-results/statistics/me";
-    return this.get(endpoint);
-  }
-
-  async getUserAchievements(userId?: number): Promise<{
-    user_id: number;
-    total_achievements: number;
-    total_points: number;
-    achievements: Array<{
-      id: string;
-      name: string;
-      description: string;
-      category: string;
-      earned_at: string;
-      points: number;
-    }>;
-  }> {
-    const endpoint = userId
-      ? `/api/game-results/achievements/${userId}`
-      : "/api/game-results/achievements/me";
-    return this.get(endpoint);
-  }
-}
-
-// === SYSTEM API ===
-export class SystemService extends ApiService {
-  async getHealth(): Promise<{
-    status: string;
-    version: string;
-    components: any;
-    weather_system: any;
-    timestamp: string;
-  }> {
-    return this.get("/health");
-  }
-
-  async getVersion(): Promise<{
-    version: string;
-    build: string;
-    environment: any;
-    components: any;
-  }> {
-    return this.get("/version");
-  }
-}
-
-// Export service instances
 export const authService = new AuthService();
 export const tournamentService = new TournamentService();
-export const weatherService = new WeatherService();
-export const bookingService = new BookingService();
-export const socialService = new SocialService();
 export const creditService = new CreditService();
-export const gameResultService = new GameResultService();
-export const systemService = new SystemService();
+export const socialService = new SocialService();
+export const locationService = new LocationService();
 
-// Export default API instance for custom requests
-const defaultApiService = new ApiService();
-export default defaultApiService;
+// ✅ TYPE ALIASES for backward compatibility
+export type RegisterData = RegisterRequest;
+export type LoginData = LoginRequest;

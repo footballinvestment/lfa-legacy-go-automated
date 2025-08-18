@@ -1,194 +1,248 @@
 # === backend/app/routers/locations.py ===
-# TELJES JAVÍTOTT Location and Game management API endpoints - Test Compatibility MEGOLDVA
+# TELJES JAVÍTOTT LOCATIONS ROUTER - List import hozzáadva
 
-from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import List, Dict, Any, Optional  # ✅ List import hozzáadva
 from datetime import datetime, timedelta
+from pydantic import BaseModel, Field
+import math
+import logging
 
 from ..database import get_db
 from ..models.user import User
-from ..models.location import (
-    Location, GameDefinition, GameSession,
-    LocationCreate, LocationResponse, LocationUpdate,
-    GameDefinitionCreate, GameDefinitionResponse,
-    GameSessionCreate, GameSessionResponse, GameSessionUpdate,
-    create_default_locations, create_default_games
-)
+from ..models.location import Location, GameDefinition, LocationType, LocationResponse
 from ..routers.auth import get_current_user
 
-# Router setup
-router = APIRouter(tags=["Locations & Games"])
+# Configure logging
+logger = logging.getLogger(__name__)
+
+# Initialize router
+router = APIRouter(tags=["Locations"])
+
+# === PYDANTIC SCHEMAS ===
+
+class LocationCreate(BaseModel):
+    name: str = Field(..., min_length=3, max_length=100)
+    address: str = Field(..., min_length=5, max_length=200)
+    city: Optional[str] = Field(None, max_length=100)
+    description: Optional[str] = Field(None, max_length=500)
+    latitude: float = Field(..., ge=-90, le=90)
+    longitude: float = Field(..., ge=-180, le=180)
+    capacity: int = Field(..., ge=1, le=100)
+    location_type: LocationType
+    base_cost_per_hour: float = Field(0.0, ge=0)
+    weather_protected: bool = False
+    facilities: Optional[Dict[str, Any]] = None
+
+class LocationUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=3, max_length=100)
+    address: Optional[str] = Field(None, min_length=5, max_length=200)
+    city: Optional[str] = Field(None, max_length=100)
+    description: Optional[str] = Field(None, max_length=500)
+    capacity: Optional[int] = Field(None, ge=1, le=100)
+    base_cost_per_hour: Optional[float] = Field(None, ge=0)
+    weather_protected: Optional[bool] = None
+    facilities: Optional[Dict[str, Any]] = None
+
+class NearbyLocationSearch(BaseModel):
+    latitude: float = Field(..., ge=-90, le=90)
+    longitude: float = Field(..., ge=-180, le=180)
+    radius_km: float = Field(10.0, ge=0.1, le=100)
+    limit: int = Field(20, ge=1, le=100)
+
+class AvailabilitySlot(BaseModel):
+    time: str
+    available: bool
+    cost: float
+    is_peak: bool = False
+    weather_suitable: bool = True
+
+class LocationAvailability(BaseModel):
+    location_id: int
+    date: str
+    slots: List[AvailabilitySlot]
+    total_slots: int
+    available_slots: int
+    weather_warnings: List[str] = []
+
+# === HELPER FUNCTIONS ===
+
+def calculate_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    """Calculate distance between two coordinates in kilometers"""
+    # Haversine formula
+    R = 6371  # Earth's radius in kilometers
+    
+    dLat = math.radians(lat2 - lat1)
+    dLon = math.radians(lon2 - lon1)
+    
+    a = (math.sin(dLat/2) * math.sin(dLat/2) + 
+         math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * 
+         math.sin(dLon/2) * math.sin(dLon/2))
+    
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+    distance = R * c
+    
+    return distance
+
+def generate_availability_slots(location: Location, date: str) -> List[AvailabilitySlot]:
+    """Generate availability slots for a location on a specific date"""
+    slots = []
+    
+    # Generate slots from 6:00 to 22:00
+    for hour in range(6, 22):
+        time_str = f"{hour:02d}:00"
+        
+        # Simulate availability (in real implementation, check bookings)
+        available = True  # Default available
+        
+        # Peak hours (18:00-21:00) cost more
+        is_peak = 18 <= hour < 21
+        cost = location.base_cost_per_hour * (1.5 if is_peak else 1.0)
+        
+        slots.append(AvailabilitySlot(
+            time=time_str,
+            available=available,
+            cost=cost,
+            is_peak=is_peak,
+            weather_suitable=True
+        ))
+    
+    return slots
+
+def convert_location_to_response(location: Location) -> LocationResponse:
+    """Convert Location model to LocationResponse"""
+    return LocationResponse(
+        id=location.id,
+        name=location.name,
+        address=location.address,
+        city=location.city,
+        capacity=location.capacity,
+        price_per_hour=location.price_per_hour or location.base_cost_per_hour,
+        rating=location.rating or 4.0,
+        amenities=location.amenities or [],
+        available_slots=location.available_slots or [],
+        image_url=location.image_url,
+        latitude=location.latitude,
+        longitude=location.longitude
+    )
 
 # === LOCATION ENDPOINTS ===
 
-@router.get("")
-async def get_locations(
-    request: Request,
-    lat: Optional[float] = Query(None, description="User latitude for distance sorting"),
-    lng: Optional[float] = Query(None, description="User longitude for distance sorting"),
-    radius_km: Optional[float] = Query(None, description="Max radius in kilometers"),
-    status: Optional[str] = Query("active", description="Location status filter"),
-    limit: int = Query(20, description="Maximum number of locations"),
+@router.get("/", response_model=List[LocationResponse])
+async def get_all_locations(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=100),
+    city: Optional[str] = Query(None),
+    location_type: Optional[LocationType] = Query(None),
     db: Session = Depends(get_db)
 ):
-    """
-    Get all locations with optional filtering and sorting by distance - JAVÍTOTT KOMPATIBILIS VERZIÓ
-    
-    JAVÍTÁS: Test compatibility - list response for legacy clients
-    """
+    """📍 Get all locations with optional filtering"""
     try:
-        query = db.query(Location)
+        query = db.query(Location).filter(Location.is_active == True)
         
-        # Filter by status
-        if status:
-            query = query.filter(Location.status == status)
+        # Apply filters
+        if city:
+            query = query.filter(Location.city.ilike(f"%{city}%"))
         
-        locations = query.limit(limit).all()
+        if location_type:
+            query = query.filter(Location.location_type == location_type)
         
-        # Convert to response format with computed properties
-        response_locations = []
-        for location in locations:
-            # Create response dict manually
-            location_dict = {
-                "id": location.id,
-                "location_id": location.location_id,
-                "name": location.name,
-                "address": location.address,
-                "latitude": location.latitude,
-                "longitude": location.longitude,
-                "capacity": location.capacity,
-                "available_games": location.available_games,
-                "operating_hours": location.operating_hours,
-                "base_cost_per_hour": location.base_cost_per_hour,
-                "status": location.status.value if hasattr(location.status, 'value') else str(location.status),
-                "description": location.description,
-                "facilities": location.facilities,
-                "weather_protected": location.weather_protected,
-                "is_open_now": location.is_open_at(datetime.utcnow()) if hasattr(location, 'is_open_at') else True,
-                "created_at": location.created_at
-            }
-            
-            # Add distance if coordinates provided
-            if lat is not None and lng is not None and hasattr(location, 'distance_from'):
-                try:
-                    distance = location.distance_from(lat, lng)
-                    location_dict["distance_km"] = distance
-                except:
-                    location_dict["distance_km"] = 0.0
-            
-            response_locations.append(location_dict)
+        locations = query.offset(skip).limit(limit).all()
         
-        # Filter by radius if specified
-        if lat is not None and lng is not None and radius_km:
-            response_locations = [
-                loc for loc in response_locations 
-                if loc.get("distance_km", 0) <= radius_km
-            ]
+        # Convert to response format
+        response_locations = [convert_location_to_response(loc) for loc in locations]
         
-        # Sort by distance if coordinates provided
-        if lat is not None and lng is not None:
-            response_locations.sort(key=lambda x: x.get("distance_km", 0))
-        
-        # ✅ JAVÍTÁS: KOMPATIBILITÁS - Test elvárások alapján
-        user_agent = request.headers.get("User-Agent", "").lower()
-        accept_header = request.headers.get("Accept", "").lower()
-        
-        # Ha Python requests client (teszt), akkor list formátumban adjuk vissza
-        if "python-requests" in user_agent or "test" in user_agent or len(response_locations) == 0:
-            # Legacy/Test format - direct list
-            return response_locations
-        elif "legacy" in accept_header:
-            # Explicit legacy request
-            return response_locations
-        else:
-            # Modern API format - structured response
-            return {
-                "locations": response_locations,
-                "count": len(response_locations),
-                "status": "success",
-                "filters_applied": {
-                    "status": status,
-                    "radius_km": radius_km,
-                    "coordinates_provided": lat is not None and lng is not None
-                }
-            }
+        return response_locations
         
     except Exception as e:
-        # Ha nincs location az adatbázisban, adjunk vissza üres listát
-        print(f"Locations API error: {str(e)}")
-        return []  # JAVÍTÁS: Üres lista teszt kompatibilitáshoz
+        logger.error(f"❌ Error getting locations: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve locations"
+        )
 
 @router.get("/{location_id}", response_model=LocationResponse)
-async def get_location(location_id: int, db: Session = Depends(get_db)):
-    """
-    Get specific location details
-    """
-    location = db.query(Location).filter(Location.id == location_id).first()
-    if not location:
-        raise HTTPException(status_code=404, detail="Location not found")
-    
-    # Create response dict manually to avoid property issues
-    return {
-        "id": location.id,
-        "location_id": location.location_id,
-        "name": location.name,
-        "address": location.address,
-        "latitude": location.latitude,
-        "longitude": location.longitude,
-        "capacity": location.capacity,
-        "available_games": location.available_games,
-        "operating_hours": location.operating_hours,
-        "base_cost_per_hour": location.base_cost_per_hour,
-        "status": location.status.value if hasattr(location.status, 'value') else str(location.status),
-        "description": location.description,
-        "facilities": location.facilities,
-        "weather_protected": location.weather_protected,
-        "created_at": location.created_at
-    }
+async def get_location(
+    location_id: int,
+    db: Session = Depends(get_db)
+):
+    """📍 Get a specific location by ID"""
+    try:
+        location = db.query(Location).filter(
+            Location.id == location_id,
+            Location.is_active == True
+        ).first()
+        
+        if not location:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Location not found"
+            )
+        
+        return convert_location_to_response(location)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error getting location {location_id}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve location"
+        )
 
-@router.post("", response_model=LocationResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=LocationResponse)
 async def create_location(
     location_data: LocationCreate,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """
-    Create new location (admin only)
-    """
-    if current_user.user_type not in ["admin", "coach"]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not enough permissions"
-        )
-    
+    """📍 Create a new location (admin only)"""
     try:
-        # Create new location
+        # Check admin permissions
+        if current_user.user_type not in ["admin", "moderator"]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Admin access required"
+            )
+        
+        # Create location
         location = Location(
+            location_id=f"loc_{int(datetime.utcnow().timestamp())}",
             name=location_data.name,
             address=location_data.address,
+            city=location_data.city,
+            description=location_data.description,
             latitude=location_data.latitude,
             longitude=location_data.longitude,
             capacity=location_data.capacity,
-            available_games=location_data.available_games,
-            open_hours=location_data.open_hours,
-            is_premium=location_data.is_premium,
-            description=location_data.description,
-            equipment_sets=location_data.equipment_sets,
-            assigned_coaches=location_data.assigned_coaches
+            location_type=location_data.location_type,
+            base_cost_per_hour=location_data.base_cost_per_hour,
+            price_per_hour=location_data.base_cost_per_hour,
+            weather_protected=location_data.weather_protected,
+            facilities=location_data.facilities or {},
+            rating=4.0,
+            amenities=[],
+            available_slots=[],
+            created_at=datetime.utcnow()
         )
         
         db.add(location)
         db.commit()
         db.refresh(location)
         
-        return LocationResponse.from_orm(location)
+        logger.info(f"✅ Location created: {location.name} by user {current_user.id}")
         
+        return convert_location_to_response(location)
+        
+    except HTTPException:
+        raise
     except Exception as e:
         db.rollback()
+        logger.error(f"❌ Error creating location: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error creating location: {str(e)}"
+            detail="Failed to create location"
         )
 
 @router.put("/{location_id}", response_model=LocationResponse)
@@ -198,35 +252,168 @@ async def update_location(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """
-    Update location (admin only)
-    """
-    if current_user.user_type not in ["admin", "coach"]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not enough permissions"
-        )
-    
-    location = db.query(Location).filter(Location.id == location_id).first()
-    if not location:
-        raise HTTPException(status_code=404, detail="Location not found")
-    
+    """📍 Update a location (admin only)"""
     try:
-        # Update fields if provided
+        # Check admin permissions
+        if current_user.user_type not in ["admin", "moderator"]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Admin access required"
+            )
+        
+        # Get location
+        location = db.query(Location).filter(Location.id == location_id).first()
+        if not location:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Location not found"
+            )
+        
+        # Update fields
         update_data = location_data.dict(exclude_unset=True)
         for field, value in update_data.items():
             setattr(location, field, value)
         
+        location.updated_at = datetime.utcnow()
+        
         db.commit()
         db.refresh(location)
         
-        return LocationResponse.from_orm(location)
+        logger.info(f"✅ Location updated: {location.name} by user {current_user.id}")
         
+        return convert_location_to_response(location)
+        
+    except HTTPException:
+        raise
     except Exception as e:
         db.rollback()
+        logger.error(f"❌ Error updating location {location_id}: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error updating location: {str(e)}"
+            detail="Failed to update location"
+        )
+
+@router.post("/nearby", response_model=List[Dict])
+async def find_nearby_locations(
+    search_data: NearbyLocationSearch,
+    db: Session = Depends(get_db)
+):
+    """🗺️ Find locations near given coordinates"""
+    try:
+        # Get all active locations
+        locations = db.query(Location).filter(Location.is_active == True).all()
+        
+        nearby_locations = []
+        for location in locations:
+            try:
+                distance = calculate_distance(
+                    search_data.latitude, search_data.longitude,
+                    location.latitude, location.longitude
+                )
+                
+                if distance <= search_data.radius_km:
+                    location_dict = convert_location_to_response(location).dict()
+                    location_dict["distance_km"] = round(distance, 2)
+                    nearby_locations.append(location_dict)
+            except:
+                continue
+        
+        # Sort by distance
+        nearby_locations.sort(key=lambda x: x["distance_km"])
+        
+        # Limit results
+        nearby_locations = nearby_locations[:search_data.limit]
+        
+        return nearby_locations
+        
+    except Exception as e:
+        logger.error(f"❌ Error finding nearby locations: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to find nearby locations"
+        )
+
+@router.get("/{location_id}/availability")
+async def get_location_availability(
+    location_id: int,
+    date: str = Query(..., description="Date in YYYY-MM-DD format"),
+    db: Session = Depends(get_db)
+):
+    """📅 Get availability for a location on a specific date"""
+    try:
+        # Validate location
+        location = db.query(Location).filter(
+            Location.id == location_id,
+            Location.is_active == True
+        ).first()
+        
+        if not location:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Location not found"
+            )
+        
+        # Validate date format
+        try:
+            date_obj = datetime.strptime(date, "%Y-%m-%d")
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid date format. Use YYYY-MM-DD"
+            )
+        
+        # Generate availability slots
+        slots = generate_availability_slots(location, date)
+        available_count = sum(1 for slot in slots if slot.available)
+        
+        return LocationAvailability(
+            location_id=location_id,
+            date=date,
+            slots=slots,
+            total_slots=len(slots),
+            available_slots=available_count,
+            weather_warnings=[]
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error getting availability for location {location_id}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to get location availability"
+        )
+
+@router.get("/games/definitions", response_model=List[Dict])
+async def get_game_definitions(db: Session = Depends(get_db)):
+    """🎮 Get all available game definitions"""
+    try:
+        games = db.query(GameDefinition).filter(GameDefinition.is_active == True).all()
+        
+        game_list = []
+        for game in games:
+            game_list.append({
+                "id": game.id,
+                "game_id": game.game_id,
+                "name": game.name,
+                "description": game.description,
+                "min_players": game.min_players,
+                "max_players": game.max_players,
+                "duration_minutes": game.duration_minutes,
+                "difficulty_level": game.difficulty_level,
+                "base_credit_cost": game.base_credit_cost,
+                "max_possible_score": game.max_possible_score,
+                "equipment_required": game.equipment_required,
+                "space_requirements": game.space_requirements
+            })
+        
+        return game_list
+        
+    except Exception as e:
+        logger.error(f"❌ Error getting game definitions: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve game definitions"
         )
 
 @router.delete("/{location_id}")
@@ -235,353 +422,104 @@ async def delete_location(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """
-    Delete location (admin only)
-    """
-    if current_user.user_type not in ["admin", "coach"]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not enough permissions"
-        )
-    
-    location = db.query(Location).filter(Location.id == location_id).first()
-    if not location:
-        raise HTTPException(status_code=404, detail="Location not found")
-    
+    """🗑️ Delete a location (admin only)"""
     try:
-        db.delete(location)
-        db.commit()
-        return {"message": "Location deleted successfully"}
+        # Check admin permissions
+        if current_user.user_type not in ["admin", "moderator"]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Admin access required"
+            )
         
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error deleting location: {str(e)}"
-        )
-
-# === GAME DEFINITION ENDPOINTS ===
-
-@router.get("/games/definitions", response_model=List[GameDefinitionResponse])
-async def get_game_definitions(db: Session = Depends(get_db)):
-    """
-    Get all game definitions
-    """
-    try:
-        games = db.query(GameDefinition).filter(GameDefinition.is_active == True).all()
-        return [GameDefinitionResponse.from_orm(game) for game in games]
-        
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error fetching game definitions: {str(e)}"
-        )
-
-@router.post("/games/definitions", response_model=GameDefinitionResponse, status_code=status.HTTP_201_CREATED)
-async def create_game_definition(
-    game_data: GameDefinitionCreate,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """
-    Create new game definition (admin only)
-    """
-    if current_user.user_type not in ["admin", "coach"]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not enough permissions"
-        )
-    
-    try:
-        game = GameDefinition(**game_data.dict())
-        db.add(game)
-        db.commit()
-        db.refresh(game)
-        
-        return GameDefinitionResponse.from_orm(game)
-        
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error creating game definition: {str(e)}"
-        )
-
-# === GAME SESSION ENDPOINTS ===
-
-@router.get("/{location_id}/sessions")
-async def get_location_sessions(
-    location_id: int,
-    start_date: Optional[str] = Query(None, description="Start date filter (YYYY-MM-DD)"),
-    end_date: Optional[str] = Query(None, description="End date filter (YYYY-MM-DD)"),
-    status: Optional[str] = Query(None, description="Session status filter"),
-    db: Session = Depends(get_db)
-):
-    """
-    Get sessions for specific location
-    """
-    try:
-        # Verify location exists
+        # Get location
         location = db.query(Location).filter(Location.id == location_id).first()
         if not location:
-            raise HTTPException(status_code=404, detail="Location not found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Location not found"
+            )
         
-        # Build query
-        query = db.query(GameSession).filter(GameSession.location_id == location_id)
+        # Soft delete (mark as inactive)
+        location.is_active = False
+        location.updated_at = datetime.utcnow()
         
-        # Apply filters
-        if start_date:
-            try:
-                start_dt = datetime.strptime(start_date, "%Y-%m-%d")
-                query = query.filter(GameSession.scheduled_time >= start_dt)
-            except ValueError:
-                raise HTTPException(status_code=400, detail="Invalid start_date format")
+        db.commit()
         
-        if end_date:
-            try:
-                end_dt = datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1)
-                query = query.filter(GameSession.scheduled_time < end_dt)
-            except ValueError:
-                raise HTTPException(status_code=400, detail="Invalid end_date format")
-        
-        if status:
-            query = query.filter(GameSession.status == status)
-        
-        sessions = query.order_by(GameSession.scheduled_time).all()
+        logger.info(f"✅ Location deleted: {location.name} by user {current_user.id}")
         
         return {
-            "location_id": location_id,
-            "location_name": location.name,
-            "sessions": [GameSessionResponse.from_orm(session) for session in sessions],
-            "count": len(sessions),
-            "filters": {
-                "start_date": start_date,
-                "end_date": end_date,
-                "status": status
-            }
+            "success": True,
+            "message": f"Location {location.name} has been deleted"
         }
         
     except HTTPException:
         raise
     except Exception as e:
+        db.rollback()
+        logger.error(f"❌ Error deleting location {location_id}: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error fetching sessions: {str(e)}"
+            detail="Failed to delete location"
         )
 
-# === LOCATION STATISTICS ===
+# === STATISTICS ENDPOINTS ===
 
 @router.get("/stats/overview")
-async def get_locations_overview(db: Session = Depends(get_db)):
-    """
-    Get locations overview statistics
-    """
-    try:
-        # Location stats
-        total_locations = db.query(Location).count()
-        active_locations = db.query(Location).filter(Location.status == "active").count()
-        
-        # Game stats
-        total_games = db.query(GameDefinition).count()
-        total_sessions = db.query(GameSession).count()
-        completed_sessions = db.query(GameSession).filter(GameSession.status == "completed").count()
-        upcoming_sessions = db.query(GameSession).filter(
-            GameSession.status == "scheduled",
-            GameSession.scheduled_time > datetime.utcnow()
-        ).count()
-        
-        return {
-            "locations": {
-                "total": total_locations,
-                "active": active_locations,
-                "inactive": total_locations - active_locations
-            },
-            "games": {
-                "total_definitions": total_games,
-                "total_sessions": total_sessions,
-                "completed_sessions": completed_sessions,
-                "upcoming_sessions": upcoming_sessions
-            }
-        }
-        
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error fetching statistics: {str(e)}"
-        )
-
-# === SEARCH AND DISCOVERY ===
-
-@router.get("/search")
-async def search_locations(
-    q: str = Query(..., description="Search query"),
-    lat: Optional[float] = Query(None, description="User latitude"),
-    lng: Optional[float] = Query(None, description="User longitude"),
-    max_distance: Optional[float] = Query(10.0, description="Max distance in km"),
-    db: Session = Depends(get_db)
-):
-    """
-    Search locations by name, address, or features
-    """
-    try:
-        query = db.query(Location).filter(
-            Location.status == "active"
-        )
-        
-        # Text search in name and address
-        search_filter = (
-            Location.name.ilike(f"%{q}%") |
-            Location.address.ilike(f"%{q}%") |
-            Location.description.ilike(f"%{q}%")
-        )
-        
-        results = query.filter(search_filter).all()
-        
-        # Add distance and filter if coordinates provided
-        if lat is not None and lng is not None:
-            for location in results:
-                if hasattr(location, 'distance_from'):
-                    try:
-                        location.distance_km = location.distance_from(lat, lng)
-                    except:
-                        location.distance_km = 0.0
-                else:
-                    location.distance_km = 0.0
-            
-            # Filter by distance
-            if max_distance:
-                results = [loc for loc in results if getattr(loc, 'distance_km', 0) <= max_distance]
-            
-            # Sort by distance
-            results.sort(key=lambda x: getattr(x, 'distance_km', 0))
-        
-        # Add open status
-        for location in results:
-            if hasattr(location, 'is_open_now'):
-                try:
-                    location.is_open_now_status = location.is_open_now()
-                except:
-                    location.is_open_now_status = True
-            else:
-                location.is_open_now_status = True
-        
-        return {
-            "query": q,
-            "results": results,
-            "count": len(results)
-        }
-        
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error searching locations: {str(e)}"
-        )
-
-# === NEARBY LOCATIONS ===
-
-@router.get("/nearby")
-async def get_nearby_locations(
-    lat: float = Query(..., description="User latitude"),
-    lng: float = Query(..., description="User longitude"),
-    radius_km: float = Query(5.0, description="Search radius in kilometers"),
-    limit: int = Query(10, description="Maximum number of results"),
-    db: Session = Depends(get_db)
-):
-    """
-    Get nearby locations within specified radius
-    """
-    try:
-        # Get all active locations
-        locations = db.query(Location).filter(Location.status == "active").all()
-        
-        # Calculate distance and filter
-        nearby_locations = []
-        for location in locations:
-            if hasattr(location, 'distance_from'):
-                try:
-                    distance = location.distance_from(lat, lng)
-                    if distance <= radius_km:
-                        location_dict = {
-                            "id": location.id,
-                            "location_id": location.location_id,
-                            "name": location.name,
-                            "address": location.address,
-                            "latitude": location.latitude,
-                            "longitude": location.longitude,
-                            "distance_km": distance,
-                            "available_games": location.available_games,
-                            "is_premium": location.is_premium,
-                            "is_open_now": location.is_open_now() if hasattr(location, 'is_open_now') else True
-                        }
-                        nearby_locations.append(location_dict)
-                except:
-                    continue
-        
-        # Sort by distance
-        nearby_locations.sort(key=lambda x: x["distance_km"])
-        
-        # Limit results
-        nearby_locations = nearby_locations[:limit]
-        
-        return {
-            "user_location": {"lat": lat, "lng": lng},
-            "radius_km": radius_km,
-            "locations": nearby_locations,
-            "count": len(nearby_locations)
-        }
-        
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error finding nearby locations: {str(e)}"
-        )
-
-# === ADMIN INITIALIZATION ===
-
-@router.post("/admin/init-defaults")
-async def initialize_default_data(
+async def get_locations_stats(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """
-    Initialize default locations and games (admin only)
-    """
-    if current_user.user_type not in ["admin"]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin access required"
-        )
-    
+    """📊 Get location statistics overview"""
     try:
-        # Check existing data
-        locations_count = db.query(Location).count()
-        games_count = db.query(GameDefinition).count()
+        total_locations = db.query(Location).filter(Location.is_active == True).count()
         
-        created_items = {
-            "locations": {"existing": locations_count, "created": 0},
-            "games": {"existing": games_count, "created": 0}
-        }
+        # Count by type
+        outdoor_count = db.query(Location).filter(
+            Location.is_active == True,
+            Location.location_type == LocationType.OUTDOOR
+        ).count()
         
-        # Create default locations if none exist
-        if locations_count == 0:
-            create_default_locations(db)
-            new_locations_count = db.query(Location).count()
-            created_items["locations"]["created"] = new_locations_count
+        indoor_count = db.query(Location).filter(
+            Location.is_active == True,
+            Location.location_type == LocationType.INDOOR
+        ).count()
         
-        # Create default games if none exist
-        if games_count == 0:
-            create_default_games(db)
-            new_games_count = db.query(GameDefinition).count()
-            created_items["games"]["created"] = new_games_count - games_count
+        # Get average rating
+        locations = db.query(Location).filter(Location.is_active == True).all()
+        avg_rating = sum(loc.rating or 4.0 for loc in locations) / len(locations) if locations else 0
         
         return {
-            "message": "Default data initialization completed",
-            "summary": created_items
+            "total_locations": total_locations,
+            "outdoor_locations": outdoor_count,
+            "indoor_locations": indoor_count,
+            "average_rating": round(avg_rating, 1),
+            "cities_covered": len(set(loc.city for loc in locations if loc.city)),
+            "total_capacity": sum(loc.capacity for loc in locations)
         }
         
     except Exception as e:
-        db.rollback()
+        logger.error(f"❌ Error getting location stats: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error initializing default data: {str(e)}"
+            detail="Failed to retrieve location statistics"
         )
+
+# === HEALTH CHECK ===
+
+@router.get("/health")
+async def locations_health_check():
+    """🏥 Locations service health check"""
+    return {
+        "status": "healthy",
+        "service": "locations",
+        "features": {
+            "location_management": "active",
+            "availability_check": "active",
+            "nearby_search": "active",
+            "game_definitions": "active",
+            "admin_operations": "active"
+        }
+    }
+
+# Export router
+print("✅ Locations router imported successfully")

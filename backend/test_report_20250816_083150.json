@@ -1,0 +1,103 @@
+{
+  "summary": {
+    "successful_tests": 10,
+    "total_tests": 10,
+    "success_rate": 100.0,
+    "total_time": 6.656017065048218,
+    "status": "🟢 KIVÁLÓ - Produkció kész",
+    "timestamp": "2025-08-16T08:31:50.571721"
+  },
+  "detailed_results": [
+    {
+      "test": "Backend Health Check",
+      "success": true,
+      "details": "Status: healthy",
+      "timestamp": "2025-08-16T08:31:43.948373",
+      "response_data": null
+    },
+    {
+      "test": "Frontend Accessibility",
+      "success": true,
+      "details": "Frontend server responding",
+      "timestamp": "2025-08-16T08:31:44.514179",
+      "response_data": null
+    },
+    {
+      "test": "User Registration",
+      "success": true,
+      "details": "User created: testuser_1755325905_bumu (ID: 10, Credits: 5)",
+      "timestamp": "2025-08-16T08:31:45.588499",
+      "response_data": null
+    },
+    {
+      "test": "User Login",
+      "success": true,
+      "details": "Login successful for testuser_1755325905_bumu",
+      "timestamp": "2025-08-16T08:31:46.585760",
+      "response_data": null
+    },
+    {
+      "test": "Protected Endpoint Access",
+      "success": true,
+      "details": "Profile accessed: testuser_1755325905_bumu (Level: 1, Credits: 5)",
+      "timestamp": "2025-08-16T08:31:47.135488",
+      "response_data": null
+    },
+    {
+      "test": "Credits System - Packages",
+      "success": true,
+      "details": "Found 4 credit packages",
+      "timestamp": "2025-08-16T08:31:47.704852",
+      "response_data": null
+    },
+    {
+      "test": "Credits System - Balance",
+      "success": true,
+      "details": "User balance: 5 credits",
+      "timestamp": "2025-08-16T08:31:47.755718",
+      "response_data": null
+    },
+    {
+      "test": "Locations System",
+      "success": true,
+      "details": "Found 3 locations",
+      "timestamp": "2025-08-16T08:31:48.283367",
+      "response_data": null
+    },
+    {
+      "test": "Tournaments System - List",
+      "success": true,
+      "details": "Found 1 tournaments",
+      "timestamp": "2025-08-16T08:31:48.852235",
+      "response_data": null
+    },
+    {
+      "test": "Tournament Registration",
+      "success": true,
+      "details": "Expected credit check working: Insufficient credits. Required: 10",
+      "timestamp": "2025-08-16T08:31:48.874648",
+      "response_data": null
+    },
+    {
+      "test": "Booking System - Availability",
+      "success": true,
+      "details": "Found availability data for 2025-08-16",
+      "timestamp": "2025-08-16T08:31:49.452393",
+      "response_data": null
+    },
+    {
+      "test": "Booking System - My Bookings",
+      "success": true,
+      "details": "User has 0 bookings",
+      "timestamp": "2025-08-16T08:31:49.471509",
+      "response_data": null
+    },
+    {
+      "test": "User Logout",
+      "success": true,
+      "details": "Successfully logged out",
+      "timestamp": "2025-08-16T08:31:50.064583",
+      "response_data": null
+    }
+  ]
+}

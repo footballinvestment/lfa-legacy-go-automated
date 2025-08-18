@@ -1,0 +1,20 @@
+{
+  "timestamp": "2025-08-16T21:21:11.745974",
+  "total_tests": 1,
+  "passed_tests": 0,
+  "failed_tests": 1,
+  "compatibility_percentage": 0.0,
+  "critical_issues": [
+    "User Setup: Failed to setup test user: {\"detail\":\"Username or email already registered\"}"
+  ],
+  "api_mismatches": [],
+  "test_results": {
+    "User Setup": {
+      "success": false,
+      "details": "Failed to setup test user: {\"detail\":\"Username or email already registered\"}",
+      "response_code": 400,
+      "timestamp": "2025-08-16T21:21:11.745923"
+    }
+  },
+  "recommendations": []
+}

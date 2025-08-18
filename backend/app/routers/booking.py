@@ -1,38 +1,40 @@
 # === backend/app/routers/booking.py ===
-# TELJES JAVÍTOTT Real-Time Location Booking System Router - TIMEZONE FIX
+# TELJES JAVÍTOTT BOOKING ROUTER - List import hozzáadva
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query, BackgroundTasks
 from sqlalchemy.orm import Session
-from typing import List, Optional, Dict, Any
+from typing import List, Dict, Any, Optional  # ✅ List import hozzáadva
 from datetime import datetime, timedelta, timezone
+from pydantic import BaseModel, Field
 import uuid
 import logging
-from pydantic import BaseModel
 
 from ..database import get_db
 from ..models.user import User
-from ..models.location import Location, GameDefinition, GameSession, SessionStatus
+from ..models.location import Location, GameDefinition, GameSession, GameSessionStatus
 from ..routers.auth import get_current_user
 
-# Initialize router and logger
-router = APIRouter(tags=["Real-Time Booking with Weather"])
+# Configure logging
 logger = logging.getLogger(__name__)
 
-# === JAVÍTOTT PYDANTIC MODELS ===
+# Initialize router
+router = APIRouter(tags=["Real-Time Booking"])
+
+# === PYDANTIC SCHEMAS ===
 
 class BookingRequest(BaseModel):
     location_id: int
-    game_type: str = "GAME1"  # Default to GAME1
-    start_time: Optional[str] = None  # ISO format datetime
-    scheduled_time: Optional[str] = None  # Alternative field name
-    duration_minutes: int = 60
-    additional_players: Optional[List[Dict]] = []
-    notes: Optional[str] = None
+    game_type: str = Field(default="GAME1", pattern="^GAME[1-5]$")
+    start_time: Optional[str] = Field(None, description="ISO format datetime")
+    scheduled_time: Optional[str] = Field(None, description="Alternative field name")
+    duration_minutes: int = Field(default=60, ge=15, le=240)
+    additional_players: Optional[List[Dict]] = Field(default=[])
+    notes: Optional[str] = Field(None, max_length=500)
 
 class BookingResponse(BaseModel):
     success: bool
     message: str
-    id: Optional[str] = None  # session ID
+    id: Optional[str] = None
     session_id: Optional[str] = None
     booking_reference: Optional[str] = None
     credits_charged: Optional[int] = None
@@ -45,7 +47,159 @@ class AvailabilitySlot(BaseModel):
     cost_credits: int
     weather_warning: Optional[str] = None
 
-# === JAVÍTOTT AVAILABILITY ENDPOINTS ===
+class BookingUpdate(BaseModel):
+    notes: Optional[str] = Field(None, max_length=500)
+    additional_players: Optional[List[Dict]] = None
+
+class SessionDetails(BaseModel):
+    id: int
+    session_id: str
+    location_id: int
+    location_name: str
+    game_type: str
+    game_name: str
+    scheduled_start: datetime
+    scheduled_end: datetime
+    duration_minutes: int
+    status: GameSessionStatus
+    cost_credits: int
+    participants: List[Dict]
+    notes: Optional[str] = None
+    weather_conditions: Optional[Dict] = None
+    created_at: datetime
+
+# === HELPER FUNCTIONS ===
+
+def generate_session_id() -> str:
+    """Generate unique session ID"""
+    timestamp = int(datetime.utcnow().timestamp())
+    random_part = str(uuid.uuid4())[:8]
+    return f"session_{timestamp}_{random_part}"
+
+def calculate_booking_cost(game_type: str, duration_minutes: int, location: Location) -> int:
+    """Calculate booking cost in credits"""
+    # Base cost from game definition
+    base_cost = 5  # Default base cost
+    
+    # Duration multiplier
+    duration_multiplier = duration_minutes / 60
+    
+    # Location cost factor
+    location_factor = (location.base_cost_per_hour or 15) / 15  # Normalize to base 15 HUF/hour
+    
+    # Calculate total cost
+    total_cost = int(base_cost * duration_multiplier * location_factor)
+    
+    return max(1, total_cost)  # Minimum 1 credit
+
+def parse_booking_time(booking_request: BookingRequest) -> datetime:
+    """Parse booking time from request"""
+    time_str = booking_request.start_time or booking_request.scheduled_time
+    
+    if not time_str:
+        # Default to next available hour
+        now = datetime.utcnow()
+        next_hour = now.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
+        return next_hour
+    
+    try:
+        # Try to parse ISO format
+        if 'T' in time_str:
+            return datetime.fromisoformat(time_str.replace('Z', '+00:00'))
+        else:
+            # Assume date format and add current time
+            date_part = datetime.strptime(time_str, "%Y-%m-%d")
+            return date_part.replace(hour=10)  # Default to 10:00
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid date/time format. Use ISO format or YYYY-MM-DD"
+        )
+
+def validate_booking_time(start_time: datetime) -> bool:
+    """Validate booking time is in the future and within business hours"""
+    now = datetime.utcnow()
+    
+    # Must be in the future
+    if start_time <= now:
+        return False
+    
+    # Must be within business hours (6:00 - 22:00)
+    hour = start_time.hour
+    if hour < 6 or hour >= 22:
+        return False
+    
+    # Must be within next 30 days
+    if start_time > now + timedelta(days=30):
+        return False
+    
+    return True
+
+def check_availability(location_id: int, start_time: datetime, duration_minutes: int, db: Session) -> bool:
+    """Check if time slot is available"""
+    end_time = start_time + timedelta(minutes=duration_minutes)
+    
+    # Check for conflicting bookings
+    conflicting_sessions = db.query(GameSession).filter(
+        GameSession.location_id == location_id,
+        GameSession.status.in_([GameSessionStatus.SCHEDULED, GameSessionStatus.CONFIRMED]),
+        GameSession.scheduled_start < end_time,
+        GameSession.scheduled_end > start_time
+    ).count()
+    
+    return conflicting_sessions == 0
+
+def create_game_session(
+    booking_request: BookingRequest,
+    user: User,
+    location: Location,
+    start_time: datetime,
+    db: Session
+) -> GameSession:
+    """Create a new game session"""
+    session_id = generate_session_id()
+    end_time = start_time + timedelta(minutes=booking_request.duration_minutes)
+    cost = calculate_booking_cost(booking_request.game_type, booking_request.duration_minutes, location)
+    
+    # Get game definition
+    game_definition = db.query(GameDefinition).filter(
+        GameDefinition.game_id == booking_request.game_type
+    ).first()
+    
+    if not game_definition:
+        # Create default game definition if not exists
+        game_definition = GameDefinition(
+            game_id=booking_request.game_type,
+            name=f"Game {booking_request.game_type[-1]}",
+            description="Football training session",
+            min_players=1,
+            max_players=1,
+            duration_minutes=booking_request.duration_minutes,
+            base_credit_cost=cost
+        )
+        db.add(game_definition)
+        db.commit()
+        db.refresh(game_definition)
+    
+    # Create session
+    session = GameSession(
+        session_id=session_id,
+        location_id=location.id,
+        game_definition_id=game_definition.id,
+        user_id=user.id,
+        scheduled_start=start_time,
+        scheduled_end=end_time,
+        status=GameSessionStatus.SCHEDULED,
+        participants=[user.id],
+        max_participants=1,
+        notes=booking_request.notes,
+        cost_credits=cost,
+        created_at=datetime.utcnow()
+    )
+    
+    return session
+
+# === BOOKING ENDPOINTS ===
 
 @router.get("/availability")
 async def check_availability_simple(
@@ -55,435 +209,438 @@ async def check_availability_simple(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """🔍 Check availability - JAVÍTOTT FIELD NAMES"""
-    
+    """🔍 Check availability - SIMPLE VERSION"""
     try:
         # Validate location
         location = db.query(Location).filter(Location.id == location_id).first()
         if not location:
-            raise HTTPException(status_code=404, detail="Location not found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Location not found"
+            )
         
         # Parse date
         try:
             target_date = datetime.strptime(date, "%Y-%m-%d")
         except ValueError:
-            raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid date format. Use YYYY-MM-DD"
+            )
         
-        # Check if date is in the past
-        if target_date.date() < datetime.now().date():
-            raise HTTPException(status_code=400, detail="Cannot check availability for past dates")
-        
-        # Generate sample time slots for the day
+        # Generate time slots for the day
         slots = []
-        start_hour = 8  # 8 AM
-        end_hour = 22   # 10 PM
-        
-        for hour in range(start_hour, end_hour, 2):  # Every 2 hours
+        for hour in range(6, 22):  # 6:00 to 21:00
             slot_time = target_date.replace(hour=hour, minute=0, second=0)
             
-            # JAVÍTOTT: Helyes field név használata
-            existing_session = db.query(GameSession).filter(
-                GameSession.location_id == location_id,
-                GameSession.scheduled_start <= slot_time,
-                GameSession.scheduled_end > slot_time,
-                GameSession.status.in_(['scheduled', 'confirmed', 'in_progress'])
-            ).first()
+            # Check availability
+            available = check_availability(location_id, slot_time, 60, db)
             
-            slot = AvailabilitySlot(
-                time=slot_time.strftime("%H:%M"),
-                available=existing_session is None,
-                cost_credits=5,  # Standard cost
+            # Calculate cost
+            cost = calculate_booking_cost(game_type, 60, location)
+            
+            slots.append(AvailabilitySlot(
+                time=f"{hour:02d}:00",
+                available=available,
+                cost_credits=cost,
                 weather_warning=None
-            )
-            slots.append(slot)
-        
-        logger.info(f"Availability checked for location {location_id}, date {date}: {len(slots)} slots")
+            ))
         
         return {
-            "date": date,
             "location_id": location_id,
             "location_name": location.name,
-            "slots": [slot.dict() for slot in slots],
+            "date": date,
+            "game_type": game_type,
+            "slots": slots,
             "total_slots": len(slots),
-            "available_slots": len([s for s in slots if s.available])
+            "available_slots": sum(1 for slot in slots if slot.available)
         }
         
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Availability check error: {str(e)}")
+        logger.error(f"❌ Availability check error: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error checking availability"
+            detail="Failed to check availability"
         )
 
-@router.get("/check-availability")
-async def check_basic_availability(
-    location_id: int = Query(...),
-    date: str = Query(...),
-    game_type: str = Query("GAME1"),
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """🔍 Check basic availability (legacy endpoint)"""
-    
-    # Redirect to the new unified endpoint
-    return await check_availability_simple(date, location_id, game_type, current_user, db)
-
-# === JAVÍTOTT BOOKING CREATION ENDPOINTS ===
-
-@router.post("/sessions", response_model=BookingResponse)
-async def create_booking_session(
+@router.post("/book", response_model=BookingResponse)
+async def create_booking(
     booking_request: BookingRequest,
-    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """📅 Create booking session - JAVÍTOTT TIMEZONE HANDLING"""
-    
+    """📅 Create a new booking"""
     try:
         # Validate location
         location = db.query(Location).filter(Location.id == booking_request.location_id).first()
         if not location:
-            raise HTTPException(status_code=404, detail="Location not found")
-        
-        # Parse start time - handle both field names
-        start_time_str = booking_request.start_time or booking_request.scheduled_time
-        if not start_time_str:
-            raise HTTPException(status_code=400, detail="start_time or scheduled_time is required")
-        
-        try:
-            start_time = datetime.fromisoformat(start_time_str.replace('Z', '+00:00'))
-            # Ensure start_time is timezone-aware (assume UTC if naive)
-            if start_time.tzinfo is None:
-                start_time = start_time.replace(tzinfo=timezone.utc)
-        except ValueError:
-            raise HTTPException(status_code=400, detail="Invalid datetime format")
-        
-        # JAVÍTÁS: Timezone-aware összehasonlítás
-        now_utc = datetime.now(timezone.utc)
-        if start_time <= now_utc:
-            raise HTTPException(status_code=400, detail="Cannot book in the past")
-        
-        # Check user credits
-        credits_needed = 5  # Standard cost
-        if current_user.credits < credits_needed:
             raise HTTPException(
-                status_code=400, 
-                detail=f"Insufficient credits. Need {credits_needed}, have {current_user.credits}"
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Location not found"
             )
         
-        # JAVÍTOTT: Check if slot is available - helyes field nevek + timezone fix
-        end_time = start_time + timedelta(minutes=booking_request.duration_minutes)
+        # Parse and validate booking time
+        start_time = parse_booking_time(booking_request)
         
-        # Convert to naive datetime for database comparison (database stores naive datetimes)
-        start_time_naive = start_time.replace(tzinfo=None)
-        end_time_naive = end_time.replace(tzinfo=None)
+        if not validate_booking_time(start_time):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid booking time. Must be in the future and within business hours (6:00-22:00)"
+            )
         
-        existing_session = db.query(GameSession).filter(
-            GameSession.location_id == booking_request.location_id,
-            GameSession.scheduled_start < end_time_naive,
-            GameSession.scheduled_end > start_time_naive,
-            GameSession.status.in_(['scheduled', 'confirmed', 'in_progress'])
-        ).first()
+        # Check availability
+        if not check_availability(booking_request.location_id, start_time, booking_request.duration_minutes, db):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Time slot is not available"
+            )
         
-        if existing_session:
-            raise HTTPException(status_code=400, detail="Time slot already booked")
+        # Calculate cost
+        cost = calculate_booking_cost(booking_request.game_type, booking_request.duration_minutes, location)
         
-        # Get default game definition
-        game_definition = db.query(GameDefinition).filter(
-            GameDefinition.game_id == booking_request.game_type
-        ).first()
+        # Check user credits
+        if current_user.credits < cost:
+            raise HTTPException(
+                status_code=status.HTTP_402_PAYMENT_REQUIRED,
+                detail=f"Insufficient credits. Required: {cost}, Available: {current_user.credits}"
+            )
         
-        if not game_definition:
-            game_definition = db.query(GameDefinition).first()  # Fallback to first game
+        # Create game session
+        session = create_game_session(booking_request, current_user, location, start_time, db)
         
-        if not game_definition:
-            raise HTTPException(status_code=500, detail="No game definitions available")
+        # Deduct credits
+        current_user.credits -= cost
         
-        # JAVÍTOTT: Create new game session - helyes field nevek
-        session_id = str(uuid.uuid4())
-        
-        # Use the already-defined naive datetimes for database storage
-        
-        new_session = GameSession(
-            session_id=session_id,
-            location_id=booking_request.location_id,
-            game_definition_id=game_definition.id,
-            booked_by_id=current_user.id,  # JAVÍTOTT: booked_by_id
-            scheduled_start=start_time_naive,    # JAVÍTOTT: timezone-naive
-            scheduled_end=end_time_naive,        # JAVÍTOTT: timezone-naive
-            status='scheduled',
-            participants=[current_user.id],
-            max_participants=location.capacity or 4,
-            total_cost=credits_needed,
-            payment_status="completed",
-            notes=booking_request.notes or f"Booking for {booking_request.duration_minutes} minutes"
-        )
-        
-        db.add(new_session)
-        
-        # Deduct credits from user
-        current_user.credits -= credits_needed
-        
-        # Commit transaction
+        # Add session to database
+        db.add(session)
         db.commit()
-        db.refresh(new_session)
+        db.refresh(session)
         
-        # Background tasks
-        background_tasks.add_task(send_booking_confirmation, session_id)
-        
-        logger.info(f"Booking created: Session {session_id} for user {current_user.username}, "
-                   f"Location {booking_request.location_id}, Time {start_time_naive}")
+        logger.info(f"✅ Booking created: {session.session_id} for user {current_user.id}")
         
         return BookingResponse(
             success=True,
             message="Booking created successfully",
-            id=session_id,
-            session_id=session_id,
-            booking_reference=f"LFA-{session_id[:8].upper()}",
-            credits_charged=credits_needed
+            id=str(session.id),
+            session_id=session.session_id,
+            booking_reference=session.session_id,
+            credits_charged=cost,
+            weather_warning=None,
+            refund_policy="Free cancellation up to 2 hours before start time"
         )
         
     except HTTPException:
         raise
     except Exception as e:
         db.rollback()
-        logger.error(f"Booking creation error: {str(e)}")
+        logger.error(f"❌ Booking creation error: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error creating booking"
+            detail="Failed to create booking"
         )
 
-@router.post("/create", response_model=BookingResponse)
-async def create_booking(
-    booking_request: BookingRequest,
-    background_tasks: BackgroundTasks,
+@router.get("/my-bookings", response_model=List[SessionDetails])
+async def get_user_bookings(
+    status_filter: Optional[GameSessionStatus] = Query(None, description="Filter by status"),
+    limit: int = Query(20, ge=1, le=100),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """📅 Create booking (legacy endpoint)"""
-    
-    # Redirect to the new unified endpoint
-    return await create_booking_session(booking_request, background_tasks, current_user, db)
-
-# === USER BOOKING MANAGEMENT ===
-
-@router.get("/my-bookings")
-async def get_my_bookings(
-    include_weather: bool = Query(True, description="Include weather information"),
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """📋 Get user's bookings - JAVÍTOTT FIELD NAMES"""
-    
+    """📋 Get user's bookings"""
     try:
-        # JAVÍTOTT: Get user's bookings - helyes field név
-        user_sessions = db.query(GameSession).filter(
-            GameSession.booked_by_id == current_user.id  # JAVÍTOTT: booked_by_id
-        ).order_by(GameSession.scheduled_start.desc()).all()  # JAVÍTOTT: scheduled_start
+        query = db.query(GameSession).filter(GameSession.user_id == current_user.id)
         
-        bookings = []
+        if status_filter:
+            query = query.filter(GameSession.status == status_filter)
         
-        for session in user_sessions:
-            booking_info = {
-                "session_id": session.session_id,
-                "booking_reference": f"LFA-{session.session_id[-8:].upper()}",
-                "game_name": session.game_definition.name if session.game_definition else "Unknown Game",
-                "location_name": session.location.name,
-                "start_time": session.scheduled_start.isoformat(),  # JAVÍTOTT: scheduled_start
-                "end_time": session.scheduled_end.isoformat(),      # JAVÍTOTT: scheduled_end
-                "status": session.status.value if hasattr(session.status, 'value') else str(session.status),
-                "total_cost": session.total_cost,
-                "participants": session.participants or [],
-                "notes": session.notes
-            }
+        sessions = query.order_by(GameSession.scheduled_start.desc()).limit(limit).all()
+        
+        session_details = []
+        for session in sessions:
+            # Get location and game info
+            location = db.query(Location).filter(Location.id == session.location_id).first()
+            game_def = db.query(GameDefinition).filter(GameDefinition.id == session.game_definition_id).first()
             
-            if include_weather and hasattr(session, 'weather_at_start'):
-                booking_info["weather"] = session.weather_at_start
-            
-            bookings.append(booking_info)
+            session_details.append(SessionDetails(
+                id=session.id,
+                session_id=session.session_id,
+                location_id=session.location_id,
+                location_name=location.name if location else "Unknown Location",
+                game_type=game_def.game_id if game_def else "GAME1",
+                game_name=game_def.name if game_def else "Football Training",
+                scheduled_start=session.scheduled_start,
+                scheduled_end=session.scheduled_end,
+                duration_minutes=session.duration_minutes,
+                status=session.status,
+                cost_credits=session.cost_credits,
+                participants=session.participants or [],
+                notes=session.notes,
+                weather_conditions=session.weather_conditions,
+                created_at=session.created_at
+            ))
         
-        return {
-            "bookings": bookings,
-            "total_bookings": len(bookings),
-            "upcoming_bookings": len([b for b in bookings if b["status"] in ["scheduled", "confirmed"]])
-        }
+        return session_details
         
     except Exception as e:
-        logger.error(f"Error fetching user bookings: {str(e)}")
+        logger.error(f"❌ Get user bookings error: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error retrieving bookings"
+            detail="Failed to retrieve bookings"
         )
 
-# === BOOKING CANCELLATION ===
+@router.get("/booking/{session_id}", response_model=SessionDetails)
+async def get_booking_details(
+    session_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """🔍 Get booking details"""
+    try:
+        session = db.query(GameSession).filter(GameSession.session_id == session_id).first()
+        
+        if not session:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Booking not found"
+            )
+        
+        # Check ownership
+        if session.user_id != current_user.id and current_user.user_type not in ["admin", "moderator"]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied"
+            )
+        
+        # Get location and game info
+        location = db.query(Location).filter(Location.id == session.location_id).first()
+        game_def = db.query(GameDefinition).filter(GameDefinition.id == session.game_definition_id).first()
+        
+        return SessionDetails(
+            id=session.id,
+            session_id=session.session_id,
+            location_id=session.location_id,
+            location_name=location.name if location else "Unknown Location",
+            game_type=game_def.game_id if game_def else "GAME1",
+            game_name=game_def.name if game_def else "Football Training",
+            scheduled_start=session.scheduled_start,
+            scheduled_end=session.scheduled_end,
+            duration_minutes=session.duration_minutes,
+            status=session.status,
+            cost_credits=session.cost_credits,
+            participants=session.participants or [],
+            notes=session.notes,
+            weather_conditions=session.weather_conditions,
+            created_at=session.created_at
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Get booking details error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve booking details"
+        )
 
-@router.delete("/sessions/{session_id}")
+@router.put("/booking/{session_id}")
+async def update_booking(
+    session_id: str,
+    update_data: BookingUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """✏️ Update booking details"""
+    try:
+        session = db.query(GameSession).filter(GameSession.session_id == session_id).first()
+        
+        if not session:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Booking not found"
+            )
+        
+        # Check ownership
+        if session.user_id != current_user.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied"
+            )
+        
+        # Check if booking can be modified
+        if session.status not in [GameSessionStatus.SCHEDULED]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Booking cannot be modified in current status"
+            )
+        
+        # Update fields
+        if update_data.notes is not None:
+            session.notes = update_data.notes
+        
+        if update_data.additional_players is not None:
+            # Update participants list
+            current_participants = session.participants or [current_user.id]
+            # Add logic to handle additional players
+            session.participants = current_participants
+        
+        session.updated_at = datetime.utcnow()
+        
+        db.commit()
+        
+        logger.info(f"✅ Booking updated: {session_id} by user {current_user.id}")
+        
+        return {
+            "success": True,
+            "message": "Booking updated successfully",
+            "session_id": session_id
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        logger.error(f"❌ Update booking error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to update booking"
+        )
+
+@router.delete("/booking/{session_id}")
 async def cancel_booking(
     session_id: str,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """❌ Cancel booking - JAVÍTOTT FIELD NAMES"""
-    
+    """❌ Cancel a booking"""
     try:
-        # Find the booking session
-        session = db.query(GameSession).filter(
-            GameSession.session_id == session_id,
-            GameSession.booked_by_id == current_user.id  # JAVÍTOTT: booked_by_id
-        ).first()
+        session = db.query(GameSession).filter(GameSession.session_id == session_id).first()
         
         if not session:
-            raise HTTPException(status_code=404, detail="Booking not found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Booking not found"
+            )
         
-        # Check if cancellation is allowed
-        now = datetime.now()
-        if session.scheduled_start <= now:  # JAVÍTOTT: scheduled_start
-            raise HTTPException(status_code=400, detail="Cannot cancel past or ongoing bookings")
+        # Check ownership
+        if session.user_id != current_user.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied"
+            )
         
-        # Check cancellation policy (24 hours before)
-        hours_until_booking = (session.scheduled_start - now).total_seconds() / 3600  # JAVÍTOTT: scheduled_start
-        if hours_until_booking < 24:
-            raise HTTPException(status_code=400, detail="Cannot cancel within 24 hours of booking")
+        # Check if booking can be cancelled
+        if session.status not in [GameSessionStatus.SCHEDULED, GameSessionStatus.CONFIRMED]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Booking cannot be cancelled in current status"
+            )
+        
+        # Check cancellation policy (2 hours before)
+        time_until_start = session.scheduled_start - datetime.utcnow()
+        if time_until_start < timedelta(hours=2):
+            # No refund for late cancellation
+            refund_amount = 0
+            refund_message = "No refund for cancellations less than 2 hours before start time"
+        else:
+            # Full refund for early cancellation
+            refund_amount = session.cost_credits
+            refund_message = f"Full refund of {refund_amount} credits"
+            current_user.credits += refund_amount
         
         # Update session status
-        session.status = 'cancelled'
-        
-        # Calculate refund (50% if cancelled more than 24 hours before)
-        refund_amount = int(session.total_cost * 0.5)  # 50% refund
-        
-        current_user.credits += refund_amount
+        session.status = GameSessionStatus.CANCELLED
+        session.updated_at = datetime.utcnow()
+        session.refund_amount = refund_amount
+        session.refund_reason = "User cancellation"
         
         db.commit()
         
-        logger.info(f"Booking cancelled: Session {session_id}, Refund: {refund_amount} credits")
+        logger.info(f"✅ Booking cancelled: {session_id} by user {current_user.id}, refund: {refund_amount}")
         
         return {
+            "success": True,
             "message": "Booking cancelled successfully",
-            "session_id": session_id,
             "refund_amount": refund_amount,
-            "new_credit_balance": current_user.credits
+            "refund_message": refund_message,
+            "session_id": session_id
         }
         
     except HTTPException:
         raise
     except Exception as e:
         db.rollback()
-        logger.error(f"Booking cancellation error: {str(e)}")
+        logger.error(f"❌ Cancel booking error: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error cancelling booking"
+            detail="Failed to cancel booking"
         )
 
-# === LOCATION AVAILABILITY ===
+# === ADMIN ENDPOINTS ===
 
-@router.get("/locations/{location_id}/availability")
-async def get_location_availability(
-    location_id: int,
-    start_date: str = Query(..., description="Start date (YYYY-MM-DD)"),
-    end_date: Optional[str] = Query(None, description="End date (YYYY-MM-DD)"),
+@router.get("/admin/all-bookings")
+async def get_all_bookings(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=100),
+    status_filter: Optional[GameSessionStatus] = Query(None),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """📅 Get availability for specific location - JAVÍTOTT FIELD NAMES"""
+    """👥 Get all bookings (admin only)"""
+    if current_user.user_type not in ["admin", "moderator"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required"
+        )
     
     try:
-        # Validate location
-        location = db.query(Location).filter(Location.id == location_id).first()
-        if not location:
-            raise HTTPException(status_code=404, detail="Location not found")
+        query = db.query(GameSession)
         
-        # Parse dates
-        try:
-            start = datetime.strptime(start_date, "%Y-%m-%d")
-            end = datetime.strptime(end_date, "%Y-%m-%d") if end_date else start
-        except ValueError:
-            raise HTTPException(status_code=400, detail="Invalid date format")
+        if status_filter:
+            query = query.filter(GameSession.status == status_filter)
         
-        # JAVÍTOTT: Get existing bookings - helyes field nevek
-        existing_sessions = db.query(GameSession).filter(
-            GameSession.location_id == location_id,
-            GameSession.scheduled_start >= start,  # JAVÍTOTT: scheduled_start
-            GameSession.scheduled_start <= end + timedelta(days=1),  # JAVÍTOTT: scheduled_start
-            GameSession.status.in_(['scheduled', 'confirmed', 'in_progress'])
-        ).all()
-        
-        # Build availability data
-        availability = {}
-        current_date = start
-        
-        while current_date <= end:
-            date_str = current_date.strftime("%Y-%m-%d")
-            daily_slots = []
-         
-            # Generate hourly slots (8 AM to 10 PM)
-            for hour in range(8, 22):
-                slot_time = current_date.replace(hour=hour, minute=0, second=0)
-                
-                # JAVÍTOTT: Check if slot is booked - helyes field nevek
-                is_booked = any(
-                    session.scheduled_start <= slot_time < session.scheduled_end  # JAVÍTOTT: scheduled_start/end
-                    for session in existing_sessions
-                )
-                
-                daily_slots.append({
-                    "time": f"{hour:02d}:00",
-                    "datetime": slot_time.isoformat(),
-                    "available": not is_booked,
-                    "cost_credits": 5
-                })
-            
-            availability[date_str] = daily_slots
-            current_date += timedelta(days=1)
+        sessions = query.order_by(GameSession.created_at.desc()).offset(skip).limit(limit).all()
         
         return {
-            "location_id": location_id,
-            "location_name": location.name,
-            "start_date": start_date,
-            "end_date": end_date or start_date,
-            "availability": availability
+            "bookings": [
+                {
+                    "session_id": session.session_id,
+                    "user_id": session.user_id,
+                    "location_id": session.location_id,
+                    "status": session.status,
+                    "scheduled_start": session.scheduled_start,
+                    "cost_credits": session.cost_credits,
+                    "created_at": session.created_at
+                }
+                for session in sessions
+            ],
+            "total_count": len(sessions)
         }
         
-    except HTTPException:
-        raise
     except Exception as e:
-        logger.error(f"Location availability error: {str(e)}")
+        logger.error(f"❌ Get all bookings error: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error retrieving location availability"
+            detail="Failed to retrieve all bookings"
         )
-
-# === BACKGROUND TASKS ===
-
-async def send_booking_confirmation(session_id: str):
-    """Send booking confirmation"""
-    logger.info(f"Sending booking confirmation for session {session_id}")
-    # TODO: Implement email/push notification
 
 # === HEALTH CHECK ===
 
 @router.get("/health")
-async def booking_system_health():
-    """🏥 Booking system health check"""
-    
+async def booking_health_check():
+    """🏥 Booking service health check"""
     return {
         "status": "healthy",
-        "features": [
-            "availability_check",
-            "session_creation",
-            "booking_management",
-            "cancellation_system",
-            "credit_integration"
-        ],
-        "endpoints": [
-            "/api/booking/availability",
-            "/api/booking/sessions",
-            "/api/booking/my-bookings"
-        ],
-        "field_mappings": {
-            "start_time": "scheduled_start",
-            "end_time": "scheduled_end",
-            "booked_by": "booked_by_id"
-        },
-        "last_check": datetime.now(timezone.utc).isoformat()
+        "service": "booking",
+        "features": {
+            "availability_check": "active",
+            "booking_creation": "active",
+            "booking_management": "active",
+            "cancellation": "active",
+            "admin_operations": "active"
+        }
     }
+
+# Export router
+print("✅ Booking router imported successfully")

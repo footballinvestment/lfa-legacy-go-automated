@@ -74,110 +74,232 @@ class Tournament(Base):
     end_time = Column(DateTime, nullable=False)
     registration_deadline = Column(DateTime, nullable=False)
     
-    # Participation Rules
+    # Participation Settings
     min_participants = Column(Integer, default=4)
-    max_participants = Column(Integer, nullable=False)
+    max_participants = Column(Integer, default=16)
+    current_participants = Column(Integer, default=0)
+    
+    # Financial Configuration
+    entry_fee_credits = Column(Integer, default=0)
+    prize_pool_credits = Column(Integer, default=0)
+    prize_distribution = Column(JSON, default=lambda: {"1st": 50, "2nd": 30, "3rd": 20})
+    
+    # Level and Skill Requirements
     min_level = Column(Integer, default=1)
     max_level = Column(Integer, nullable=True)
+    skill_requirements = Column(JSON, default=dict)
     
-    # Entry Requirements
-    entry_fee_credits = Column(Integer, default=0)
-    entry_requirements = Column(JSON, default=lambda: {})
-    
-    # Prize Pool
-    prize_pool_credits = Column(Integer, default=0)
-    prize_distribution = Column(JSON, nullable=False)
-    
-    # Status and Management
-    status = Column(Enum(TournamentStatus), default=TournamentStatus.REGISTRATION)
+    # Tournament Status and Management
+    status = Column(Enum(TournamentStatus), default=TournamentStatus.DRAFT)
     organizer_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    moderator_ids = Column(JSON, default=list)
     
-    # Tournament Settings
-    settings = Column(JSON, default=lambda: {})
-    
-    # Results
+    # Tournament Results
     winner_id = Column(Integer, ForeignKey("users.id"), nullable=True)
-    final_standings = Column(JSON, default=lambda: [])
+    runner_up_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    third_place_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     
-    # Metadata
+    # Tournament Structure and Progress
+    current_round = Column(Integer, default=0)
+    total_rounds = Column(Integer, default=1)
+    bracket_data = Column(JSON, default=dict)
+    schedule = Column(JSON, default=dict)
+    
+    # Tournament Rules and Configuration
+    rules = Column(JSON, default=dict)
+    special_rules = Column(Text, nullable=True)
+    match_duration_minutes = Column(Integer, default=30)
+    break_duration_minutes = Column(Integer, default=10)
+    
+    # Analytics and Statistics
+    total_matches = Column(Integer, default=0)
+    completed_matches = Column(Integer, default=0)
+    average_match_duration = Column(Float, default=0.0)
+    competitiveness_score = Column(Float, default=0.0)
+    
+    # Tournament Quality and Engagement
+    rating = Column(Float, default=0.0)
+    rating_count = Column(Integer, default=0)
+    spectator_count = Column(Integer, default=0)
+    total_prize_awarded = Column(Integer, default=0)
+    
+    # Media and Promotion
+    banner_image_url = Column(String(255), nullable=True)
+    promotion_text = Column(Text, nullable=True)
+    hashtags = Column(JSON, default=list)
+    social_links = Column(JSON, default=dict)
+    
+    # Tournament Metadata
+    is_featured = Column(Boolean, default=False)
+    is_public = Column(Boolean, default=True)
+    is_recurring = Column(Boolean, default=False)
+    recurring_schedule = Column(JSON, default=dict)
+    
+    # Weather and Environmental Factors
+    weather_dependent = Column(Boolean, default=True)
+    backup_location_id = Column(Integer, ForeignKey("locations.id"), nullable=True)
+    weather_requirements = Column(JSON, default=dict)
+    
+    # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    started_at = Column(DateTime, nullable=True)
+    completed_at = Column(DateTime, nullable=True)
     
-    # === RELATIONSHIPS - JAVÍTOTT VERZIÓ overlaps paraméterekkel ===
-    location = relationship("Location", back_populates="tournaments")
-    organizer = relationship("User", foreign_keys=[organizer_id])
-    winner = relationship("User", foreign_keys=[winner_id])
+    # ✅ JAVÍTOTT: Relationships with explicit foreign_keys
+    location = relationship("Location", foreign_keys=[location_id], back_populates="tournaments")
+    backup_location = relationship("Location", foreign_keys=[backup_location_id])
     participants = relationship("TournamentParticipant", back_populates="tournament", cascade="all, delete-orphan")
     matches = relationship("TournamentMatch", back_populates="tournament", cascade="all, delete-orphan")
-    bracket = relationship("TournamentBracket", back_populates="tournament", uselist=False, cascade="all, delete-orphan")
     
     def __repr__(self):
         return f"<Tournament(id='{self.tournament_id}', name='{self.name}', status='{self.status.value}')>"
-    
+
     @property
     def is_registration_open(self) -> bool:
-        """Check if tournament registration is still open"""
-        return (self.status == TournamentStatus.REGISTRATION and 
-                datetime.now() < self.registration_deadline)
-    
-    @property
-    def participant_count(self) -> int:
-        """Get current number of participants"""
-        return len([p for p in self.participants if p.status not in [ParticipantStatus.WITHDREW, ParticipantStatus.DISQUALIFIED]])
-    
+        """Check if registration is currently open"""
+        now = datetime.utcnow()
+        return (
+            self.status == TournamentStatus.REGISTRATION and
+            now < self.registration_deadline and
+            self.current_participants < self.max_participants
+        )
+
     @property
     def is_full(self) -> bool:
-        """Check if tournament is at maximum capacity"""
-        return self.participant_count >= self.max_participants
-    
+        """Check if tournament is at capacity"""
+        return self.current_participants >= self.max_participants
+
     @property
     def can_start(self) -> bool:
-        """Check if tournament can be started"""
-        return (self.status == TournamentStatus.REGISTRATION_CLOSED and 
-                self.participant_count >= self.min_participants)
-    
-    def generate_tournament_id(self) -> str:
-        """Generate unique tournament ID"""
-        date_str = datetime.now().strftime("%Y%m%d")
-        random_suffix = str(uuid.uuid4().hex[:6]).upper()
-        return f"TOURN_{date_str}_{random_suffix}"
-    
-    def calculate_total_matches(self) -> int:
-        """Calculate total number of matches for this tournament format"""
-        participant_count = self.participant_count
+        """Check if tournament can start"""
+        return (
+            self.current_participants >= self.min_participants and
+            self.status in [TournamentStatus.REGISTRATION, TournamentStatus.REGISTRATION_CLOSED] and
+            datetime.utcnow() >= self.start_time
+        )
+
+    @property
+    def completion_percentage(self) -> float:
+        """Calculate tournament completion percentage"""
+        if self.total_matches == 0:
+            return 0.0
+        return (self.completed_matches / self.total_matches) * 100
+
+    def add_participant(self, user_id: int) -> bool:
+        """Add a participant to the tournament"""
+        if not self.is_registration_open:
+            return False
         
+        # Check if user is already registered
+        existing = any(p.user_id == user_id for p in self.participants)
+        if existing:
+            return False
+        
+        self.current_participants += 1
+        return True
+
+    def remove_participant(self, user_id: int) -> bool:
+        """Remove a participant from the tournament"""
+        if self.status not in [TournamentStatus.REGISTRATION]:
+            return False
+        
+        # Find and remove participant
+        for participant in self.participants:
+            if participant.user_id == user_id:
+                self.current_participants -= 1
+                return True
+        return False
+
+    def generate_bracket(self) -> Dict:
+        """Generate tournament bracket based on format"""
         if self.format == TournamentFormat.SINGLE_ELIMINATION:
-            return participant_count - 1
+            return self._generate_single_elimination_bracket()
         elif self.format == TournamentFormat.ROUND_ROBIN:
-            return participant_count * (participant_count - 1) // 2
-        elif self.format == TournamentFormat.SWISS_SYSTEM:
-            rounds = math.ceil(math.log2(participant_count))
-            return rounds * (participant_count // 2)
-        else:
-            return 0
-    
-    def calculate_estimated_duration(self) -> timedelta:
-        """Calculate estimated tournament duration"""
-        game_duration = 20
-        setup_time = 5
+            return self._generate_round_robin_schedule()
+        # Add more formats as needed
+        return {}
+
+    def _generate_single_elimination_bracket(self) -> Dict:
+        """Generate single elimination bracket"""
+        participants = list(self.participants)
+        participant_count = len(participants)
         
-        total_matches = self.calculate_total_matches()
+        # Calculate rounds needed
+        rounds_needed = math.ceil(math.log2(participant_count))
+        self.total_rounds = rounds_needed
         
-        if self.format == TournamentFormat.SINGLE_ELIMINATION:
-            rounds = math.ceil(math.log2(self.participant_count))
-            duration_minutes = rounds * (game_duration + setup_time)
-        elif self.format == TournamentFormat.ROUND_ROBIN:
-            duration_minutes = total_matches * (game_duration + setup_time)
-        else:
-            duration_minutes = total_matches * (game_duration + setup_time) // 2
+        bracket = {
+            "format": "single_elimination",
+            "total_rounds": rounds_needed,
+            "total_matches": participant_count - 1,
+            "rounds": {}
+        }
         
-        return timedelta(minutes=duration_minutes)
+        # Generate first round matches
+        first_round_matches = []
+        for i in range(0, participant_count, 2):
+            match = {
+                "match_id": f"{self.tournament_id}_r1_m{i//2+1}",
+                "round": 1,
+                "player1": participants[i].user_id if i < participant_count else None,
+                "player2": participants[i+1].user_id if i+1 < participant_count else None,
+                "winner": None,
+                "completed": False
+            }
+            first_round_matches.append(match)
+        
+        bracket["rounds"]["1"] = {"matches": first_round_matches}
+        
+        return bracket
+
+    def _generate_round_robin_schedule(self) -> Dict:
+        """Generate round robin schedule"""
+        participants = list(self.participants)
+        participant_count = len(participants)
+        
+        total_matches = (participant_count * (participant_count - 1)) // 2
+        
+        schedule = {
+            "format": "round_robin",
+            "total_rounds": participant_count - 1,
+            "total_matches": total_matches,
+            "matches": []
+        }
+        
+        match_id = 1
+        for i in range(participant_count):
+            for j in range(i + 1, participant_count):
+                match = {
+                    "match_id": f"{self.tournament_id}_rr_m{match_id}",
+                    "player1": participants[i].user_id,
+                    "player2": participants[j].user_id,
+                    "winner": None,
+                    "completed": False
+                }
+                schedule["matches"].append(match)
+                match_id += 1
+        
+        return schedule
+
+    def update_match_result(self, match_id: str, winner_id: int):
+        """Update match result in bracket"""
+        if not self.bracket_data:
+            return
+        
+        # Find and update match in bracket
+        for round_num, round_data in self.bracket_data.get("rounds", {}).items():
+            for match in round_data.get("matches", []):
+                if match.get("match_id") == match_id:
+                    match["winner"] = winner_id
+                    match["completed"] = True
+                    break
 
 # === TOURNAMENT PARTICIPANT MODEL ===
 
 class TournamentParticipant(Base):
     """
-    Tournament participant with detailed tracking
+    Tournament participant tracking with detailed statistics
     """
     __tablename__ = "tournament_participants"
     
@@ -185,82 +307,92 @@ class TournamentParticipant(Base):
     tournament_id = Column(Integer, ForeignKey("tournaments.id"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     
-    # Registration
+    # Registration Information
     registration_time = Column(DateTime(timezone=True), server_default=func.now())
+    registration_ip = Column(String(45), nullable=True)
+    registration_method = Column(String(20), default="manual")
+    
+    # Participant Status
     status = Column(Enum(ParticipantStatus), default=ParticipantStatus.REGISTERED)
+    seeding = Column(Integer, nullable=True)
+    bracket_position = Column(String(20), nullable=True)
     
-    # 🔧 JAVÍTÁS: HIÁNYZÓ FIELDS HOZZÁADÁSA
-    entry_fee_paid = Column(Integer, default=0)
-    withdrawal_time = Column(DateTime, nullable=True)
-    
-    # Tournament Progress
-    current_round = Column(Integer, default=0)
+    # Performance Statistics
     matches_played = Column(Integer, default=0)
     matches_won = Column(Integer, default=0)
     matches_lost = Column(Integer, default=0)
-    matches_drawn = Column(Integer, default=0)
-    
-    # Scoring Statistics
     total_score = Column(Integer, default=0)
     average_score = Column(Float, default=0.0)
     best_score = Column(Integer, default=0)
     
-    # Swiss System specific
-    points = Column(Float, default=0.0)
-    tie_break_score = Column(Float, default=0.0)
-    
-    # Final Results
-    final_position = Column(Integer, nullable=True)
-    prize_won = Column(Integer, default=0)
+    # Tournament Progression
+    current_round = Column(Integer, default=0)
+    eliminated_in_round = Column(Integer, nullable=True)
+    final_placement = Column(Integer, nullable=True)
+    advancement_path = Column(JSON, default=list)
     
     # Performance Metrics
     performance_rating = Column(Float, default=0.0)
-    skill_rating_change = Column(Float, default=0.0)
+    consistency_score = Column(Float, default=0.0)
+    clutch_performance = Column(Float, default=0.0)
+    improvement_rate = Column(Float, default=0.0)
+    
+    # Rewards and Recognition
+    prize_won = Column(Integer, default=0)
+    achievements_earned = Column(JSON, default=list)
+    special_recognitions = Column(JSON, default=list)
+    
+    # Participant Behavior
+    punctuality_score = Column(Float, default=100.0)
+    sportsmanship_rating = Column(Float, default=5.0)
+    fair_play_violations = Column(Integer, default=0)
+    
+    # Additional Data
+    participant_notes = Column(Text, nullable=True)
+    coaching_notes = Column(Text, nullable=True)
+    equipment_used = Column(JSON, default=dict)
     
     # Timestamps
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    eliminated_at = Column(DateTime, nullable=True)
+    final_match_time = Column(DateTime, nullable=True)
     
-    # Relationships
+    # ✅ JAVÍTOTT: Relationships
     tournament = relationship("Tournament", back_populates="participants")
-    # user = relationship("User", foreign_keys=[user_id])  # Temporarily disabled
     
-    # Unique constraint
+    # Constraints
     __table_args__ = (
-        UniqueConstraint('tournament_id', 'user_id', name='unique_tournament_participation'),
+        UniqueConstraint('tournament_id', 'user_id', name='unique_tournament_participant'),
     )
     
     def __repr__(self):
         return f"<TournamentParticipant(tournament={self.tournament_id}, user={self.user_id}, status='{self.status.value}')>"
-    
+
     @property
     def win_rate(self) -> float:
         """Calculate win rate percentage"""
-        total_games = self.matches_played
-        if total_games == 0:
-            return 0.0
-        return (self.matches_won / total_games) * 100
-    
-    @property
-    def points_per_game(self) -> float:
-        """Calculate average points per game"""
         if self.matches_played == 0:
             return 0.0
-        return self.total_score / self.matches_played
-    
-    def update_match_statistics(self, won: bool, score: int, opponent_score: int):
-        """Update participant statistics after a match"""
+        return (self.matches_won / self.matches_played) * 100
+
+    @property
+    def is_active(self) -> bool:
+        """Check if participant is still active in tournament"""
+        return self.status in [ParticipantStatus.REGISTERED, ParticipantStatus.CONFIRMED]
+
+    @property
+    def is_eliminated(self) -> bool:
+        """Check if participant has been eliminated"""
+        return self.eliminated_in_round is not None
+
+    def add_match_result(self, won: bool, score: int):
+        """Add a match result to participant statistics"""
         self.matches_played += 1
-        self.total_score += score
-        
         if won:
             self.matches_won += 1
-            self.points += 1.0
-        elif score == opponent_score:
-            self.matches_drawn += 1
-            self.points += 0.5
         else:
             self.matches_lost += 1
+        
+        self.total_score += score
         
         # Update averages
         self.average_score = self.total_score / self.matches_played
@@ -313,11 +445,8 @@ class TournamentMatch(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     completed_at = Column(DateTime, nullable=True)
     
-    # Relationships
+    # ✅ JAVÍTOTT: Relationships
     tournament = relationship("Tournament", back_populates="matches")
-    # player1 = relationship("User", foreign_keys=[player1_id])  # Temporarily disabled
-    # player2 = relationship("User", foreign_keys=[player2_id])  # Temporarily disabled
-    # winner = relationship("User", foreign_keys=[winner_id])  # Temporarily disabled
     
     def __repr__(self):
         return f"<TournamentMatch(id='{self.match_id}', tournament={self.tournament_id}, round={self.round_number})>"
@@ -325,77 +454,25 @@ class TournamentMatch(Base):
     @property
     def is_completed(self) -> bool:
         """Check if match is completed"""
-        return self.status == MatchStatus.COMPLETED
+        return self.status == MatchStatus.COMPLETED and self.winner_id is not None
     
     @property
-    def can_be_played(self) -> bool:
-        """Check if match can be played"""
-        return self.status == MatchStatus.SCHEDULED and datetime.now() >= self.scheduled_time
+    def is_bye(self) -> bool:
+        """Check if this is a bye match"""
+        return self.player2_id is None
     
-    def generate_match_id(self) -> str:
-        """Generate unique match ID"""
-        date_str = datetime.now().strftime("%Y%m%d")
-        random_suffix = str(uuid.uuid4().hex[:4]).upper()
-        return f"MATCH_{date_str}_{self.tournament_id}_{self.round_number}_{random_suffix}"
-
-# === TOURNAMENT BRACKET MODEL ===
-
-class TournamentBracket(Base):
-    """
-    Tournament bracket structure and management
-    """
-    __tablename__ = "tournament_brackets"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    tournament_id = Column(Integer, ForeignKey("tournaments.id"), nullable=False)
-    
-    # Bracket Configuration
-    format = Column(Enum(TournamentFormat), nullable=False)
-    structure = Column(JSON, nullable=False)
-    
-    # Bracket State
-    current_round = Column(Integer, default=1)
-    total_rounds = Column(Integer, nullable=False)
-    is_completed = Column(Boolean, default=False)
-    
-    # Bracket Data
-    participants_seeding = Column(JSON, default=lambda: [])
-    round_results = Column(JSON, default=lambda: {})
-    
-    # Timestamps
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    
-    # Relationships
-    tournament = relationship("Tournament", back_populates="bracket")
-    
-    def __repr__(self):
-        return f"<TournamentBracket(tournament={self.tournament_id}, format='{self.format.value}', round={self.current_round}/{self.total_rounds})>"
-    
-    @property
-    def completion_percentage(self) -> float:
-        """Calculate bracket completion percentage"""
-        if self.total_rounds == 0:
-            return 0.0
-        return (self.current_round / self.total_rounds) * 100
-    
-    def advance_round(self):
-        """Advance bracket to next round"""
-        if self.current_round < self.total_rounds:
-            self.current_round += 1
+    def complete_match(self, winner_id: int, player1_score: int, player2_score: int = None):
+        """Complete the match with results"""
+        self.winner_id = winner_id
+        self.player1_score = player1_score
+        if player2_score is not None:
+            self.player2_score = player2_score
+        self.status = MatchStatus.COMPLETED
+        self.completed_at = datetime.utcnow()
         
-        if self.current_round >= self.total_rounds:
-            self.is_completed = True
-    
-    def update_match_result(self, match_id: str, winner_id: int):
-        """Update bracket with match result"""
-        # Find and update the match in the structure
-        for round_num, round_matches in self.structure.get("rounds", {}).items():
-            for match in round_matches.get("matches", []):
-                if match.get("match_id") == match_id:
-                    match["winner"] = winner_id
-                    match["completed"] = True
-                    break
+        if self.actual_start_time:
+            duration = datetime.utcnow() - self.actual_start_time
+            self.duration_minutes = int(duration.total_seconds() / 60)
 
 # === TOURNAMENT ACHIEVEMENT MODEL ===
 
@@ -447,7 +524,6 @@ class UserTournamentAchievement(Base):
     progress_data = Column(JSON, default=lambda: {})
     
     # Relationships
-    # user = relationship("User", foreign_keys=[user_id])  # Temporarily disabled
     achievement = relationship("TournamentAchievement")
     tournament = relationship("Tournament")
     

@@ -12,6 +12,11 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Tournaments from "./pages/Tournaments";
 import Profile from "./pages/Profile";
+import CreditsPage from "./pages/CreditsPage";
+import Social from "./pages/Social";
+import TournamentDetails from "./pages/TournamentDetails";
+import GameResults from "./pages/GameResults";
+import AdminPanel from "./pages/AdminPanel";
 import Layout from "./components/layout/Layout";
 
 function App() {
@@ -51,6 +56,41 @@ function App() {
               <ProtectedRoute>
                 <Layout>
                   <Profile />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/credits" element={
+              <ProtectedRoute>
+                <Layout>
+                  <CreditsPage />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/social" element={
+              <ProtectedRoute>
+                <Layout>
+                  <Social />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/tournaments/:tournamentId" element={
+              <ProtectedRoute>
+                <Layout>
+                  <TournamentDetails />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/game-results" element={
+              <ProtectedRoute>
+                <Layout>
+                  <GameResults />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/admin" element={
+              <ProtectedRoute>
+                <Layout>
+                  <AdminPanel />
                 </Layout>
               </ProtectedRoute>
             } />

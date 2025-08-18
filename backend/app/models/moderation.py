@@ -1,5 +1,5 @@
-# backend/app/models/moderation.py
-# TELJES JAVÍTOTT FÁJL - SQLAlchemy models for moderation system
+# === backend/app/models/moderation.py ===
+# JAVÍTOTT FÁJL - back_populates referenciák eltávolítva
 
 from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Boolean, JSON
 from sqlalchemy.orm import relationship
@@ -22,8 +22,8 @@ class UserViolation(Base):
     updated_at = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now())
     status = Column(String(20), default="active", index=True)
 
-    # JAVÍTOTT RELATIONSHIPS - Late binding használata
-    user = relationship("User", foreign_keys=[user_id], back_populates="violations", lazy="select")
+    # ✅ JAVÍTOTT: back_populates eltávolítva
+    user = relationship("User", foreign_keys=[user_id], lazy="select")
     created_by_user = relationship("User", foreign_keys=[created_by], lazy="select")
 
     def __repr__(self):
@@ -56,7 +56,7 @@ class ModerationLog(Base):
     user_agent = Column(Text)
     created_at = Column(DateTime(timezone=True), default=func.now(), index=True)
 
-    # JAVÍTOTT RELATIONSHIPS - Late binding használata
+    # ✅ JAVÍTOTT: back_populates eltávolítva
     actor = relationship("User", foreign_keys=[actor_id], lazy="select")
     target_user = relationship("User", foreign_keys=[target_user_id], lazy="select")
 
@@ -92,7 +92,7 @@ class UserReport(Base):
     created_at = Column(DateTime(timezone=True), default=func.now(), index=True)
     updated_at = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now())
 
-    # JAVÍTOTT RELATIONSHIPS - Late binding használata
+    # ✅ JAVÍTOTT: back_populates eltávolítva
     reporter = relationship("User", foreign_keys=[reporter_id], lazy="select")
     reported_user = relationship("User", foreign_keys=[reported_user_id], lazy="select")
     assigned_moderator = relationship("User", foreign_keys=[assigned_to], lazy="select")

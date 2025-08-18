@@ -209,7 +209,7 @@ async def get_all_leaderboards(
 
 @router.get("/leaderboards/{category}")
 async def get_leaderboard(
-    category: str = Path(..., regex="^(overall|game1|game2|game3|accuracy|speed|technique)$"),
+    category: str = Path(..., pattern="^(overall|game1|game2|game3|accuracy|speed|technique)$"),
     limit: int = Query(default=50, le=100),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)

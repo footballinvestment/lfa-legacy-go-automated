@@ -1,5 +1,5 @@
-// src/contexts/AuthContext.tsx
-// LFA Legacy GO - Authentication Context with Enhanced State Management
+// === frontend/src/contexts/AuthContext.tsx ===
+// CLEAN AUTH CONTEXT - NO MOCK ADMIN LOGIC
 
 import React, {
   createContext,
@@ -8,159 +8,114 @@ import React, {
   useEffect,
   ReactNode,
 } from "react";
-import { authService } from "../services/api";
+import { authService, RegisterRequest, User } from "../services/api";
 
-// === INTERFACES ===
-
-export interface User {
-  id: number;
+// ✅ RegisterData interface
+export interface RegisterData {
   username: string;
+  password: string;
   email: string;
-  full_name: string;
-  display_name?: string;
-  level: number;
-  xp: number; // Added missing field
-  credits: number;
-  bio?: string;
-  skills: Record<string, number>;
-  games_played: number;
-  games_won: number;
-  games_lost?: number; // Added optional field
-  friend_count: number;
-  challenge_wins?: number; // Added optional field
-  challenge_losses?: number; // Added optional field
-  total_achievements: number;
-  is_premium: boolean;
-  premium_expires_at?: string;
-  user_type: string;
-  role?: 'admin' | 'user' | 'moderator';
-  is_admin?: boolean;
-  is_active: boolean;
-  created_at: string;
-  last_login?: string;
-  last_activity?: string;
+  full_name: string; // ✅ REQUIRED FIELD
+  name?: string; // Optional backward compatibility
+}
+
+export interface LoginData {
+  username: string;
+  password: string;
 }
 
 export interface AuthState {
   user: User | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
+  loading: boolean;
   error: string | null;
+  isAuthenticated: boolean;
   sessionExpiry: Date | null;
 }
-
-export interface LoginCredentials {
-  username: string;
-  password: string;
-}
-
-export interface RegisterData {
-  username: string;
-  email: string;
-  full_name: string;
-  password: string;
-}
-
-// === ACTION TYPES ===
 
 type AuthAction =
   | { type: "AUTH_START" }
   | { type: "AUTH_SUCCESS"; payload: User }
   | { type: "AUTH_FAILURE"; payload: string }
   | { type: "AUTH_LOGOUT" }
-  | { type: "CLEAR_ERROR" }
   | { type: "UPDATE_USER"; payload: Partial<User> }
-  | { type: "SET_SESSION_EXPIRY"; payload: Date };
+  | { type: "SET_SESSION_EXPIRY"; payload: Date }
+  | { type: "CLEAR_ERROR" };
 
-// === REDUCER ===
+const initialState: AuthState = {
+  user: null,
+  loading: false,
+  error: null,
+  isAuthenticated: false,
+  sessionExpiry: null,
+};
 
-const authReducer = (state: AuthState, action: AuthAction): AuthState => {
+function authReducer(state: AuthState, action: AuthAction): AuthState {
   switch (action.type) {
     case "AUTH_START":
       return {
         ...state,
-        isLoading: true,
+        loading: true,
         error: null,
       };
-
     case "AUTH_SUCCESS":
       return {
         ...state,
+        loading: false,
+        error: null,
         user: action.payload,
         isAuthenticated: true,
-        isLoading: false,
-        error: null,
       };
-
     case "AUTH_FAILURE":
       return {
         ...state,
+        loading: false,
+        error: action.payload,
         user: null,
         isAuthenticated: false,
-        isLoading: false,
-        error: action.payload,
       };
-
     case "AUTH_LOGOUT":
       return {
-        ...state,
-        user: null,
-        isAuthenticated: false,
-        isLoading: false,
-        error: null,
-        sessionExpiry: null,
+        ...initialState,
       };
-
-    case "CLEAR_ERROR":
-      return {
-        ...state,
-        error: null,
-      };
-
     case "UPDATE_USER":
       return {
         ...state,
         user: state.user ? { ...state.user, ...action.payload } : null,
       };
-
     case "SET_SESSION_EXPIRY":
       return {
         ...state,
         sessionExpiry: action.payload,
       };
-
+    case "CLEAR_ERROR":
+      return {
+        ...state,
+        error: null,
+      };
     default:
       return state;
   }
-};
+}
 
-// === CONTEXT ===
-
-export interface AuthContextType {
+interface AuthContextType {
   state: AuthState;
-  user: User | null;
-  login: (credentials: LoginCredentials) => Promise<boolean>;
+  login: (data: LoginData) => Promise<boolean>;
   register: (data: RegisterData) => Promise<boolean>;
   logout: () => Promise<void>;
   updateUser: (userData: Partial<User>) => void;
   clearError: () => void;
-  refreshAuth: () => Promise<void>;
-  checkSessionValidity: () => boolean;
+  refreshStats: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// === INITIAL STATE ===
-
-const initialState: AuthState = {
-  user: null,
-  isAuthenticated: false,
-  isLoading: true,
-  error: null,
-  sessionExpiry: null,
+export const useAuth = (): AuthContextType => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
 };
-
-// === PROVIDER ===
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -169,135 +124,90 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
-  // Initialize authentication state
+  // Initialize auth state from stored token
   useEffect(() => {
     const initializeAuth = async () => {
       const token = localStorage.getItem("auth_token");
+      if (token) {
+        try {
+          dispatch({ type: "AUTH_START" });
 
-      if (!token) {
-        dispatch({ type: "AUTH_FAILURE", payload: "No token found" });
-        return;
-      }
+          // ✅ CLEAN: Only real API call, no mock logic
+          const userData = await authService.getCurrentUser();
+          if (!userData) {
+            throw new Error("Invalid user data");
+          }
 
-      try {
-        dispatch({ type: "AUTH_START" });
-
-        // Verify token and get user data
-        const user = await authService.getCurrentUser();
-
-        if (user) {
-          // Type-safe user conversion
-          const authUser: User = {
-            ...user,
-            display_name: user.display_name,
-            bio: user.bio,
-            games_lost: user.games_lost,
-            challenge_wins: user.challenge_wins,
-            challenge_losses: user.challenge_losses,
-            is_premium: user.is_premium ?? false,
-            premium_expires_at: user.premium_expires_at,
-            last_activity: user.last_activity,
+          const user: User = {
+            ...userData,
+            display_name: userData.display_name,
+            bio: userData.bio,
+            games_lost: userData.games_lost,
+            challenge_wins: userData.challenge_wins,
+            challenge_losses: userData.challenge_losses,
+            is_premium: userData.is_premium ?? false,
+            premium_expires_at: userData.premium_expires_at,
+            last_activity: userData.last_activity,
           };
 
-          dispatch({ type: "AUTH_SUCCESS", payload: authUser });
+          dispatch({ type: "AUTH_SUCCESS", payload: user });
 
-          // Set session expiry (assuming 24 hours from now)
-          const expiry = new Date();
-          expiry.setHours(expiry.getHours() + 24);
-          dispatch({ type: "SET_SESSION_EXPIRY", payload: expiry });
-        } else {
-          throw new Error("Invalid user data");
+          // Calculate session expiry from JWT token
+          try {
+            const tokenData = JSON.parse(atob(token.split(".")[1]));
+            const expiry = new Date(tokenData.exp * 1000);
+            dispatch({ type: "SET_SESSION_EXPIRY", payload: expiry });
+          } catch (e) {
+            // If token parsing fails, set default expiry
+            const expiry = new Date();
+            expiry.setHours(expiry.getHours() + 12);
+            dispatch({ type: "SET_SESSION_EXPIRY", payload: expiry });
+          }
+        } catch (error) {
+          console.error("Auth initialization failed:", error);
+          localStorage.removeItem("auth_token");
+          dispatch({ type: "AUTH_FAILURE", payload: "Session expired" });
         }
-      } catch (error) {
-        console.error("Auth initialization error:", error);
-
-        // Clear invalid token
-        localStorage.removeItem("auth_token");
-        dispatch({ type: "AUTH_FAILURE", payload: "Session expired" });
+      } else {
+        dispatch({ type: "AUTH_FAILURE", payload: "" });
       }
     };
 
     initializeAuth();
   }, []);
 
-  // Session validity checker
-  const checkSessionValidity = (): boolean => {
-    if (!state.sessionExpiry) return false;
-
-    const now = new Date();
-    const timeLeft = state.sessionExpiry.getTime() - now.getTime();
-
-    // Session expires in less than 5 minutes
-    if (timeLeft < 5 * 60 * 1000) {
-      return false;
-    }
-
-    return true;
-  };
-
-  // Auto-refresh token before expiry
-  useEffect(() => {
-    if (!state.isAuthenticated || !state.sessionExpiry) return;
-
-    const checkAndRefresh = async () => {
-      const timeUntilExpiry =
-        state.sessionExpiry!.getTime() - new Date().getTime();
-
-      // Refresh 10 minutes before expiry
-      if (timeUntilExpiry < 10 * 60 * 1000 && timeUntilExpiry > 0) {
-        try {
-          await refreshAuth();
-        } catch (error) {
-          console.error("Auto-refresh failed:", error);
-          await logout();
-        }
-      }
-    };
-
-    const interval = setInterval(checkAndRefresh, 60 * 1000); // Check every minute
-    return () => clearInterval(interval);
-  }, [state.isAuthenticated, state.sessionExpiry]);
-
-  // === METHODS ===
-
-  const login = async (credentials: LoginCredentials): Promise<boolean> => {
+  const login = async (data: LoginData): Promise<boolean> => {
     try {
       dispatch({ type: "AUTH_START" });
 
-      const response = await authService.login(credentials);
+      // ✅ CLEAN: Only real API login
+      const response = await authService.login(data);
 
-      if (response.access_token && response.user) {
-        localStorage.setItem("auth_token", response.access_token);
+      localStorage.setItem("auth_token", response.access_token);
 
-        // Type-safe user conversion
-        const authUser: User = {
-          ...response.user,
-          display_name: response.user.display_name,
-          bio: response.user.bio,
-          games_lost: response.user.games_lost,
-          challenge_wins: response.user.challenge_wins,
-          challenge_losses: response.user.challenge_losses,
-          is_premium: response.user.is_premium ?? false,
-          premium_expires_at: response.user.premium_expires_at,
-          last_activity: response.user.last_activity,
-        };
+      const user: User = {
+        ...response.user,
+        display_name: response.user.display_name,
+        bio: response.user.bio,
+        games_lost: response.user.games_lost,
+        challenge_wins: response.user.challenge_wins,
+        challenge_losses: response.user.challenge_losses,
+        is_premium: response.user.is_premium ?? false,
+        premium_expires_at: response.user.premium_expires_at,
+        last_activity: response.user.last_activity,
+      };
 
-        dispatch({ type: "AUTH_SUCCESS", payload: authUser });
+      dispatch({ type: "AUTH_SUCCESS", payload: user });
 
-        // Set session expiry
-        const expiry = new Date();
-        expiry.setSeconds(expiry.getSeconds() + response.expires_in);
-        dispatch({ type: "SET_SESSION_EXPIRY", payload: expiry });
+      // Set session expiry
+      const expiry = new Date();
+      expiry.setTime(expiry.getTime() + response.expires_in * 1000);
+      dispatch({ type: "SET_SESSION_EXPIRY", payload: expiry });
 
-        return true;
-      } else {
-        throw new Error("Invalid response format");
-      }
+      return true;
     } catch (error: any) {
       const errorMessage =
-        error.response?.data?.detail?.message ||
-        error.message ||
-        "Login failed";
+        error.response?.data?.detail || error.message || "Login failed";
       dispatch({ type: "AUTH_FAILURE", payload: errorMessage });
       return false;
     }
@@ -307,40 +217,37 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       dispatch({ type: "AUTH_START" });
 
+      // ✅ Validation
+      if (!data.full_name || data.full_name.trim().length === 0) {
+        throw new Error("Full name is required");
+      }
+
       const response = await authService.register(data);
 
-      if (response.access_token && response.user) {
-        localStorage.setItem("auth_token", response.access_token);
+      localStorage.setItem("auth_token", response.access_token);
 
-        // Type-safe user conversion
-        const authUser: User = {
-          ...response.user,
-          display_name: response.user.display_name,
-          bio: response.user.bio,
-          games_lost: response.user.games_lost,
-          challenge_wins: response.user.challenge_wins,
-          challenge_losses: response.user.challenge_losses,
-          is_premium: response.user.is_premium ?? false,
-          premium_expires_at: response.user.premium_expires_at,
-          last_activity: response.user.last_activity,
-        };
+      const user: User = {
+        ...response.user,
+        display_name: response.user.display_name,
+        bio: response.user.bio,
+        games_lost: response.user.games_lost,
+        challenge_wins: response.user.challenge_wins,
+        challenge_losses: response.user.challenge_losses,
+        is_premium: response.user.is_premium ?? false,
+        premium_expires_at: response.user.premium_expires_at,
+        last_activity: response.user.last_activity,
+      };
 
-        dispatch({ type: "AUTH_SUCCESS", payload: authUser });
+      dispatch({ type: "AUTH_SUCCESS", payload: user });
 
-        // Set session expiry
-        const expiry = new Date();
-        expiry.setSeconds(expiry.getSeconds() + response.expires_in);
-        dispatch({ type: "SET_SESSION_EXPIRY", payload: expiry });
+      const expiry = new Date();
+      expiry.setTime(expiry.getTime() + response.expires_in * 1000);
+      dispatch({ type: "SET_SESSION_EXPIRY", payload: expiry });
 
-        return true;
-      } else {
-        throw new Error("Invalid response format");
-      }
+      return true;
     } catch (error: any) {
       const errorMessage =
-        error.response?.data?.detail?.message ||
-        error.message ||
-        "Registration failed";
+        error.response?.data?.detail || error.message || "Registration failed";
       dispatch({ type: "AUTH_FAILURE", payload: errorMessage });
       return false;
     }
@@ -348,12 +255,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = async (): Promise<void> => {
     try {
-      // Call logout endpoint
+      // ✅ CLEAN: Only real API logout
       await authService.logout();
     } catch (error) {
       console.error("Logout API call failed:", error);
     } finally {
-      // Clear local storage and state regardless
       localStorage.removeItem("auth_token");
       dispatch({ type: "AUTH_LOGOUT" });
     }
@@ -367,191 +273,45 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     dispatch({ type: "CLEAR_ERROR" });
   };
 
-  const refreshAuth = async (): Promise<void> => {
+  const refreshStats = async (): Promise<void> => {
+    const token = localStorage.getItem("auth_token");
+
+    if (!token) return;
+
     try {
-      const user = await authService.getCurrentUser();
-
-      if (user) {
-        dispatch({ type: "UPDATE_USER", payload: user });
-
-        // Extend session expiry
-        const expiry = new Date();
-        expiry.setHours(expiry.getHours() + 24);
-        dispatch({ type: "SET_SESSION_EXPIRY", payload: expiry });
-      } else {
-        throw new Error("Failed to refresh user data");
-      }
+      // ✅ CLEAN: Only real API refresh
+      const userData = await authService.getCurrentUser();
+      dispatch({ type: "UPDATE_USER", payload: userData });
     } catch (error) {
-      console.error("Auth refresh error:", error);
-      throw error;
+      console.error("Failed to refresh user stats:", error);
     }
-  };
-
-  const contextValue: AuthContextType = {
-    state,
-    user: state.user,
-    login,
-    register,
-    logout,
-    updateUser,
-    clearError,
-    refreshAuth,
-    checkSessionValidity,
   };
 
   return (
-    <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
+    <AuthContext.Provider
+      value={{
+        state,
+        login,
+        register,
+        logout,
+        updateUser,
+        clearError,
+        refreshStats,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
   );
 };
 
-// Custom hook to use auth context
-export const useAuth = (): AuthContextType => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
-};
-
-// === CUSTOM HOOKS ===
-
-// Hook for protected routes
-export const useRequireAuth = () => {
-  const { state } = useAuth();
-
-  useEffect(() => {
-    if (!state.isLoading && !state.isAuthenticated) {
-      window.location.href = "/login";
-    }
-  }, [state.isLoading, state.isAuthenticated]);
-
-  return {
-    isAuthenticated: state.isAuthenticated,
-    isLoading: state.isLoading,
-    user: state.user,
-  };
-};
-
-// Hook for user statistics with auto-refresh
-export const useUserStats = () => {
-  const { state, updateUser } = useAuth();
-  const [isRefreshing, setIsRefreshing] = React.useState(false);
-
-  const refreshStats = async () => {
-    if (!state.user) return;
-
-    setIsRefreshing(true);
-    try {
-      const user = await authService.getCurrentUser();
-      updateUser(user);
-    } catch (error) {
-      console.error("Failed to refresh user stats:", error);
-    } finally {
-      setIsRefreshing(false);
-    }
-  };
-
-  // Auto-refresh stats every 5 minutes
-  useEffect(() => {
-    if (!state.isAuthenticated) return;
-
-    const interval = setInterval(refreshStats, 5 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, [state.isAuthenticated]);
-
-  return {
-    user: state.user,
-    isRefreshing,
-    refreshStats,
-    credits: state.user?.credits ?? 0,
-    level: state.user?.level ?? 1,
-    xp: state.user?.xp ?? 0, // Added xp field
-    gamesPlayed: state.user?.games_played ?? 0,
-    gamesWon: state.user?.games_won ?? 0,
-    winRate:
-      state.user && state.user.games_played > 0
-        ? ((state.user.games_won ?? 0) /
-            Math.max(state.user.games_played ?? 1, 1)) *
-          100
-        : 0,
-  };
-};
-
-// Hook for authentication forms
-export const useAuthForm = () => {
-  const { state, login, register, clearError } = useAuth();
-  const [formData, setFormData] = React.useState({
-    username: "",
-    email: "",
-    full_name: "",
-    password: "",
-    confirmPassword: "",
-  });
-
-  const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    if (state.error) {
-      clearError();
-    }
-  };
-
-  const handleLogin = async () => {
-    return await login({
-      username: formData.username,
-      password: formData.password,
-    });
-  };
-
-  const handleRegister = async () => {
-    if (formData.password !== formData.confirmPassword) {
-      return false;
-    }
-
-    return await register({
-      username: formData.username,
-      email: formData.email,
-      full_name: formData.full_name,
-      password: formData.password,
-    });
-  };
-
-  const resetForm = () => {
-    setFormData({
-      username: "",
-      email: "",
-      full_name: "",
-      password: "",
-      confirmPassword: "",
-    });
-    clearError();
-  };
-
-  return {
-    formData,
-    handleInputChange,
-    handleLogin,
-    handleRegister,
-    resetForm,
-    isLoading: state.isLoading,
-    error: state.error,
-    clearError,
-  };
-};
-
 // Protected Route Component
-interface ProtectedRouteProps {
-  children: ReactNode;
-  fallback?: ReactNode;
-}
-
-export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
+export const ProtectedRoute: React.FC<{ children: ReactNode }> = ({
   children,
-  fallback = <div>Loading...</div>,
 }) => {
   const { state } = useAuth();
 
-  if (state.isLoading) {
-    return <>{fallback}</>;
+  if (state.loading) {
+    return <div>Loading...</div>;
   }
 
   if (!state.isAuthenticated) {
@@ -562,29 +322,18 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   return <>{children}</>;
 };
 
-// Public Route Component (redirect if authenticated)
-interface PublicRouteProps {
-  children: ReactNode;
-  redirectTo?: string;
-}
-
-export const PublicRoute: React.FC<PublicRouteProps> = ({
+// Public Route Component (redirects to dashboard if authenticated)
+export const PublicRoute: React.FC<{ children: ReactNode }> = ({
   children,
-  redirectTo = "/dashboard",
 }) => {
   const { state } = useAuth();
 
-  useEffect(() => {
-    if (state.isAuthenticated && !state.isLoading) {
-      window.location.href = redirectTo;
-    }
-  }, [state.isAuthenticated, state.isLoading, redirectTo]);
-
-  if (state.isLoading) {
+  if (state.loading) {
     return <div>Loading...</div>;
   }
 
   if (state.isAuthenticated) {
+    window.location.href = "/dashboard";
     return null;
   }
 

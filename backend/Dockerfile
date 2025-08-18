@@ -48,5 +48,5 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
 
 EXPOSE 8080
 
-# Start command
-CMD exec python -m app.main
+# Start command - Use uvicorn with dynamic port
+CMD exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080}

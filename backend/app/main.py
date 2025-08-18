@@ -1,371 +1,355 @@
-#!/usr/bin/env python3
-"""
-LFA Legacy GO - Google Cloud Run Optimized
-Location: backend/app/main.py
-"""
+# === backend/app/main.py ===
+# LFA Legacy GO - EMERGENCY FIX - Absolute Imports
+# VÉGSŐ JAVÍTÁS - Minden router importálás javítva
 
-import os
-import sys
-import uvicorn
-import signal
-from pathlib import Path
-
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
-from slowapi.errors import RateLimitExceeded
+from sqlalchemy.exc import SQLAlchemyError
+import logging
+import sys
+import os
+from datetime import datetime
 
-# Database imports
-from app.database import engine, Base, create_tables, verify_database_connection
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
 
-# === ROUTER IMPORTS ===
-# Import all routers with error handling
+# Initialize FastAPI app
+app = FastAPI(
+    title="LFA Legacy GO API", 
+    description="Football Training Platform - Pokémon GO Style",
+    version="2.1.0",
+    docs_url="/docs",
+    redoc_url="/redoc"
+)
 
-def safe_import_router(module_name, router_name="router"):
-    """Safely import routers with error handling"""
+# CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:3001", 
+        "https://lfa-legacy-go.netlify.app",
+        "https://glittering-unicorn-b00443.netlify.app",
+        "https://*.netlify.app",
+        "https://*.railway.app", 
+        "https://*.vercel.app",
+        "https://*.run.app"
+    ],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allow_headers=["*"],
+)
+
+# Router status tracking
+routers_status = {}
+active_routers = 0
+
+def safe_import_router(router_path: str, router_name: str = "router"):
+    """Safely import a router with absolute imports"""
     try:
-        # Direct relative import without package parameter
-        if module_name == "auth":
+        # Use absolute imports
+        if router_path == "auth":
             from app.routers.auth import router
-        elif module_name == "credits":
+        elif router_path == "credits":
             from app.routers.credits import router
-        elif module_name == "social":
+        elif router_path == "social":
             from app.routers.social import router
-        elif module_name == "locations":
+        elif router_path == "locations":
             from app.routers.locations import router
-        elif module_name == "booking":
+        elif router_path == "booking":
             from app.routers.booking import router
-        elif module_name == "tournaments":
+        elif router_path == "tournaments":
             from app.routers.tournaments import router
-        elif module_name == "weather":
-            from app.routers.weather import router
-        elif module_name == "game_results":
+        elif router_path == "game_results":
             from app.routers.game_results import router
-        elif module_name == "admin":
+        elif router_path == "weather":
+            from app.routers.weather import router
+        elif router_path == "admin":
             from app.routers.admin import router
-        elif module_name == "health":
-            from app.routers.health import router
         else:
-            print(f"❌ Unknown router: {module_name}")
-            return None
+            raise ImportError(f"Unknown router: {router_path}")
             
-        print(f"✅ Successfully imported {module_name} router")
+        routers_status[router_path] = "✅ SUCCESS"
+        logger.info(f"✅ {router_path} router imported successfully")
         return router
+        
+    except ImportError as e:
+        routers_status[router_path] = f"❌ IMPORT ERROR: {str(e)}"
+        logger.error(f"❌ Failed to import {router_path} router: {e}")
+        return None
     except Exception as e:
-        print(f"❌ Failed to import {module_name} router: {e}")
+        routers_status[router_path] = f"❌ UNKNOWN ERROR: {str(e)}"
+        logger.error(f"❌ Unexpected error importing {router_path}: {e}")
         return None
 
-# Import all available routers
+# Import all routers
+logger.info("🚀 Starting LFA Legacy GO Backend...")
+logger.info("📦 Importing routers with absolute imports...")
+
+# Import routers one by one
 auth_router = safe_import_router("auth")
-credits_router = safe_import_router("credits") 
+credits_router = safe_import_router("credits")
 social_router = safe_import_router("social")
 locations_router = safe_import_router("locations")
 booking_router = safe_import_router("booking")
 tournaments_router = safe_import_router("tournaments")
-weather_router = safe_import_router("weather")
 game_results_router = safe_import_router("game_results")
+weather_router = safe_import_router("weather")
 admin_router = safe_import_router("admin")
-health_router = safe_import_router("health")
 
-# === FASTAPI APPLICATION SETUP ===
+# Register routers with the app
+if auth_router:
+    app.include_router(auth_router, prefix="/api/auth", tags=["Authentication"])
+    active_routers += 1
 
-# Rate limiting setup
-limiter = Limiter(key_func=get_remote_address)
+if credits_router:
+    app.include_router(credits_router, prefix="/api/credits", tags=["Credits"])
+    active_routers += 1
 
-app = FastAPI(
-    title=os.getenv("API_TITLE", "LFA Legacy GO API - Protected"),
-    description="🛡️ Spam-Protected Football Training Platform",
-    version=os.getenv("API_VERSION", "3.1.0"),
-    docs_url="/docs",
-    redoc_url="/redoc",
-    openapi_url="/openapi.json",
-    debug=os.getenv("DEBUG", "false").lower() == "true"
-)
+if social_router:
+    app.include_router(social_router, prefix="/api/social", tags=["Social"])
+    active_routers += 1
 
-# Add rate limiting
-app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+if locations_router:
+    app.include_router(locations_router, prefix="/api/locations", tags=["Locations"])
+    active_routers += 1
 
-# === CORS CONFIGURATION ===
+if booking_router:
+    app.include_router(booking_router, prefix="/api/booking", tags=["Booking"])
+    active_routers += 1
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "https://lfa-legacy-go.netlify.app",              # Netlify frontend
-        "https://*.run.app",                              # Cloud Run domains
-        "http://localhost:3000",                          # Local frontend
-        "http://localhost:3001", 
-        "http://localhost:8000",                          # Local backend
-        "http://localhost:8001",
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:8000",
-        "http://127.0.0.1:8001"
-    ],
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"],
-    allow_headers=[
-        "Accept",
-        "Accept-Language", 
-        "Content-Language",
-        "Content-Type",
-        "Authorization",
-        "X-Requested-With",
-        "Origin",
-        "Access-Control-Request-Method",
-        "Access-Control-Request-Headers"
-    ],
-    expose_headers=["*"],
-    max_age=600,
-)
+if tournaments_router:
+    app.include_router(tournaments_router, prefix="/api/tournaments", tags=["Tournaments"])
+    active_routers += 1
 
-# === ROOT ENDPOINTS ===
+if game_results_router:
+    app.include_router(game_results_router, prefix="/api/game-results", tags=["Game Results"])
+    active_routers += 1
 
-@app.options("/{full_path:path}")
-async def options_handler():
-    """Handle CORS preflight OPTIONS requests"""
-    from fastapi import Response
-    return Response(status_code=200)
+if weather_router:
+    app.include_router(weather_router, tags=["Weather"])
+    active_routers += 1
 
+if admin_router:
+    app.include_router(admin_router, tags=["Administration"])
+    active_routers += 1
+
+# Router status summary
+total_routers = 9
+logger.info("📊 Router Status Summary:")
+for router_name, status in routers_status.items():
+    logger.info(f"   {router_name}: {status}")
+
+logger.info(f"🎯 Active Routers: {active_routers}/{total_routers}")
+
+if active_routers == total_routers:
+    logger.info("🏆 ALL ROUTERS ACTIVE - 9/9 SUCCESS!")
+elif active_routers >= 7:
+    logger.warning(f"⚠️ Most routers active ({active_routers}/{total_routers}) - Core functionality working")
+else:
+    logger.error(f"🔴 Critical router failures ({active_routers}/{total_routers}) - System may be unstable")
+
+# Root endpoint
 @app.get("/")
 async def root():
-    """Root endpoint with comprehensive application status"""
+    """API root endpoint"""
     return {
-        "message": "LFA Legacy GO API - Google Cloud Run",
-        "status": "running",
-        "version": os.getenv("API_VERSION", "3.0.0"),
-        "environment": os.getenv("ENVIRONMENT", "production"),
-        "platform": "google_cloud_run",
-        "port": os.getenv("PORT", "8080"),
-        "location": "backend/app/main.py",
-        "routers_loaded": get_loaded_routers_count(),
-        "database_status": "connected",
-        "scaling": "automatic",
-        "features": [
-            "Authentication System", "Credit Purchase System", "Social Features",
-            "Location Management", "Booking System", "Tournament Management",
-            "Weather Integration", "Game Results Tracking", "Admin Panel",
-            "Health Monitoring"
-        ]
+        "message": "LFA Legacy GO API",
+        "version": "2.1.0",
+        "status": "operational",
+        "active_routers": f"{active_routers}/{total_routers}",
+        "router_status": routers_status,
+        "timestamp": datetime.now().isoformat()
     }
 
+# Health check endpoint
 @app.get("/health")
 async def health_check():
-    """Enhanced health check endpoint for Cloud Run"""
+    """Health check"""
+    
+    # Database check (simplified)
+    db_status = "healthy"
     try:
-        db_status = verify_database_connection()
-        router_count = get_loaded_routers_count()
-        
-        return {
-            "status": "healthy",
-            "service": "LFA Legacy GO API",
-            "version": os.getenv("API_VERSION", "3.0.0"),
-            "environment": os.getenv("ENVIRONMENT", "production"),
-            "platform": "google_cloud_run",
-            "database": "connected" if db_status else "disconnected",
-            "routers_active": router_count,
-            "routers_expected": 10,
-            "location": "backend/app/main.py",
-            "port": os.getenv("PORT", "8080"),
-            "revision": os.getenv("K_REVISION", "unknown"),
-            "service_name": os.getenv("K_SERVICE", "unknown")
+        from app.database import SessionLocal
+        from sqlalchemy import text
+        with SessionLocal() as db:
+            db.execute(text("SELECT 1"))
+        db_healthy = True
+    except Exception as e:
+        db_status = f"degraded: {str(e)[:100]}"
+        db_healthy = False
+    
+    # Overall status
+    overall_status = "healthy" if active_routers >= 7 and db_healthy else "degraded"
+    
+    return {
+        "status": overall_status,
+        "timestamp": datetime.now().isoformat(),
+        "version": "2.1.0",
+        "database": {
+            "status": db_status,
+            "healthy": db_healthy
+        },
+        "routers": {
+            "active": active_routers,
+            "total": total_routers,
+            "percentage": round((active_routers / total_routers) * 100, 1),
+            "status": routers_status
         }
-    except Exception as e:
-        return JSONResponse(
-            status_code=503,
-            content={
-                "status": "unhealthy",
-                "error": str(e),
-                "service": "LFA Legacy GO API",
-                "platform": "google_cloud_run"
-            }
-        )
+    }
 
-def get_loaded_routers_count():
-    """Count successfully loaded routers"""
-    routers = [
-        auth_router, credits_router, social_router, locations_router,
-        booking_router, tournaments_router, weather_router, 
-        game_results_router, admin_router, health_router
-    ]
-    return len([r for r in routers if r is not None])
-
-# === ROUTER REGISTRATION ===
-
-def register_all_routers():
-    """Register all available routers with comprehensive error handling"""
+# API Health check endpoint (frontend compatibility)
+@app.get("/api/health") 
+async def api_health_check():
+    """API Health check for frontend compatibility"""
     
-    router_configs = [
-        (auth_router, "/api/auth", "Authentication", "JWT-based user authentication system"),
-        (credits_router, "/api/credits", "Credits", "Credit purchase and management system"),
-        (social_router, "/api/social", "Social", "Friend requests and social features"),
-        (locations_router, "/api/locations", "Locations", "Location and venue management"),
-        (booking_router, "/api/booking", "Booking", "Game session booking system"),
-        (tournaments_router, "/api/tournaments", "Tournaments", "Tournament management system"),
-        (weather_router, "/api/weather", "Weather", "Weather integration service"),
-        (game_results_router, "/api/game-results", "Game Results", "Game statistics and results tracking"),
-        (admin_router, "/api/admin", "Administration", "Admin panel and moderation tools"),
-        (health_router, "/api/health", "Health", "System health monitoring")
-    ]
-    
-    loaded_count = 0
-    failed_routers = []
-    
-    for router, prefix, name, description in router_configs:
-        if router is not None:
-            try:
-                app.include_router(router, prefix=prefix, tags=[name])
-                print(f"✅ Registered {name} router at {prefix} - {description}")
-                loaded_count += 1
-            except Exception as e:
-                print(f"❌ Failed to register {name} router: {e}")
-                failed_routers.append(name)
-        else:
-            print(f"⚠️ Skipped {name} router (import failed)")
-            failed_routers.append(name)
-    
-    print(f"🚀 Successfully loaded {loaded_count}/10 routers")
-    
-    if failed_routers:
-        print(f"⚠️ Failed routers: {', '.join(failed_routers)}")
-    
-    return loaded_count
-
-# === DATABASE INITIALIZATION ===
-
-def initialize_database():
-    """Initialize database tables and verify connection"""
+    # Database check (simplified)
+    db_status = "healthy"
     try:
-        print("🗄️ Initializing database...")
-        
-        # Create all tables
-        create_tables()
-        print("✅ Database tables created/verified")
-        
-        # Verify connection
-        if verify_database_connection():
-            print("✅ Database connection verified")
-            return True
-        else:
-            print("❌ Database connection failed")
-            return False
-            
+        from app.database import SessionLocal
+        from sqlalchemy import text
+        with SessionLocal() as db:
+            db.execute(text("SELECT 1"))
+        db_healthy = True
     except Exception as e:
-        print(f"❌ Database initialization error: {e}")
-        return False
+        db_status = f"degraded: {str(e)[:100]}"
+        db_healthy = False
+    
+    # Overall status
+    overall_status = "healthy" if active_routers >= 7 and db_healthy else "degraded"
+    
+    return {
+        "status": overall_status,
+        "service": "LFA Legacy GO API",
+        "timestamp": datetime.now().isoformat(),
+        "version": "2.1.0", 
+        "database": {
+            "status": db_status,
+            "healthy": db_healthy
+        },
+        "routers": {
+            "active": active_routers,
+            "total": total_routers,
+            "percentage": round((active_routers / total_routers) * 100, 1)
+        },
+        "features": {
+            "authentication": "active",
+            "tournaments": "active", 
+            "credits": "active",
+            "coupons": "active",
+            "social": "active"
+        }
+    }
 
-# === APPLICATION STARTUP ===
-
+# Database initialization
 @app.on_event("startup")
 async def startup_event():
-    """Complete application startup sequence"""
-    print("🚀 LFA Legacy GO API Starting on Google Cloud Run...")
-    print("=" * 60)
-    print(f"📍 Location: backend/app/main.py")
-    print(f"🌍 Environment: {os.getenv('ENVIRONMENT', 'production')}")
-    print(f"🔧 Port: {os.getenv('PORT', '8080')}")
-    print(f"☁️ Platform: Google Cloud Run")
-    print(f"🔄 Revision: {os.getenv('K_REVISION', 'unknown')}")
-    print("=" * 60)
+    """Application startup"""
+    logger.info("🔥 Application startup initiated")
     
     try:
-        db_success = initialize_database()
-        if not db_success:
-            print("⚠️ Database initialization failed, but continuing...")
+        # Database initialization (optional)
+        try:
+            from app.database import init_database
+            init_database()
+            logger.info("✅ Database initialization complete")
+            
+            # Create admin user if not exists
+            try:
+                from app.models.user import User
+                from app.database import SessionLocal
+                from passlib.context import CryptContext
+                from sqlalchemy import text
+                
+                pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+                
+                with SessionLocal() as db:
+                    # Check if admin exists
+                    result = db.execute(text("SELECT id, username FROM users WHERE username = 'admin'")).fetchone()
+                    
+                    if not result:
+                        # Create admin user
+                        password_hash = pwd_context.hash("admin123")
+                        
+                        sql = """
+                        INSERT INTO users (
+                            username, email, full_name, hashed_password, user_type, is_active, is_premium,
+                            level, xp, credits, games_played, games_won, total_playtime_minutes,
+                            achievement_points, total_score, average_performance,
+                            friend_count, challenge_wins, challenge_losses, tournament_wins,
+                            total_credits_purchased, login_count, total_sessions,
+                            language, timezone, platform
+                        ) 
+                        VALUES (
+                            :username, :email, :full_name, :password_hash, :user_type, :is_active, :is_premium,
+                            :level, :xp, :credits, :games_played, :games_won, :total_playtime_minutes,
+                            :achievement_points, :total_score, :average_performance,
+                            :friend_count, :challenge_wins, :challenge_losses, :tournament_wins,
+                            :total_credits_purchased, :login_count, :total_sessions,
+                            :language, :timezone, :platform
+                        )
+                        """
+                        
+                        db.execute(text(sql), {
+                            'username': 'admin',
+                            'email': 'admin@lfagolegacy.com',
+                            'full_name': 'System Administrator',
+                            'password_hash': password_hash,
+                            'user_type': 'admin',
+                            'is_active': True,
+                            'is_premium': False,
+                            'level': 1,
+                            'xp': 0,
+                            'credits': 1000,
+                            'games_played': 0,
+                            'games_won': 0,
+                            'total_playtime_minutes': 0,
+                            'achievement_points': 0,
+                            'total_score': 0.0,
+                            'average_performance': 0.0,
+                            'friend_count': 0,
+                            'challenge_wins': 0,
+                            'challenge_losses': 0,
+                            'tournament_wins': 0,
+                            'total_credits_purchased': 0,
+                            'login_count': 0,
+                            'total_sessions': 0,
+                            'language': 'en',
+                            'timezone': 'UTC',
+                            'platform': 'web'
+                        })
+                        
+                        db.commit()
+                        logger.info("✅ Admin user created: admin/admin123")
+                    else:
+                        logger.info("✅ Admin user already exists")
+                        
+            except Exception as e:
+                logger.warning(f"⚠️ Could not create admin user: {e}")
+                
+        except Exception as e:
+            logger.info(f"📋 Database initialization skipped: {e}")
         
-        router_count = register_all_routers()
+        logger.info("🎉 LFA Legacy GO Backend startup complete!")
+        logger.info(f"📊 Final Status: {active_routers}/{total_routers} routers active")
         
-        print("=" * 60)
-        print(f"✅ Cloud Run startup complete!")
-        print(f"🔥 {router_count}/10 routers active")
-        print(f"🌐 Available at: https://<service-url>.run.app")
-        print("=" * 60)
+        if active_routers == total_routers:
+            logger.info("🏆 PERFECT STARTUP - ALL SYSTEMS OPERATIONAL!")
         
     except Exception as e:
-        print(f"❌ Critical startup error: {e}")
-        print("🚨 Application may not function properly!")
+        logger.error(f"💥 Startup error: {str(e)}")
 
-@app.on_event("shutdown")
+@app.on_event("shutdown") 
 async def shutdown_event():
-    """Application shutdown sequence"""
-    print("🛑 LFA Legacy GO API shutting down...")
+    """Application shutdown"""
+    logger.info("🛑 Application shutdown")
 
-# === EXCEPTION HANDLERS ===
-
-@app.exception_handler(404)
-async def not_found_handler(request, exc):
-    """Custom 404 handler with helpful information"""
-    return JSONResponse(
-        status_code=404,
-        content={
-            "status": "error",
-            "code": 404,
-            "message": "Endpoint not found",
-            "suggestion": "Check the API documentation",
-            "available_endpoints": {
-                "documentation": "/docs",
-                "health_check": "/health", 
-                "authentication": "/api/auth",
-                "credits": "/api/credits",
-                "social": "/api/social",
-                "locations": "/api/locations",
-                "booking": "/api/booking",
-                "tournaments": "/api/tournaments",
-                "weather": "/api/weather",
-                "game_results": "/api/game-results",
-                "admin": "/api/admin"
-            }
-        }
-    )
-
-@app.exception_handler(500)
-async def internal_error_handler(request, exc):
-    """Custom 500 handler"""
-    return JSONResponse(
-        status_code=500,
-        content={
-            "status": "error", 
-            "code": 500,
-            "message": "Internal server error",
-            "service": "LFA Legacy GO API",
-            "suggestion": "Check server logs for details"
-        }
-    )
-
-# === CLOUD RUN OPTIMIZED STARTUP ===
-def handle_signals():
-    """Handle Cloud Run shutdown signals gracefully"""
-    def signal_handler(signum, frame):
-        print(f"🔔 Received signal {signum}, shutting down gracefully...")
-        sys.exit(0)
-    
-    signal.signal(signal.SIGTERM, signal_handler)
-    signal.signal(signal.SIGINT, signal_handler)
-
+# Development server
 if __name__ == "__main__":
-    port = int(os.getenv("PORT", 8080))  # Cloud Run uses 8080 default
-    host = "0.0.0.0"  # Required for Cloud Run
-    
-    handle_signals()
-    
-    print("☁️ Google Cloud Run Deployment Starting...")
-    print("=" * 70)
-    print(f"📍 Application: LFA Legacy GO API")
-    print(f"🌍 Host: {host}")
-    print(f"🔌 Port: {port}")
-    print(f"☁️ Platform: Google Cloud Run")
-    print("=" * 70)
-    
-    uvicorn.run(
-        "app.main:app",
-        host=host,
-        port=port,
-        log_level="info",
-        access_log=True,
-        workers=1,
-        loop="uvloop",
-        http="httptools",
-        reload=False,
-        timeout_keep_alive=30
-    )
+    import uvicorn
+    uvicorn.run("main:app", host="0.0.0.0", port=int(os.getenv("PORT", 8080)), reload=True)

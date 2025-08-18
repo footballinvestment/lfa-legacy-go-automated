@@ -1,0 +1,44 @@
+# Page snapshot
+
+```yaml
+- heading "⚽ Football SMG MVP" [level=1]
+- paragraph: Simple Social Media Generator
+- heading "📱 Platform" [level=3]
+- button "Instagram Post 1080×1080"
+- button "Facebook Post 1200×630"
+- button "Twitter/X 1200×675"
+- button "LinkedIn 1200×627"
+- heading "🎯 Event Type" [level=3]
+- button "⚽ GOAL!"
+- button "🅰️ ASSIST"
+- button "🟨 YELLOW CARD"
+- button "🟥 RED CARD"
+- button "🔄 SUBSTITUTION"
+- button "⭐ MAN OF THE MATCH"
+- heading "📝 Details" [level=3]
+- text: Player Name
+- textbox "Enter player name": testuser
+- text: Jersey Number
+- textbox "e.g. 9": "9"
+- text: Home Team
+- textbox "Home team": Real Madrid
+- text: Away Team
+- textbox "Away team": FC Barcelona
+- text: Home Score
+- textbox "0": "2"
+- text: Away Score
+- textbox "0": "1"
+- text: Minute
+- textbox "e.g. 78": "78"
+- heading "🎯 SafeZone Export" [level=3]
+- button "🎯 Export with SafeZone"
+- text: "✅ Platform-specific safe zone applied 📐 Export size: 1080×1080px (JSON)"
+- button "📥 Export Image"
+- button "🔄 Reset"
+- 'heading "SafeZone Preview: Instagram Post" [level=2]'
+- paragraph: "Export: 1080×1080px"
+- heading "👁️ SafeZone Preview" [level=3]
+- text: ⚽ GOAL 78'
+- heading "GOAL!" [level=1]
+- text: "testuser Real Madrid vs FC Barcelona 2 - 1 📐 400×400px • 🎯 SafeZone: Platform-optimized • 📱 Responsive scaling: ON"
+```

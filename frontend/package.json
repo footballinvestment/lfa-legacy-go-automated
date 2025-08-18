@@ -19,11 +19,17 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "NODE_OPTIONS='--max-old-space-size=8192' react-scripts start",
-    "build": "NODE_OPTIONS='--max-old-space-size=8192' react-scripts build",
+    "start": "NODE_OPTIONS=\"--max-old-space-size=8192\" GENERATE_SOURCEMAP=false react-scripts start",
+    "build": "NODE_OPTIONS=\"--max-old-space-size=8192\" GENERATE_SOURCEMAP=false react-scripts build",
     "test": "react-scripts test",
+    "test:e2e": "npx playwright test",
+    "test:e2e:ui": "npx playwright test --ui",
+    "test:e2e:debug": "npx playwright test --debug",
+    "test:e2e:headed": "npx playwright test --headed",
+    "test:e2e:report": "npx playwright show-report",
     "eject": "react-scripts eject",
-    "dev": "NODE_OPTIONS='--max-old-space-size=8192' react-scripts start"
+    "dev": "NODE_OPTIONS='--max-old-space-size=8192' GENERATE_SOURCEMAP=false react-scripts start",
+    "start:memory": "NODE_OPTIONS=\"--max-old-space-size=20480\" GENERATE_SOURCEMAP=false react-scripts start"
   },
   "eslintConfig": {
     "extends": [
@@ -50,6 +56,7 @@
     "@mui/lab": "^7.0.0-beta.16",
     "@mui/material": "^7.3.1",
     "@mui/x-date-pickers": "^8.10.0",
+    "@playwright/test": "^1.54.2",
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",
     "@types/react-router-dom": "^5.3.3",
