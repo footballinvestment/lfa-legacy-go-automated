@@ -48,8 +48,8 @@ const Tournaments: React.FC = () => {
   const handleRegister = async (tournamentId: number) => {
     try {
       await tournamentService.registerForTournament(tournamentId);
-      // Refresh tournaments
-      window.location.reload();
+      // ✅ FIXED: Refresh tournaments data instead of page reload
+      loadTournaments();
     } catch (err: any) {
       alert(err.message || 'Registration failed');
     }

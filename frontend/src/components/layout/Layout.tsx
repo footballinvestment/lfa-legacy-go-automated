@@ -21,6 +21,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 import {
   SportsSoccer,
   Dashboard as DashboardIcon,
@@ -40,6 +41,7 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { state, logout } = useAuth();
+  const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   
@@ -87,7 +89,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <ListItem 
             key={item.label}
             onClick={() => {
-              window.location.href = item.href;
+              navigate(item.href);
               setMobileOpen(false);
             }}
             sx={{ cursor: 'pointer' }}
@@ -128,7 +130,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   key={item.label}
                   color="inherit"
                   startIcon={item.icon}
-                  onClick={() => (window.location.href = item.href)}
+                  onClick={() => navigate(item.href)}
                   sx={{
                     '&:hover': {
                       backgroundColor: 'rgba(255, 255, 255, 0.1)',
@@ -177,7 +179,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               open={Boolean(anchorEl)}
               onClose={handleClose}
             >
-              <MenuItem onClick={() => { window.location.href = '/profile'; handleClose(); }}>
+              <MenuItem onClick={() => { navigate('/profile'); handleClose(); }}>
                 <Person sx={{ mr: 1 }} /> Profile
               </MenuItem>
               <MenuItem onClick={handleLogout}>

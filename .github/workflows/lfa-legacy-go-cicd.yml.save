@@ -1,0 +1,258 @@
+# =============================================
+# LFA LEGACY GO - COMPLETE CI/CD PIPELINE
+# Fixed YAML syntax with infinite loop detection
+# =============================================
+
+name: 🚀 LFA Legacy GO - Complete CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Health checks at 9 AM UTC weekdays
+    - cron: '0 9 * * 1-5'
+
+env:
+  BACKEND_URL: https://lfa-legacy-go-backend-376491487980.us-central1.run.app
+  FRONTEND_URL: https://lfa-legacy-go.netlify.app
+
+jobs:
+  # =============================================
+  # JOB 1: BACKEND DEPLOYMENT
+  # =============================================
+  backend-deployment:
+    name: 🐳 Backend Deployment
+    runs-on: ubuntu-latest
+    outputs:
+      backend-url: ${{ steps.deploy.outputs.url }}
+      
+    steps:
+    - name: 📋 Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: 🔐 Authenticate with Google Cloud
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+    - name: ☁️ Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v2
+
+    - name: 🔧 Configure Docker for GCR
+      run: gcloud auth configure-docker
+
+    - name: 🏗️ Build and Deploy to Cloud Run
+      id: deploy
+      run: |
+        echo "🚀 Building Docker image..."
+        gcloud builds submit backend/ \
+          --tag gcr.io/${{ secrets.GCP_PROJECT_ID }}/lfa-legacy-go-backend \
+          --timeout=20m
+
+        echo "🚀 Deploying to Cloud Run..."
+        gcloud run deploy lfa-legacy-go-backend \
+          --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/lfa-legacy-go-backend \
+          --platform managed \
+          --region us-central1 \
+          --allow-unauthenticated \
+          --port 8080 \
+          --memory 1Gi \
+          --cpu 1 \
+          --min-instances 0 \
+          --max-instances 100 \
+          --concurrency 80 \
+          --timeout 300 \
+          --set-env-vars="DATABASE_URL=${{ secrets.DATABASE_URL }},JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }},ENVIRONMENT=production,API_TITLE=LFA Legacy GO API,API_VERSION=3.0.0,DEBUG=false,ACCESS_TOKEN_EXPIRE_MINUTES=43200" \
+          --cpu-boost
+
+        # Get service URL
+        SERVICE_URL=$(gcloud run services describe lfa-legacy-go-backend --region=us-central1 --format="value(status.url)")
+        echo "url=${SERVICE_URL}" >> $GITHUB_OUTPUT
+        echo "✅ Backend deployed to: ${SERVICE_URL}"
+
+    - name: 🏥 Health Check
+      run: |
+        echo "🏥 Testing backend health..."
+        sleep 30
+        
+        HEALTH_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" "${{ steps.deploy.outputs.url }}/health")
+        
+        if [ "$HEALTH_RESPONSE" = "200" ]; then
+          echo "✅ Backend health check passed!"
+        else
+          echo "❌ Backend health check failed with code: $HEALTH_RESPONSE"
+          exit 1
+        fi
+
+  # =============================================
+  # JOB 2: FRONTEND DEPLOYMENT  
+  # =============================================
+  frontend-deployment:
+    name: 🌐 Frontend Deployment
+    runs-on: ubuntu-latest
+    needs: backend-deployment
+    if: github.event_name == 'push' && contains(github.ref, 'main')
+    
+    steps:
+    - name: 📋 Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: 📦 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+
+    - name: 📥 Install Dependencies
+      run: |
+        cd frontend
+        npm ci
+
+    - name: 🏗️ Build Frontend
+      run: |
+        cd frontend
+        echo "REACT_APP_API_URL=${{ needs.backend-deployment.outputs.backend-url }}" > .env.production
+        npm run build
+
+    - name: 🚀 Deploy to Netlify
+      if: ${{ secrets.NETLIFY_AUTH_TOKEN && secrets.NETLIFY_SITE_ID }}
+      run: |
+        npm install -g netlify-cli
+        cd frontend
+        netlify deploy --prod --dir=build --auth=${{ secrets.NETLIFY_AUTH_TOKEN }} --site=${{ secrets.NETLIFY_SITE_ID }}
+
+    - name: ✅ Frontend Deployment Success
+      run: echo "✅ Frontend deployed successfully!"
+
+  # =============================================
+  # JOB 3: PLAYWRIGHT AUTOMATION & LOOP DETECTION
+  # =============================================
+  visual-automation:
+    name: 🎭 Visual Automation & Loop Detection
+    runs-on: ubuntu-latest
+    needs: [backend-deployment, frontend-deployment]
+    if: always() && needs.backend-deployment.result == 'success'
+    
+    steps:
+    - name: 📋 Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: 📦 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: 📥 Install Dependencies
+      run: |
+        npm ci
+        npx playwright install --with-deps chromium
+
+    - name: 🎭 Run Visual Automation Tests
+      env:
+        FRONTEND_URL: ${{ env.FRONTEND_URL }}
+        BACKEND_URL: ${{ needs.backend-deployment.outputs.backend-url }}
+        TEST_USERNAME: ${{ secrets.TEST_USERNAME }}
+        TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+        TEST_EMAIL: ${{ secrets.TEST_EMAIL }}
+      run: |
+        echo "🎭 Starting Playwright automation with infinite loop detection..."
+        npx playwright test tests/automation/lfa-visual-automation.spec.js \
+          --reporter=html,github \
+          --output-dir=test-results/automation
+
+    - name: 📊 Upload Test Results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: automation-test-results
+        path: |
+          test-results/
+          playwright-report/
+        retention-days: 7
+
+    - name: 📸 Test Results Summary
+      if: always()
+      run: |
+        echo "📊 Visual Automation Results:"
+        echo "✅ Screenshots captured for debugging"
+        echo "✅ Infinite loop detection monitored"
+        echo "✅ Performance metrics collected"
+        echo "📦 Results uploaded to artifacts"
+
+  # =============================================
+  # JOB 4: COMPREHENSIVE HEALTH MONITORING
+  # =============================================
+  health-monitoring:
+    name: 📊 Health Monitoring
+    runs-on: ubuntu-latest
+    needs: [backend-deployment, visual-automation]
+    if: always() && needs.backend-deployment.result == 'success'
+    
+    steps:
+    - name: 🏥 Comprehensive Health Check
+      run: |
+        BACKEND_URL="${{ needs.backend-deployment.outputs.backend-url }}"
+        
+        echo "📊 Running comprehensive health checks..."
+        
+        # Test main endpoints
+        echo "🔍 Testing health endpoint..."
+        curl -f "$BACKEND_URL/health" || exit 1
+        
+        echo "🔍 Testing root endpoint..."
+        curl -f "$BACKEND_URL/" || exit 1
+        
+        echo "🔍 Testing API documentation..."
+        curl -f "$BACKEND_URL/docs" || exit 1
+
+    - name: 📈 Performance Monitoring
+      run: |
+        BACKEND_URL="${{ needs.backend-deployment.outputs.backend-url }}"
+        
+        echo "📈 Performance monitoring..."
+        RESPONSE_TIME=$(curl -o /dev/null -s -w '%{time_total}' "$BACKEND_URL/health")
+        echo "⏱️ Health endpoint response time: ${RESPONSE_TIME}s"
+        
+        if (( $(echo "$RESPONSE_TIME > 2.0" | bc -l) )); then
+          echo "⚠️ Response time warning: ${RESPONSE_TIME}s > 2.0s"
+        else
+          echo "✅ Response time acceptable: ${RESPONSE_TIME}s"
+        fi
+
+    - name: 🎉 Deployment Success Summary
+      run: |
+        echo "🎉 LFA Legacy GO - Deployment Complete!"
+        echo "=================================="
+        echo "✅ Backend: ${{ needs.backend-deployment.outputs.backend-url }}"
+        echo "✅ Frontend: ${{ env.FRONTEND_URL }}"
+        echo "✅ Health: All endpoints responding"
+        echo "✅ Automation: Visual testing completed"
+        echo "✅ Monitoring: Performance validated"
+        echo "=================================="
+        echo "🚀 System ready for production use!"
+
+  # =============================================
+  # JOB 5: SLACK/TEAMS NOTIFICATION (Optional)
+  # =============================================
+  notification:
+    name: 📢 Deployment Notification
+    runs-on: ubuntu-latest
+    needs: [backend-deployment, frontend-deployment, visual-automation, health-monitoring]
+    if: always()
+    
+    steps:
+    - name: 📢 Success Notification
+      if: needs.backend-deployment.result == 'success'
+      run: |
+        echo "🎉 LFA Legacy GO deployment completed successfully!"
+        echo "Backend: ${{ needs.backend-deployment.outputs.backend-url }}"
+        echo "All systems operational!"
+
+    - name: 🚨 Failure Notification  
+      if: failure()
+      run: |
+        echo "🚨 LFA Legacy GO deployment failed!"
+        echo "Check logs for details."

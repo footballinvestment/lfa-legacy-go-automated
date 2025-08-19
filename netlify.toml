@@ -1,0 +1,22 @@
+[build]
+  command = "cd frontend && npm run build"
+  publish = "frontend/build"
+
+[build.environment]
+  NODE_VERSION = "18"
+  REACT_APP_API_URL = "https://lfa-legacy-go-backend-376491487980.us-central1.run.app"
+  REACT_APP_DEBUG = "true"
+
+# CRITICAL: Catch-all redirect for SPA
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Debug headers
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "strict-origin-when-cross-origin"

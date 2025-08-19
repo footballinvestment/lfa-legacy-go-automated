@@ -123,8 +123,9 @@ const AuthForm: React.FC = () => {
     }
 
     if (success) {
-      // Redirect will be handled by AuthContext
-      window.location.href = "/dashboard";
+      // ✅ SUCCESS: AuthContext will handle redirect automatically
+      // ProtectedRoute/PublicRoute components will redirect based on auth state
+      // No manual navigation needed to prevent infinite loops
     }
   };
 

@@ -1,0 +1,39 @@
+{
+  "name": "lfa-legacy-go-automation",
+  "version": "1.0.0",
+  "description": "LFA Legacy GO - Complete automation pipeline with infinite loop detection",
+  "private": true,
+  "scripts": {
+    "test:e2e": "playwright test",
+    "test:e2e:debug": "playwright test --debug",
+    "test:e2e:headed": "playwright test --headed",
+    "test:automation": "playwright test tests/automation/lfa-visual-automation.spec.js",
+    "test:loop-detection": "playwright test tests/automation/lfa-visual-automation.spec.js --headed",
+    "test:automation:ci": "playwright test tests/automation/lfa-visual-automation.spec.js --reporter=github",
+    "automation:install": "playwright install --with-deps chromium",
+    "automation:setup": "npm install && npm run automation:install",
+    "dev:frontend": "cd frontend && npm start",
+    "dev:backend": "cd backend && uvicorn app.main:app --reload",
+    "build:frontend": "cd frontend && npm run build",
+    "docker:build": "docker build -t lfa-legacy-go-backend backend/",
+    "docker:run": "docker run -p 8080:8080 lfa-legacy-go-backend"
+  },
+  "dependencies": {
+    "@playwright/test": "^1.54.2",
+    "puppeteer": "^24.16.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "keywords": [
+    "lfa-legacy-go",
+    "automation",
+    "playwright",
+    "infinite-loop-detection",
+    "visual-testing",
+    "ci-cd"
+  ],
+  "author": "LFA Legacy GO Team",
+  "license": "MIT"
+}

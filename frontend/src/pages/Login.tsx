@@ -126,7 +126,9 @@ const Login: React.FC = () => {
     }
 
     if (success) {
-      window.location.href = '/';
+      // ✅ SUCCESS: AuthContext will handle redirect automatically
+      // ProtectedRoute/PublicRoute components will redirect based on auth state
+      // No manual navigation needed to prevent infinite loops
     }
   };
 

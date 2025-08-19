@@ -729,7 +729,12 @@ const AdvancedUserManagement: React.FC = () => {
           )}
 
           <Box sx={{ ml: 'auto' }}>
-            <IconButton onClick={() => window.location.reload()}>
+            <IconButton onClick={() => {
+              // ✅ FIXED: Refresh data instead of page reload
+              setUsers([]);
+              setLoading(true);
+              loadUsers();
+            }}>
               <Refresh />
             </IconButton>
           </Box>

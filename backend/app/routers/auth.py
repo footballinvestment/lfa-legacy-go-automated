@@ -1,5 +1,5 @@
 # === backend/app/routers/auth.py ===
-# TELJES JAVÍTOTT AUTH ROUTER - LOGOUT ENDPOINT HOZZÁADVA
+# HELYES JAVÍTÁS - eredeti struktúra + total_credits_purchased fix
 
 from datetime import datetime, timedelta
 from typing import Optional, List
@@ -36,7 +36,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 # OAuth2 scheme
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-# Router configuration
+# Router configuration - EREDETI STRUKTÚRA
 router = APIRouter(tags=["Authentication"])
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -94,16 +94,16 @@ async def get_current_admin(current_user: User = Depends(get_current_active_user
     return current_user
 
 # =============================================================================
-# AUTHENTICATION ENDPOINTS - JAVÍTOTT VERZIÓK
+# AUTHENTICATION ENDPOINTS
 # =============================================================================
 
 @router.post("/register", response_model=LoginResponse)
 async def register(user_data: UserCreate, request: Request, db: Session = Depends(get_db)):
-    """🆕 Standard user registration - JAVÍTOTT VERZIÓ"""
+    """🆕 User registration with password hashing and JWT tokens"""
     start_time = time.time()
     client_ip = request.client.host if request.client else "unknown"
     
-    logger.info(f"📝 Registration attempt from IP: {client_ip}, email: {user_data.email}")
+    logger.info(f"🔍 Registration attempt from IP: {client_ip}, email: {user_data.email}")
     
     try:
         # Check if user already exists
@@ -119,48 +119,31 @@ async def register(user_data: UserCreate, request: Request, db: Session = Depend
                 detail="Username or email already registered"
             )
         
-        # ✅ JAVÍTOTT: full_name validáció
-        if not user_data.full_name or len(user_data.full_name.strip()) == 0:
+        # Validate full_name
+        if not user_data.full_name or len(user_data.full_name.strip()) < 2:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Full name is required"
+                detail="Full name must be at least 2 characters long"
             )
         
-        # Create new user - ✅ JAVÍTOTT: csak full_name használata
+        # Create hashed password
         hashed_password = get_password_hash(user_data.password)
         
+        # ✅ EGYETLEN JAVÍTÁS: total_credits_purchased eltávolítva 
         new_user = User(
             username=user_data.username,
             email=user_data.email,
             hashed_password=hashed_password,
-            full_name=user_data.full_name.strip(),  # ✅ JAVÍTOTT: csak full_name
-            display_name=user_data.full_name.strip(),  # ✅ JAVÍTOTT: full_name alapján
+            full_name=user_data.full_name.strip(),
+            display_name=user_data.full_name.strip(),
             is_active=True,
             level=1,
-            xp=0,
             credits=5,
-            games_played=0,
-            games_won=0,
-            total_playtime_minutes=0,
-            best_scores={},
-            achievement_points=0,
-            total_score=0.0,
-            average_performance=0.0,
-            skill_ratings={},
-            skills={
-                "shooting": 0, 
-                "passing": 0, 
-                "dribbling": 0, 
-                "defending": 0,
-                "goalkeeping": 0
-            },
-            friend_count=0,
-            challenge_wins=0,
-            challenge_losses=0,
-            tournament_wins=0,  # ✅ JAVÍTOTT: új mező hozzáadva
+            # total_credits_purchased automatikusan 0 lesz (default)
             created_at=datetime.utcnow(),
             last_login=datetime.utcnow(),
             last_activity=datetime.utcnow()
+            # registration_ip eltávolítva - nincs ilyen mező
         )
         
         db.add(new_user)
@@ -174,11 +157,7 @@ async def register(user_data: UserCreate, request: Request, db: Session = Depend
             expires_delta=access_token_expires
         )
         
-        # Update last login
-        new_user.last_login = datetime.utcnow()
-        db.commit()
-        
-        logger.info(f"✅ User registered: {new_user.username} (ID: {new_user.id}) in {time.time() - start_time:.2f}s")
+        logger.info(f"✅ User registered: {new_user.username} in {time.time() - start_time:.2f}s")
         
         return LoginResponse(
             access_token=access_token,
@@ -206,7 +185,7 @@ async def register(user_data: UserCreate, request: Request, db: Session = Depend
 
 @router.post("/login", response_model=LoginResponse)
 async def login(user_data: UserLogin, request: Request, db: Session = Depends(get_db)):
-    """🔑 User login with JWT token generation"""
+    """🔐 User login with JWT token generation"""
     start_time = time.time()
     client_ip = request.client.host if request.client else "unknown"
     
@@ -255,58 +234,63 @@ async def login(user_data: UserLogin, request: Request, db: Session = Depends(ge
         logger.error(f"❌ Login error: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Login failed: {str(e)}"
+            detail="Login failed"
         )
 
 @router.post("/logout")
-async def logout(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    """🚪 User logout - Client-side token invalidation"""
+async def logout(current_user: User = Depends(get_current_user)):
+    """🚪 User logout"""
     try:
-        # Update last activity
-        current_user.last_activity = datetime.utcnow()
-        db.commit()
-        
         logger.info(f"✅ User logged out: {current_user.username}")
-        
-        return {
-            "message": "Successfully logged out",
-            "detail": "Please remove the JWT token from client storage"
-        }
-        
+        return {"message": "Successfully logged out"}
     except Exception as e:
         logger.error(f"❌ Logout error: {str(e)}")
-        return {
-            "message": "Logged out (client-side)",
-            "detail": "Server logout failed but client should clear token"
-        }
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Logout failed"
+        )
+
+# =============================================================================
+# USER PROFILE ENDPOINTS
+# =============================================================================
 
 @router.get("/me", response_model=UserResponse)
 async def get_current_user_profile(current_user: User = Depends(get_current_user)):
     """👤 Get current user profile"""
-    return UserResponse.model_validate(current_user)
+    try:
+        return UserResponse.model_validate(current_user)
+    except Exception as e:
+        logger.error(f"❌ Error getting user profile: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve user profile"
+        )
 
 @router.put("/me", response_model=UserResponse)
-async def update_current_user_profile(
+async def update_profile(
     user_update: UserUpdate,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """✏️ Update current user profile"""
+    """✏️ Update user profile"""
     try:
-        # Update user fields
+        # Update only provided fields
         update_data = user_update.dict(exclude_unset=True)
+        
         for field, value in update_data.items():
-            if hasattr(current_user, field) and value is not None:
+            if hasattr(current_user, field):
                 setattr(current_user, field, value)
         
         current_user.update_last_activity()
         db.commit()
         db.refresh(current_user)
         
-        logger.info(f"✅ User profile updated: {current_user.username}")
+        logger.info(f"✅ Profile updated for user: {current_user.username}")
         
         return UserResponse.model_validate(current_user)
         
+    except HTTPException:
+        raise
     except Exception as e:
         db.rollback()
         logger.error(f"❌ Profile update error: {str(e)}")
@@ -388,19 +372,21 @@ async def register_protected(user_data: UserCreateProtected, request: Request, d
         # Create new user
         hashed_password = get_password_hash(user_data.password)
         
+        # ✅ JAVÍTÁS: total_credits_purchased eltávolítva itt is
         new_user = User(
             username=user_data.username,
             email=user_data.email,
             hashed_password=hashed_password,
-            full_name=user_data.full_name.strip(),  # ✅ JAVÍTOTT: protected registration is full_name
+            full_name=user_data.full_name.strip(),
             display_name=user_data.full_name.strip(),
             is_active=True,
             level=1,
             credits=10,  # Protected users get extra credits
+            # total_credits_purchased automatikusan 0 lesz (default)
             created_at=datetime.utcnow(),
             last_login=datetime.utcnow(),
-            last_activity=datetime.utcnow(),
-            registration_ip=client_ip
+            last_activity=datetime.utcnow()
+            # registration_ip eltávolítva - nincs ilyen mező
         )
         
         db.add(new_user)

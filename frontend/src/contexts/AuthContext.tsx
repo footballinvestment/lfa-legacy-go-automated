@@ -8,6 +8,7 @@ import React, {
   useEffect,
   ReactNode,
 } from "react";
+import { Navigate } from "react-router-dom";
 import { authService, RegisterRequest, User } from "../services/api";
 
 // ✅ RegisterData interface
@@ -315,8 +316,7 @@ export const ProtectedRoute: React.FC<{ children: ReactNode }> = ({
   }
 
   if (!state.isAuthenticated) {
-    window.location.href = "/login";
-    return null;
+    return <Navigate to="/login" replace />;
   }
 
   return <>{children}</>;
@@ -333,8 +333,7 @@ export const PublicRoute: React.FC<{ children: ReactNode }> = ({
   }
 
   if (state.isAuthenticated) {
-    window.location.href = "/dashboard";
-    return null;
+    return <Navigate to="/dashboard" replace />;
   }
 
   return <>{children}</>;
