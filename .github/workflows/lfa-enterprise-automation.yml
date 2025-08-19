@@ -211,7 +211,7 @@ jobs:
         
         # Execute critical tests
         npx playwright test critical-test.spec.js \
-          --reporter=line,json:test-results/critical-results.json \
+          --reporter=line,html \
           --output=test-results/automation \
           --project=chromium
     
@@ -316,7 +316,7 @@ jobs:
         
         # Execute comprehensive tests with graceful error handling
         npx playwright test comprehensive-test.spec.js \
-          --reporter=line,json:test-results/comprehensive-results.json \
+          --reporter=line,html \
           --output=test-results/automation \
           --project=chromium \
           --max-failures=5 || echo "⚠️ Some comprehensive tests failed - continuing..."
