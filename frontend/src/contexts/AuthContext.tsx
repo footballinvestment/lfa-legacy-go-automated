@@ -133,8 +133,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         try {
           dispatch({ type: "AUTH_START" });
 
-          // ✅ CLEAN: Only real API call, no mock logic
-          const userData = await authService.getCurrentUser();
+          // ✅ CRITICAL FIX: Add timeout to prevent infinite loading
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Auth timeout after 10 seconds')), 10000)
+          );
+
+          // Race between API call and timeout
+          const userData = await Promise.race([
+            authService.getCurrentUser(),
+            timeoutPromise
+          ]);
+
           if (!userData) {
             throw new Error("Invalid user data");
           }
@@ -175,6 +184,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
 
     initializeAuth();
+  }, []);
+
+  // ✅ CRITICAL FIX: Fallback timeout to force loading state to false
+  useEffect(() => {
+    const fallbackTimeout = setTimeout(() => {
+      console.warn('⚠️ Auth initialization timeout - forcing loading state to false');
+      dispatch({ type: "AUTH_FAILURE", payload: "Authentication timeout" });
+    }, 15000);
+    
+    return () => clearTimeout(fallbackTimeout);
   }, []);
 
   const login = async (data: LoginData): Promise<boolean> => {
