@@ -339,4 +339,5 @@ export interface ServiceWorkerConfig {
   pushNotifications: boolean;
 }
 
-export default Tournament;
+// Tournament interface already exported as named export
+// TypeScript interfaces cannot be default exported for React components

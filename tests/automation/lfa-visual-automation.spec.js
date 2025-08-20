@@ -2,7 +2,7 @@
 // LFA LEGACY GO - VISUAL AUTOMATION & INFINITE LOOP DETECTION
 // =============================================
 
-const { test, expect } = require('@playwright/test');
+import { test, expect } from '@playwright/test';
 
 // CONFIGURATION
 const CONFIG = {
@@ -318,7 +318,7 @@ test.describe('LFA Legacy GO - Application Health & Infinite Loop Detection', ()
   });
 
   // =============================================
-  # VISUAL REGRESSION DETECTION
+  // VISUAL REGRESSION DETECTION
   // =============================================
   
   test('👁️ should maintain visual consistency', async ({ page }) => {
@@ -349,7 +349,7 @@ test.describe('LFA Legacy GO - Application Health & Infinite Loop Detection', ()
 });
 
 // =============================================
-# ADVANCED MONITORING SUITE
+// ADVANCED MONITORING SUITE
 // =============================================
 
 test.describe('Advanced Production Monitoring', () => {
@@ -403,7 +403,7 @@ test.describe('Advanced Production Monitoring', () => {
 });
 
 // =============================================
-# CONFIGURATION & SUMMARY
+// CONFIGURATION & SUMMARY
 // =============================================
 
 console.log(`
@@ -413,7 +413,7 @@ Frontend URL: ${CONFIG.urls.frontend}
 Backend URL: ${CONFIG.urls.backend}
 Loop Threshold: ${CONFIG.automation.infiniteLoopThreshold} redirects
 Cycle Interval: ${CONFIG.automation.cycleInterval}ms
-Visual Feedback: ${CONFIG.automation.visualFeedbackEnabled ? 'Enabled' ✅' : 'Disabled ❌'}
+Visual Feedback: ${CONFIG.automation.visualFeedbackEnabled ? 'Enabled ✅' : 'Disabled ❌'}
 
 🎯 Test Objectives:
 ✅ Detect and prevent infinite loops

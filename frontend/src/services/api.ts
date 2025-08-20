@@ -162,7 +162,19 @@ export class AuthService extends ApiService {
   }
 
   async getCurrentUser(): Promise<User> {
-    return this.get("/api/auth/me");
+    try {
+      return await this.get("/api/auth/me");
+    } catch (error) {
+      // ✅ CRITICAL FIX: Clear invalid token on auth failure
+      if (error instanceof Error && 
+          (error.message.includes('401') || 
+           error.message.includes('403') || 
+           error.message.includes('Unauthorized'))) {
+        console.warn('🔑 Clearing invalid auth token');
+        localStorage.removeItem('auth_token');
+      }
+      throw error;
+    }
   }
 
   async refreshToken(): Promise<AuthResponse> {

@@ -139,13 +139,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           );
 
           // Race between API call and timeout
-          const userData = await Promise.race([
-            authService.getCurrentUser(),
-            timeoutPromise
-          ]);
+          let userData;
+          try {
+            userData = await Promise.race([
+              authService.getCurrentUser(),
+              timeoutPromise
+            ]);
+          } catch (error) {
+            console.error('Auth initialization failed:', error);
+            throw new Error("Authentication timeout or failed");
+          }
 
-          if (!userData) {
-            throw new Error("Invalid user data");
+          // CRITICAL FIX: Proper validation to prevent React Error #130
+          if (!userData || typeof userData !== 'object' || userData.constructor === Error || userData.message) {
+            console.error('Invalid user data type:', typeof userData, userData);
+            throw new Error("Invalid user data received - got: " + typeof userData);
           }
 
           const user: User = {

@@ -3,12 +3,12 @@
 // Optimized for infinite loop detection and visual automation
 // =============================================
 
-const { defineConfig, devices } = require('@playwright/test');
+import { defineConfig, devices } from '@playwright/test';
 
 /**
  * @see https://playwright.dev/docs/test-configuration
  */
-module.exports = defineConfig({
+export default defineConfig({
   testDir: './tests/automation',
   
   /* Run tests in files in parallel */
@@ -146,8 +146,8 @@ module.exports = defineConfig({
   },
 
   /* Global setup and teardown */
-  globalSetup: require.resolve('./tests/automation/global-setup.js'),
-  // globalTeardown: require.resolve('./tests/automation/global-teardown.js'),
+  // globalSetup: './tests/automation/global-setup.js',
+  // globalTeardown: './tests/automation/global-teardown.js',
 
   /* Test metadata */
   metadata: {

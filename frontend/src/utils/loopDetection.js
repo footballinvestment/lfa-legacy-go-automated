@@ -57,21 +57,44 @@ class InfiniteLoopDetector {
     
     this.isCircuitBreakerActive = true;
     
-    // Clear all storage
-    localStorage.clear();
-    sessionStorage.clear();
-    
-    // Store emergency state
-    sessionStorage.setItem('emergency_stop', JSON.stringify({
+    // Store emergency state but DON'T clear localStorage immediately
+    localStorage.setItem('LFA_EMERGENCY_STOP', 'true');
+    localStorage.setItem('LFA_LOOP_HISTORY', JSON.stringify({
       redirectHistory: this.redirectHistory.slice(-10),
       timestamp: Date.now(),
-      count: this.redirectCount
+      count: this.redirectCount,
+      userAgent: navigator.userAgent,
+      url: window.location.href
     }));
     
-    // Reset to safe state after delay
-    setTimeout(() => {
-      window.location.href = '/login?emergency=true';
-    }, 1000);
+    // 🚨 CRITICAL FIX: DON'T use window.location.href - it causes hard refresh!
+    // Instead, let the emergency stop mechanism handle it
+    console.error('🛑 Emergency stop activated - refresh loop prevention engaged');
+    
+    // Force emergency stop activation
+    localStorage.setItem('LFA_REFRESH_COUNT', '10');
+    
+    // Show immediate feedback without refresh
+    if (document.body) {
+      const emergencyDiv = document.createElement('div');
+      emergencyDiv.innerHTML = `
+        <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+                    background: rgba(255, 107, 107, 0.95); color: white; 
+                    display: flex; align-items: center; justify-content: center; 
+                    z-index: 999999; font-family: Arial;">
+          <div style="text-align: center; padding: 20px;">
+            <h1>🛑 NAVIGATION LOOP DETECTED</h1>
+            <p>Emergency stop activated to prevent browser freeze</p>
+            <p>Redirects detected: ${this.redirectCount}</p>
+            <button onclick="location.reload()" style="padding: 10px 20px; font-size: 16px; 
+                    background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer;">
+              🔄 Reload Page Safely
+            </button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(emergencyDiv);
+    }
   }
 
   reset() {

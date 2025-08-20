@@ -33,8 +33,8 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30 * 24 * 60  # 30 days
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# OAuth2 scheme
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+# OAuth2 scheme - Fixed tokenUrl to match OAuth2 standard
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/token")
 
 # Router configuration - EREDETI STRUKTÚRA
 router = APIRouter(tags=["Authentication"])
@@ -183,9 +183,63 @@ async def register(user_data: UserCreate, request: Request, db: Session = Depend
             detail=f"Registration failed: {str(e)}"
         )
 
+@router.post("/token", response_model=LoginResponse)
+async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), request: Request = None, db: Session = Depends(get_db)):
+    """🔐 OAuth2-compliant token endpoint (accepts FormData)"""
+    start_time = time.time()
+    client_ip = request.client.host if request and request.client else "unknown"
+    
+    try:
+        # Find user by username
+        user = db.query(User).filter(User.username == form_data.username).first()
+        
+        if not user or not verify_password(form_data.password, user.hashed_password):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect username or password",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        if not user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="User account is disabled"
+            )
+        
+        # Create access token
+        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(
+            data={"sub": str(user.id)}, 
+            expires_delta=access_token_expires
+        )
+        
+        # Update last login
+        user.last_login = datetime.utcnow()
+        user.last_activity = datetime.utcnow()
+        user.increment_login()
+        db.commit()
+        
+        logger.info(f"✅ User logged in via OAuth2: {user.username} (IP: {client_ip}) in {time.time() - start_time:.2f}s")
+        
+        return LoginResponse(
+            access_token=access_token,
+            token_type="bearer",
+            expires_in=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+            user=UserResponse.model_validate(user)
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ OAuth2 token error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Authentication failed"
+        )
+
 @router.post("/login", response_model=LoginResponse)
 async def login(user_data: UserLogin, request: Request, db: Session = Depends(get_db)):
-    """🔐 User login with JWT token generation"""
+    """🔐 JSON-based login endpoint (backward compatibility)"""
     start_time = time.time()
     client_ip = request.client.host if request.client else "unknown"
     

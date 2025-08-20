@@ -20,7 +20,7 @@
   },
   "scripts": {
     "start": "NODE_OPTIONS=\"--max-old-space-size=8192\" GENERATE_SOURCEMAP=false react-scripts start",
-    "build": "NODE_OPTIONS=\"--max-old-space-size=8192\" GENERATE_SOURCEMAP=false react-scripts build",
+    "build": "NODE_OPTIONS=\"--max-old-space-size=8192\" GENERATE_SOURCEMAP=true react-scripts build",
     "test": "react-scripts test",
     "test:e2e": "npx playwright test",
     "test:e2e:ui": "npx playwright test --ui",

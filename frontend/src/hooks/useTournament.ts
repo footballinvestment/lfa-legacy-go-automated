@@ -574,16 +574,5 @@ export const useTournamentValidation = () => {
   };
 };
 
-export default {
-  useTournaments,
-  useTournamentDetails,
-  useTournamentRegistration,
-  useTournamentCreation,
-  useTournamentBracket,
-  useTournamentMatches,
-  useTournamentStatistics,
-  useTournamentFilters,
-  useTournamentPermissions,
-  useTournamentUpdates,
-  useTournamentValidation,
-};
+// Individual named exports are already provided above
+// No default export needed for hook collections

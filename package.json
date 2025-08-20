@@ -1,39 +1,21 @@
 {
   "name": "lfa-legacy-go-automation",
   "version": "1.0.0",
-  "description": "LFA Legacy GO - Complete automation pipeline with infinite loop detection",
+  "description": "LFA Legacy GO - Deployment testing",
   "private": true,
+  "type": "module",
   "scripts": {
-    "test:e2e": "playwright test",
-    "test:e2e:debug": "playwright test --debug",
-    "test:e2e:headed": "playwright test --headed",
-    "test:automation": "playwright test tests/automation/lfa-visual-automation.spec.js",
-    "test:loop-detection": "playwright test tests/automation/lfa-visual-automation.spec.js --headed",
-    "test:automation:ci": "playwright test tests/automation/lfa-visual-automation.spec.js --reporter=github",
-    "automation:install": "playwright install --with-deps chromium",
-    "automation:setup": "npm install && npm run automation:install",
-    "dev:frontend": "cd frontend && npm start",
-    "dev:backend": "cd backend && uvicorn app.main:app --reload",
-    "build:frontend": "cd frontend && npm run build",
-    "docker:build": "docker build -t lfa-legacy-go-backend backend/",
-    "docker:run": "docker run -p 8080:8080 lfa-legacy-go-backend"
+    "test:quick": "node test/quick-deployment-check.js",
+    "test:auto": "node test/automated-integration-test.js",
+    "test:api": "curl -s https://lfa-legacy-go-backend-376491487980.us-central1.run.app/health",
+    "test:all": "npm run test:quick && echo '✅ Gyors teszt kész!' && echo 'Telepítsd a Puppeteer-t a teljes teszthez: npm install puppeteer chalk'",
+    "install:test-deps": "npm install puppeteer chalk node-fetch --save-dev"
   },
-  "dependencies": {
-    "@playwright/test": "^1.54.2",
+  "devDependencies": {
+    "chalk": "^5.0.0",
+    "node-fetch": "^3.3.0"
+  },
+  "optionalDependencies": {
     "puppeteer": "^24.16.2"
-  },
-  "engines": {
-    "node": ">=18.0.0",
-    "npm": ">=8.0.0"
-  },
-  "keywords": [
-    "lfa-legacy-go",
-    "automation",
-    "playwright",
-    "infinite-loop-detection",
-    "visual-testing",
-    "ci-cd"
-  ],
-  "author": "LFA Legacy GO Team",
-  "license": "MIT"
+  }
 }

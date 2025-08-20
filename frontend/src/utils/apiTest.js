@@ -1,5 +1,5 @@
 // === API Connectivity Verification ===
-import config from '../config/environment.js';
+import config from '../config/environment';
 
 export const verifyAPIConnectivity = async () => {
   const apiUrl = config.API_URL;
