@@ -1,14 +1,14 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { Box, CircularProgress, Alert, AlertTitle } from '@mui/material';
-import { useAuth } from '../../contexts/AuthContext';
+import { useSafeAuth } from '../../SafeAuthContext';
 
 interface AdminRouteProps {
   children: React.ReactNode;
 }
 
 const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
-  const { state } = useAuth();
+  const { state } = useSafeAuth();
 
   // Show loading spinner while authentication state is being determined
   if (state.isLoading) {

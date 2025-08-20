@@ -59,7 +59,7 @@ import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { Tournament, TournamentCreateRequest, TournamentFormat } from '../../types/tournament';
-import { useAuth } from '../../contexts/AuthContext';
+import { useSafeAuth } from '../../SafeAuthContext';
 import ErrorBoundary from '../common/ErrorBoundary';
 
 const Transition = React.forwardRef(function Transition(
@@ -83,7 +83,7 @@ const MobileCreateTournament: React.FC<MobileCreateTournamentProps> = ({
   onSubmit
 }) => {
   const theme = useTheme();
-  const { user } = useAuth();
+  const { user } = useSafeAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Form state

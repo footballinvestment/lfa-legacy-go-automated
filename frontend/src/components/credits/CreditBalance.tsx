@@ -19,7 +19,7 @@ import {
   History,
   Add,
 } from '@mui/icons-material';
-import { useAuth } from '../../contexts/AuthContext';
+import { useSafeAuth } from '../../SafeAuthContext';
 import { creditService } from '../../services/api';
 
 interface CreditBalanceProps {
@@ -39,7 +39,7 @@ const CreditBalance: React.FC<CreditBalanceProps> = ({
   onViewHistory,
   refreshInterval = 30000, // 30 seconds default
 }) => {
-  const { state } = useAuth();
+  const { state } = useSafeAuth();
   const [balance, setBalance] = useState<number>(state.user?.credits || 0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

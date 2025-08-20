@@ -62,7 +62,7 @@ import {
 } from '@mui/icons-material';
 import { TransitionProps } from '@mui/material/transitions';
 import { Tournament, TournamentParticipant, Match, TournamentStats } from '../../types/tournament';
-import { useAuth } from '../../contexts/AuthContext';
+import { useSafeAuth } from '../../SafeAuthContext';
 import ErrorBoundary from '../common/ErrorBoundary';
 
 // SwipeableViews component for tab switching - can be replaced with a simple Box if library not available
@@ -97,7 +97,7 @@ const MobileTournamentDetails: React.FC<MobileTournamentDetailsProps> = ({
   onJoin
 }) => {
   const theme = useTheme();
-  const { user } = useAuth();
+  const { user } = useSafeAuth();
   const isAuthenticated = user !== null;
   
   // State management

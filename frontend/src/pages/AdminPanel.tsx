@@ -66,7 +66,7 @@ import {
   TrendingDown,
   MoreVert,
 } from '@mui/icons-material';
-import { useAuth } from '../contexts/AuthContext';
+import { useSafeAuth } from '../SafeAuthContext';
 
 // Interfaces for Admin Panel
 interface SystemMetrics {
@@ -107,7 +107,7 @@ interface SystemAlert {
 
 const AdminPanel: React.FC = () => {
   const navigate = useNavigate();
-  const { state } = useAuth();
+  const { state } = useSafeAuth();
   const [activeTab, setActiveTab] = useState(0);
   const [loading, setLoading] = useState(true);
   const [metrics, setMetrics] = useState<SystemMetrics | null>(null);

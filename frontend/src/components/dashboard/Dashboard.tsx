@@ -38,7 +38,7 @@ import {
   Add,
   Assessment,
 } from "@mui/icons-material";
-import { useAuth } from "../../contexts/AuthContext";
+import { useSafeAuth } from "../../contexts/AuthContext";
 import { gameResultsService } from "../../services/gameResultsService";
 
 interface QuickAction {
@@ -71,7 +71,7 @@ interface GameStats {
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { state, refreshStats } = useAuth();
+  const { state, refreshStats } = useSafeAuth();
   const { user } = state;
 
   const [loading, setLoading] = useState(false);

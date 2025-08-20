@@ -1,9 +1,9 @@
 import React from 'react';
 import { Box, Typography, Card, CardContent, Grid, LinearProgress } from '@mui/material';
-import { useAuth } from '../contexts/AuthContext';
+import { useSafeAuth } from '../SafeAuthContext';
 
 const Profile: React.FC = () => {
-  const { state } = useAuth();
+  const { state } = useSafeAuth();
 
   if (!state.user) {
     return <Typography>Loading...</Typography>;

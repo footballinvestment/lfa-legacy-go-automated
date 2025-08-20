@@ -33,7 +33,7 @@ import {
   Speed,
   AccountBalanceWallet,
 } from "@mui/icons-material";
-import { useAuth } from "../../contexts/AuthContext";
+import { useSafeAuth } from "../../contexts/AuthContext";
 
 interface AvailabilitySlot {
   time: string;
@@ -60,7 +60,7 @@ interface BookingResponse {
 
 const BookingForm: React.FC = () => {
   const navigate = useNavigate();
-  const { state, updateUser } = useAuth();
+  const { state, updateUser } = useSafeAuth();
 
   // Default to location 1 (can be made dynamic later)
   const locationId = "1";

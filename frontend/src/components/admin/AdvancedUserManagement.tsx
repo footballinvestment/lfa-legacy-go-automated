@@ -64,7 +64,7 @@ import {
   ViewModule,
   Clear,
 } from '@mui/icons-material';
-import { useAuth } from '../../contexts/AuthContext';
+import { useSafeAuth } from '../../SafeAuthContext';
 import UserDetailModal from './UserDetailModal';
 import { moderationApi } from '../../services/moderationApi';
 import type { BulkUserOperation, BulkOperationResult } from '../../types/moderation';
@@ -130,7 +130,7 @@ interface UserAction {
 }
 
 const AdvancedUserManagement: React.FC = () => {
-  const { user } = useAuth();
+  const { user } = useSafeAuth();
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');

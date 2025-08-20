@@ -73,7 +73,7 @@ import {
   Analytics,
   History,
 } from '@mui/icons-material';
-import { useAuth } from '../../contexts/AuthContext';
+import { useSafeAuth } from '../../SafeAuthContext';
 import { moderationApi } from '../../services/moderationApi';
 import type { 
   UserReport, 
@@ -129,7 +129,7 @@ function TabPanel(props: TabPanelProps) {
 }
 
 const AdvancedModerationTools: React.FC = () => {
-  const { user } = useAuth();
+  const { user } = useSafeAuth();
   const [currentTab, setCurrentTab] = useState(0);
   const [loading, setLoading] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);

@@ -22,7 +22,7 @@ import {
   Person,
   Lock,
 } from '@mui/icons-material';
-import { useAuth } from '../contexts/AuthContext';
+import { useSafeAuth } from '../SafeAuthContext';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -39,7 +39,7 @@ const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => {
 };
 
 const Login: React.FC = () => {
-  const { state, login, register, clearError } = useAuth();
+  const { state, login, register, clearError } = useSafeAuth();
   const [activeTab, setActiveTab] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -181,7 +181,7 @@ const Login: React.FC = () => {
                     onChange={handleInputChange('username')}
                     error={Boolean(errors.username)}
                     helperText={errors.username}
-                    disabled={state.isLoading}
+                    disabled={state.loading}
                     fullWidth
                     InputProps={{
                       startAdornment: (
@@ -199,7 +199,7 @@ const Login: React.FC = () => {
                     onChange={handleInputChange('password')}
                     error={Boolean(errors.password)}
                     helperText={errors.password}
-                    disabled={state.isLoading}
+                    disabled={state.loading}
                     fullWidth
                     InputProps={{
                       startAdornment: (
@@ -230,7 +230,7 @@ const Login: React.FC = () => {
                     onChange={handleInputChange('full_name')}
                     error={Boolean(errors.full_name)}
                     helperText={errors.full_name}
-                    disabled={state.isLoading}
+                    disabled={state.loading}
                     fullWidth
                     InputProps={{
                       startAdornment: (
@@ -247,7 +247,7 @@ const Login: React.FC = () => {
                     onChange={handleInputChange('username')}
                     error={Boolean(errors.username)}
                     helperText={errors.username}
-                    disabled={state.isLoading}
+                    disabled={state.loading}
                     fullWidth
                     InputProps={{
                       startAdornment: (
@@ -265,7 +265,7 @@ const Login: React.FC = () => {
                     onChange={handleInputChange('email')}
                     error={Boolean(errors.email)}
                     helperText={errors.email}
-                    disabled={state.isLoading}
+                    disabled={state.loading}
                     fullWidth
                     InputProps={{
                       startAdornment: (
@@ -283,7 +283,7 @@ const Login: React.FC = () => {
                     onChange={handleInputChange('password')}
                     error={Boolean(errors.password)}
                     helperText={errors.password}
-                    disabled={state.isLoading}
+                    disabled={state.loading}
                     fullWidth
                     InputProps={{
                       startAdornment: (
@@ -311,7 +311,7 @@ const Login: React.FC = () => {
                     onChange={handleInputChange('confirmPassword')}
                     error={Boolean(errors.confirmPassword)}
                     helperText={errors.confirmPassword}
-                    disabled={state.isLoading}
+                    disabled={state.loading}
                     fullWidth
                     InputProps={{
                       startAdornment: (
@@ -329,7 +329,7 @@ const Login: React.FC = () => {
                 variant="contained"
                 size="large"
                 fullWidth
-                disabled={state.isLoading}
+                disabled={state.loading}
                 sx={{
                   mt: 3,
                   py: 1.5,
@@ -341,7 +341,7 @@ const Login: React.FC = () => {
                   },
                 }}
               >
-                {state.isLoading ? (
+                {state.loading ? (
                   <CircularProgress size={24} color="inherit" />
                 ) : (
                   activeTab === 0 ? 'Sign In' : 'Create Account'

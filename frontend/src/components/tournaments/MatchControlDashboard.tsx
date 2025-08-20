@@ -44,7 +44,7 @@ import {
   Timeline,
   SportsScore,
 } from "@mui/icons-material";
-import { useAuth } from "../../contexts/AuthContext";
+import { useSafeAuth } from "../../contexts/AuthContext";
 
 interface Player {
   id: number;
@@ -79,7 +79,7 @@ interface ScoreInput {
 const MatchControlDashboard: React.FC = () => {
   const { tournamentId } = useParams<{ tournamentId: string }>();
   const navigate = useNavigate();
-  const { state: authState } = useAuth();
+  const { state: authState } = useSafeAuth();
 
   const [matches, setMatches] = useState<Match[]>([]);
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);

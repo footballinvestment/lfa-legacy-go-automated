@@ -38,14 +38,14 @@ import {
 } from '@mui/icons-material';
 import { Violation, ViolationCreate, AdminUser } from '../../../types/moderation';
 import { moderationApi } from '../../../services/moderationApi';
-import { useAuth } from '../../../contexts/AuthContext';
+import { useSafeAuth } from '../../../SafeAuthContext';
 
 interface ViolationsTabProps {
   user: AdminUser;
 }
 
 const ViolationsTab: React.FC<ViolationsTabProps> = ({ user }) => {
-  const { user: currentUser } = useAuth();
+  const { user: currentUser } = useSafeAuth();
   const [violations, setViolations] = useState<Violation[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);

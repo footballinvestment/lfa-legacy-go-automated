@@ -23,7 +23,7 @@ import {
   Lock,
   AccountCircle,
 } from "@mui/icons-material";
-import { useAuth } from "../../contexts/AuthContext";
+import { useSafeAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 
 interface RegisterFormProps {
@@ -40,7 +40,7 @@ interface FormData {
 }
 
 const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
-  const { register, state } = useAuth();
+  const { register, state } = useSafeAuth();
   const navigate = useNavigate();
 
   // ✅ JAVÍTOTT: Form state

@@ -50,7 +50,7 @@ import {
   Timeline,
   SportsScore,
 } from "@mui/icons-material";
-import { useAuth } from "../../contexts/AuthContext";
+import { useSafeAuth } from "../../contexts/AuthContext";
 
 // Tournament Types
 interface Tournament {
@@ -104,7 +104,7 @@ interface NewTournament {
 
 const TournamentList: React.FC = () => {
   const navigate = useNavigate();
-  const { state: authState } = useAuth();
+  const { state: authState } = useSafeAuth();
 
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [loading, setLoading] = useState(true);

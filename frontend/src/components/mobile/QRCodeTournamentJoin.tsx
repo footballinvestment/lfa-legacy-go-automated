@@ -36,7 +36,7 @@ import {
 } from '@mui/icons-material';
 import { TransitionProps } from '@mui/material/transitions';
 import { Tournament } from '../../types/tournament';
-import { useAuth } from '../../contexts/AuthContext';
+import { useSafeAuth } from '../../SafeAuthContext';
 import useMobileViewport from '../../hooks/useMobileViewport';
 
 const Transition = React.forwardRef(function Transition(
@@ -79,7 +79,7 @@ const QRCodeTournamentJoin: React.FC<QRCodeTournamentJoinProps> = ({
   onShareQRCode
 }) => {
   const theme = useTheme();
-  const { user } = useAuth();
+  const { user } = useSafeAuth();
   const { viewport, isSmallScreen } = useMobileViewport();
   
   // QR Code generation state

@@ -44,7 +44,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import { useAuth } from '../../contexts/AuthContext';
+import { useSafeAuth } from '../../SafeAuthContext';
 
 interface TournamentStats {
   totalTournaments: number;
@@ -96,7 +96,7 @@ interface PlayerAnalytics {
 }
 
 const TournamentAnalyticsDashboard: React.FC = () => {
-  const { user } = useAuth();
+  const { user } = useSafeAuth();
   const [selectedTab, setSelectedTab] = useState(0);
   const [timeRange, setTimeRange] = useState('30d');
   const [loading, setLoading] = useState(false);

@@ -39,7 +39,7 @@ import {
   ExpandMore,
   SportsScore,
 } from "@mui/icons-material";
-import { useAuth } from "../../contexts/AuthContext";
+import { useSafeAuth } from "../../contexts/AuthContext";
 
 interface Tournament {
   id: number;
@@ -301,7 +301,7 @@ const mockTournamentData: TournamentDetails = {
 const TournamentDetailsPage: React.FC = () => {
   const { tournamentId } = useParams<{ tournamentId: string }>();
   const navigate = useNavigate();
-  const { state: authState } = useAuth();
+  const { state: authState } = useSafeAuth();
 
   const [tournament, setTournament] = useState<TournamentDetails | null>(null);
   const [loading, setLoading] = useState(true);

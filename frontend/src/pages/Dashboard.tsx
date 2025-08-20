@@ -23,7 +23,7 @@ import {
   Timeline,
   AccountBalanceWallet,
 } from "@mui/icons-material";
-import { useAuth } from "../contexts/AuthContext";
+import { useSafeAuth } from "../SafeAuthContext";
 import { useNavigate } from "react-router-dom";
 import { tournamentService, CouponRedemptionResponse } from "../services/api";
 import CreditBalance from "../components/credits/CreditBalance";
@@ -37,8 +37,8 @@ interface DashboardStats {
 }
 
 const Dashboard: React.FC = () => {
-  // 🔥 KRITIKUS JAVÍTÁS: refreshStats kinyerése az AuthContext-ből
-  const { state, refreshStats } = useAuth();
+  // 🔥 KRITIKUS JAVÍTÁS: refreshStats kinyerése az SafeAuthContext-ből
+  const { state, refreshStats } = useSafeAuth();
   const navigate = useNavigate();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(false);

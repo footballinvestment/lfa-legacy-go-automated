@@ -22,7 +22,7 @@ import {
   EmojiEvents,
 } from '@mui/icons-material';
 import { formatDistanceToNow, isBefore } from 'date-fns';
-import { useAuth } from '../../contexts/AuthContext';
+import { useSafeAuth } from '../../SafeAuthContext';
 import { tournamentService, Tournament } from '../../services/api';
 
 interface RegistrationPanelProps {
@@ -40,7 +40,7 @@ const RegistrationPanel: React.FC<RegistrationPanelProps> = ({
   userParticipation,
   onRegistrationChange,
 }) => {
-  const { state } = useAuth();
+  const { state } = useSafeAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<{

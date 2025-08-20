@@ -61,7 +61,7 @@ import {
 } from '@mui/icons-material';
 import { TransitionProps } from '@mui/material/transitions';
 import { Tournament, TournamentStatus, MatchStatus } from '../../types/tournament';
-import { useAuth } from '../../contexts/AuthContext';
+import { useSafeAuth } from '../../SafeAuthContext';
 import ErrorBoundary from '../common/ErrorBoundary';
 
 // Slide transition for mobile dialogs
@@ -248,7 +248,7 @@ const MobileTournamentCard: React.FC<MobileTournamentCardProps> = ({
 const MobileTournamentInterface: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const { user } = useAuth();
+  const { user } = useSafeAuth();
   const isAuthenticated = user !== null;
   
   // State management

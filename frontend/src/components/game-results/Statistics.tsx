@@ -26,7 +26,7 @@ import {
   Star,
   Analytics,
 } from '@mui/icons-material';
-import { useAuth } from '../../contexts/AuthContext';
+import { useSafeAuth } from '../../SafeAuthContext';
 
 // Mock service - replace with actual API
 const gameResultsService = {
@@ -96,7 +96,7 @@ interface Statistics {
 }
 
 const Statistics: React.FC = () => {
-  const { state } = useAuth();
+  const { state } = useSafeAuth();
   const [statistics, setStatistics] = useState<Statistics | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

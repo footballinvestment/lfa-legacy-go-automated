@@ -29,7 +29,7 @@ import {
   Login as LoginIcon,
   PersonAdd,
 } from "@mui/icons-material";
-import { useAuthForm } from "../../contexts/AuthContext";
+import { useSafeAuthForm } from "../../contexts/AuthContext";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -55,7 +55,7 @@ const AuthForm: React.FC = () => {
     isLoading,
     error,
     clearError,
-  } = useAuthForm();
+  } = useSafeAuthForm();
 
   const [activeTab, setActiveTab] = useState(0);
   const [showPassword, setShowPassword] = useState(false);

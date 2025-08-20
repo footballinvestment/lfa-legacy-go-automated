@@ -29,7 +29,7 @@ const mockAuthContext = {
 };
 
 jest.mock('../../../contexts/AuthContext', () => ({
-  useAuth: () => mockAuthContext,
+  useSafeAuth: () => mockAuthContext,
 }));
 
 // Mock data

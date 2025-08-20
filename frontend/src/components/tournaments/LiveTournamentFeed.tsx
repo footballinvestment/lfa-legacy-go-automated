@@ -43,7 +43,7 @@ import {
   Group,
   LocationOn,
 } from '@mui/icons-material';
-import { useAuth } from "../../contexts/AuthContext";
+import { useSafeAuth } from "../../contexts/AuthContext";
 
 interface TournamentEvent {
   id: string;
@@ -78,7 +78,7 @@ interface ActiveTournament {
 }
 
 const LiveTournamentFeed: React.FC = () => {
-  const { user } = useAuth();
+  const { user } = useSafeAuth();
   const [events, setEvents] = useState<TournamentEvent[]>([]);
   const [activeTournaments, setActiveTournaments] = useState<ActiveTournament[]>([]);
   const [loading, setLoading] = useState(false);

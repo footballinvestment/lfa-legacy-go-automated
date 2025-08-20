@@ -23,7 +23,7 @@ import {
   Settings,
 } from '@mui/icons-material';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import { useSafeAuth } from '../../SafeAuthContext';
 
 interface MobileBottomNavigationProps {
   onAddTournament?: () => void;
@@ -40,7 +40,7 @@ const MobileBottomNavigation: React.FC<MobileBottomNavigationProps> = ({
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const location = useLocation();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user } = useSafeAuth();
   const isAuthenticated = user !== null;
   
   const [value, setValue] = useState(0);

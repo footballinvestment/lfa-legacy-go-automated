@@ -66,7 +66,7 @@ import {
   FilterList,
   MoreVert,
 } from '@mui/icons-material';
-import { useAuth } from '../../contexts/AuthContext';
+import { useSafeAuth } from '../../SafeAuthContext';
 
 interface AdminMetrics {
   totalUsers: number;
@@ -135,7 +135,7 @@ interface ModeratorAction {
 }
 
 const AdvancedAdminDashboard: React.FC = () => {
-  const { user } = useAuth();
+  const { user } = useSafeAuth();
   const navigate = useNavigate();
   const [selectedTab, setSelectedTab] = useState(0);
   const [alerts, setAlerts] = useState<AdminAlert[]>([]);
