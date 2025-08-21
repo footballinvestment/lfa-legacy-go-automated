@@ -7,10 +7,10 @@ plugins = []
 [functions."*"]
 
 [build]
-publish = "/Users/lovas.zoltan/Seafile/Football Investment/Projects/GanballGames/lfa-legacy-go/frontend/frontend/build"
+publish = "/Users/lovas.zoltan/Seafile/Football Investment/Projects/GanballGames/lfa-legacy-go/frontend"
 publishOrigin = "config"
 commandOrigin = "config"
-command = "cd frontend && npm run build"
+command = "cd frontend && npm run build && cp -r build/* ../"
 
 [build.environment]
 NODE_VERSION = "18"

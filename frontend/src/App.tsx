@@ -2,7 +2,7 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider, CssBaseline } from "@mui/material";
-import { theme } from "./theme";
+import { lightAppTheme } from "./styles/theme";
 import { SafeAuthProvider, ProtectedRoute, PublicRoute } from "./SafeAuthContext";
 
 // Import all original pages
@@ -19,7 +19,7 @@ import Layout from "./components/layout/Layout";
 
 function App() {
   return (
-    <ThemeProvider theme={theme}>
+    <ThemeProvider theme={lightAppTheme}>
       <CssBaseline />
       <SafeAuthProvider>
         <Router>

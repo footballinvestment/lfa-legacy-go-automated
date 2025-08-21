@@ -191,7 +191,14 @@ export const SafeAuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (data: LoginData): Promise<boolean> => {
     try {
       dispatch({ type: "AUTH_START" });
+      console.log("Login attempt for user:", data.username);
+      
       const response = await authService.login(data);
+      console.log("Login response received:", { 
+        hasToken: !!response?.access_token, 
+        hasUser: !!response?.user,
+        userId: response?.user?.id 
+      });
       
       if (!response || !response.access_token || !response.user) {
         throw new Error("Invalid login response");
@@ -224,8 +231,16 @@ export const SafeAuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       expiry.setTime(expiry.getTime() + (response.expires_in || 43200) * 1000);
       dispatch({ type: "SET_SESSION_EXPIRY", payload: expiry });
 
+      console.log("Login successful for user:", response.user.username);
       return true;
     } catch (error: any) {
+      console.error("Login failed:", {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message,
+        stack: error.stack
+      });
+      
       const errorMessage = error.response?.data?.detail || error.message || "Login failed";
       dispatch({ type: "AUTH_FAILURE", payload: errorMessage });
       return false;
@@ -287,7 +302,17 @@ export const SafeAuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } catch (error) {
       console.error("Logout API call failed:", error);
     } finally {
-      localStorage.removeItem("auth_token");
+      // Complete cleanup
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      // Clear any potential auth-related cookies
+      document.cookie.split(";").forEach((c) => {
+        const eqPos = c.indexOf("=");
+        const name = eqPos > -1 ? c.substring(0, eqPos) : c;
+        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+      });
+      
       dispatch({ type: "AUTH_LOGOUT" });
     }
   };

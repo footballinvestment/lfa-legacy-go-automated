@@ -105,30 +105,39 @@ const Login: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (event: React.FormEvent) => {
+  const handleLoginSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    console.log('🔐 Login attempt initiated');
 
     if (!validateForm()) return;
 
-    let success = false;
-    if (activeTab === 0) {
-      success = await login({
-        username: formData.username,
-        password: formData.password,
-      });
-    } else {
-      success = await register({
-        username: formData.username,
-        email: formData.email,
-        full_name: formData.full_name,
-        password: formData.password,
-      });
-    }
+    const success = await login({
+      username: formData.username,
+      password: formData.password,
+    });
 
     if (success) {
+      console.log('🔐 Login successful');
       // ✅ SUCCESS: AuthContext will handle redirect automatically
-      // ProtectedRoute/PublicRoute components will redirect based on auth state
-      // No manual navigation needed to prevent infinite loops
+    }
+  };
+
+  const handleRegisterSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    console.log('📝 Register attempt initiated');
+
+    if (!validateForm()) return;
+
+    const success = await register({
+      username: formData.username,
+      email: formData.email,
+      full_name: formData.full_name,
+      password: formData.password,
+    });
+
+    if (success) {
+      console.log('📝 Registration successful');
+      // ✅ SUCCESS: AuthContext will handle redirect automatically
     }
   };
 
@@ -172,7 +181,7 @@ const Login: React.FC = () => {
               </Alert>
             )}
 
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={activeTab === 0 ? handleLoginSubmit : handleRegisterSubmit}>
               <TabPanel value={activeTab} index={0}>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
                   <TextField
