@@ -19,7 +19,7 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "NODE_OPTIONS=\"--max-old-space-size=6144\" GENERATE_SOURCEMAP=false DISABLE_ESLINT_PLUGIN=true TSC_COMPILE_ON_ERROR=true SKIP_PREFLIGHT_CHECK=true craco start",
+    "start": "NODE_OPTIONS=\"--max-old-space-size=16384\" GENERATE_SOURCEMAP=false DISABLE_ESLINT_PLUGIN=true TSC_COMPILE_ON_ERROR=true SKIP_PREFLIGHT_CHECK=true FAST_REFRESH=false craco start",
     "start:minimal": "NODE_OPTIONS=\"--max-old-space-size=4096\" SKIP_PREFLIGHT_CHECK=true TSC_COMPILE_ON_ERROR=true DISABLE_ESLINT_PLUGIN=true GENERATE_SOURCEMAP=false FAST_REFRESH=false craco start",
     "start:ultralow": "NODE_OPTIONS=\"--max-old-space-size=4096\" SKIP_PREFLIGHT_CHECK=true TSC_COMPILE_ON_ERROR=true DISABLE_ESLINT_PLUGIN=true GENERATE_SOURCEMAP=false FAST_REFRESH=false WDS_SOCKET_PORT=0 craco start",
     "build": "NODE_OPTIONS=\"--max-old-space-size=32768\" GENERATE_SOURCEMAP=false react-scripts build",

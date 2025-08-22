@@ -1,11 +1,28 @@
-// SafeAuthContext.tsx - FIXED VERSION
-// Contains all necessary admin fields for proper admin panel access
-
-import React, { createContext, useContext, useReducer, useEffect, ReactNode } from "react";
+// Safe AuthContext - Production Ready without React Error #130
+import React, {
+  createContext,
+  useContext,
+  useReducer,
+  useEffect,
+  ReactNode,
+} from "react";
 import { Navigate } from "react-router-dom";
 import { authService, User } from "./services/api";
 
-interface AuthState {
+export interface RegisterData {
+  username: string;
+  password: string;
+  email: string;
+  full_name: string;
+  name?: string;
+}
+
+export interface LoginData {
+  username: string;
+  password: string;
+}
+
+export interface AuthState {
   user: User | null;
   loading: boolean;
   error: string | null;
@@ -13,22 +30,22 @@ interface AuthState {
   sessionExpiry: Date | null;
 }
 
-const initialState: AuthState = {
-  user: null,
-  loading: true,
-  error: null,
-  isAuthenticated: false,
-  sessionExpiry: null,
-};
-
 type AuthAction =
   | { type: "AUTH_START" }
   | { type: "AUTH_SUCCESS"; payload: User }
   | { type: "AUTH_FAILURE"; payload: string }
-  | { type: "LOGOUT" }
+  | { type: "AUTH_LOGOUT" }
   | { type: "UPDATE_USER"; payload: Partial<User> }
   | { type: "SET_SESSION_EXPIRY"; payload: Date }
   | { type: "CLEAR_ERROR" };
+
+const initialState: AuthState = {
+  user: null,
+  loading: false,
+  error: null,
+  isAuthenticated: false,
+  sessionExpiry: null,
+};
 
 function authReducer(state: AuthState, action: AuthAction): AuthState {
   switch (action.type) {
@@ -41,24 +58,22 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
     case "AUTH_SUCCESS":
       return {
         ...state,
-        user: action.payload,
         loading: false,
         error: null,
+        user: action.payload,
         isAuthenticated: true,
       };
     case "AUTH_FAILURE":
       return {
         ...state,
-        user: null,
         loading: false,
         error: action.payload,
+        user: null,
         isAuthenticated: false,
-        sessionExpiry: null,
       };
-    case "LOGOUT":
+    case "AUTH_LOGOUT":
       return {
         ...initialState,
-        loading: false,
       };
     case "UPDATE_USER":
       return {
@@ -78,18 +93,6 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
     default:
       return state;
   }
-}
-
-interface LoginData {
-  username: string;
-  password: string;
-}
-
-interface RegisterData {
-  username: string;
-  password: string;
-  email: string;
-  full_name: string;
 }
 
 interface AuthContextType {
@@ -149,27 +152,24 @@ export const SafeAuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           username: userData.username || "",
           email: userData.email || "",
           full_name: userData.full_name || "",
-          display_name: userData.display_name || userData.full_name || userData.username || "",
+          display_name:
+            userData.display_name ||
+            userData.full_name ||
+            userData.username ||
+            "",
           bio: userData.bio || "",
-          level: userData.level || 1,
-          xp: userData.xp || 0,
-          credits: userData.credits || 0,
-          skills: userData.skills || {},
-          games_played: userData.games_played || 0,
           games_won: userData.games_won || 0,
           games_lost: userData.games_lost || 0,
-          friend_count: userData.friend_count || 0,
           challenge_wins: userData.challenge_wins || 0,
           challenge_losses: userData.challenge_losses || 0,
-          total_achievements: userData.total_achievements || 0,
           is_premium: Boolean(userData.is_premium),
-          premium_expires_at: userData.premium_expires_at || undefined,
-          user_type: userData.user_type || "user", // ✅ ADMIN FIELD!
-          is_active: userData.is_active !== false,
-          is_admin: userData.user_type === "admin" || userData.user_type === "moderator" || userData.is_admin || false, // ✅ ADMIN FIELD!
+          premium_expires_at: userData.premium_expires_at || null,
+          last_activity: userData.last_activity || null,
+          credits: userData.credits || 0,
           created_at: userData.created_at || "",
-          last_login: userData.last_login || undefined,
-          last_activity: userData.last_activity || undefined,
+          updated_at: userData.updated_at || "",
+          user_type: userData.user_type || "user", // MISSING ADMIN FIELD!
+          is_admin: userData.user_type === "admin" || userData.user_type === "moderator", // MISSING ADMIN FIELD!
         };
 
         dispatch({ type: "AUTH_SUCCESS", payload: safeUser });
@@ -204,7 +204,6 @@ export const SafeAuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         hasToken: !!response?.access_token,
         hasUser: !!response?.user,
         userId: response?.user?.id,
-        userType: response?.user?.user_type, // Debug admin type
       });
 
       if (!response || !response.access_token || !response.user) {
@@ -213,33 +212,29 @@ export const SafeAuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       localStorage.setItem("auth_token", response.access_token);
 
-      // CRITICAL FIX: Safe user object creation WITH ADMIN FIELDS
       const safeUser: User = {
         id: response.user.id || 0,
         username: response.user.username || "",
         email: response.user.email || "",
         full_name: response.user.full_name || "",
-        display_name: response.user.display_name || response.user.full_name || response.user.username || "",
+        display_name:
+          response.user.display_name ||
+          response.user.full_name ||
+          response.user.username ||
+          "",
         bio: response.user.bio || "",
-        level: response.user.level || 1,
-        xp: response.user.xp || 0,
-        credits: response.user.credits || 0,
-        skills: response.user.skills || {},
-        games_played: response.user.games_played || 0,
         games_won: response.user.games_won || 0,
         games_lost: response.user.games_lost || 0,
-        friend_count: response.user.friend_count || 0,
         challenge_wins: response.user.challenge_wins || 0,
         challenge_losses: response.user.challenge_losses || 0,
-        total_achievements: response.user.total_achievements || 0,
         is_premium: Boolean(response.user.is_premium),
-        premium_expires_at: response.user.premium_expires_at || undefined,
-        user_type: response.user.user_type || "user", // ✅ ADMIN FIELD!
-        is_active: response.user.is_active !== false,
-        is_admin: response.user.user_type === "admin" || response.user.user_type === "moderator" || response.user.is_admin || false, // ✅ ADMIN FIELD!
+        premium_expires_at: response.user.premium_expires_at || null,
+        last_activity: response.user.last_activity || null,
+        credits: response.user.credits || 0,
         created_at: response.user.created_at || "",
-        last_login: response.user.last_login || undefined,
-        last_activity: response.user.last_activity || undefined,
+        updated_at: response.user.updated_at || "",
+        user_type: response.user.user_type || "user", // MISSING ADMIN FIELD!
+        is_admin: response.user.user_type === "admin" || response.user.user_type === "moderator", // MISSING ADMIN FIELD!
       };
 
       dispatch({ type: "AUTH_SUCCESS", payload: safeUser });
@@ -248,7 +243,7 @@ export const SafeAuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       expiry.setTime(expiry.getTime() + (response.expires_in || 43200) * 1000);
       dispatch({ type: "SET_SESSION_EXPIRY", payload: expiry });
 
-      console.log("✅ Login successful for user:", response.user.username, "| Admin:", safeUser.is_admin);
+      console.log("Login successful for user:", response.user.username);
       return true;
     } catch (error: any) {
       console.error("Login failed:", {
@@ -281,33 +276,29 @@ export const SafeAuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       localStorage.setItem("auth_token", response.access_token);
 
-      // CRITICAL FIX: Safe user object creation WITH ADMIN FIELDS
       const safeUser: User = {
         id: response.user.id || 0,
         username: response.user.username || "",
         email: response.user.email || "",
         full_name: response.user.full_name || "",
-        display_name: response.user.display_name || response.user.full_name || response.user.username || "",
+        display_name:
+          response.user.display_name ||
+          response.user.full_name ||
+          response.user.username ||
+          "",
         bio: response.user.bio || "",
-        level: response.user.level || 1,
-        xp: response.user.xp || 0,
-        credits: response.user.credits || 0,
-        skills: response.user.skills || {},
-        games_played: response.user.games_played || 0,
         games_won: response.user.games_won || 0,
         games_lost: response.user.games_lost || 0,
-        friend_count: response.user.friend_count || 0,
         challenge_wins: response.user.challenge_wins || 0,
         challenge_losses: response.user.challenge_losses || 0,
-        total_achievements: response.user.total_achievements || 0,
         is_premium: Boolean(response.user.is_premium),
-        premium_expires_at: response.user.premium_expires_at || undefined,
-        user_type: response.user.user_type || "user", // ✅ ADMIN FIELD!
-        is_active: response.user.is_active !== false,
-        is_admin: response.user.user_type === "admin" || response.user.user_type === "moderator" || response.user.is_admin || false, // ✅ ADMIN FIELD!
+        premium_expires_at: response.user.premium_expires_at || null,
+        last_activity: response.user.last_activity || null,
+        credits: response.user.credits || 0,
         created_at: response.user.created_at || "",
-        last_login: response.user.last_login || undefined,
-        last_activity: response.user.last_activity || undefined,
+        updated_at: response.user.updated_at || "",
+        user_type: response.user.user_type || "user", // MISSING ADMIN FIELD!
+        is_admin: response.user.user_type === "admin" || response.user.user_type === "moderator", // MISSING ADMIN FIELD!
       };
 
       dispatch({ type: "AUTH_SUCCESS", payload: safeUser });
@@ -338,11 +329,12 @@ export const SafeAuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Clear any potential auth-related cookies
       document.cookie.split(";").forEach((c) => {
         const eqPos = c.indexOf("=");
-        const name = eqPos > -1 ? c.substr(0, eqPos) : c;
-        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+        const name = eqPos > -1 ? c.substring(0, eqPos) : c;
+        document.cookie =
+          name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
       });
 
-      dispatch({ type: "LOGOUT" });
+      dispatch({ type: "AUTH_LOGOUT" });
     }
   };
 
@@ -355,36 +347,31 @@ export const SafeAuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const refreshStats = async (): Promise<void> => {
-    if (!state.user) return;
+    const token = localStorage.getItem("auth_token");
+    if (!token) return;
 
     try {
       const userData = await authService.getCurrentUser();
-      if (userData) {
-        updateUser({
-          games_won: userData.games_won || 0,
-          games_lost: userData.games_lost || 0,
-          challenge_wins: userData.challenge_wins || 0,
-          challenge_losses: userData.challenge_losses || 0,
-          credits: userData.credits || 0,
-        });
+      if (userData && typeof userData === "object") {
+        dispatch({ type: "UPDATE_USER", payload: userData });
       }
     } catch (error) {
-      console.error("Failed to refresh stats:", error);
+      console.error("Failed to refresh user stats:", error);
     }
   };
 
+  const contextValue = {
+    state,
+    login,
+    register,
+    logout,
+    updateUser,
+    clearError,
+    refreshStats,
+  };
+
   return (
-    <SafeAuthContext.Provider
-      value={{
-        state,
-        login,
-        register,
-        logout,
-        updateUser,
-        clearError,
-        refreshStats,
-      }}
-    >
+    <SafeAuthContext.Provider value={contextValue}>
       {children}
     </SafeAuthContext.Provider>
   );
@@ -447,5 +434,3 @@ export const PublicRoute: React.FC<{ children: ReactNode }> = ({
 
   return <>{children}</>;
 };
-
-export default SafeAuthProvider;

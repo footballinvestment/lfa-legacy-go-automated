@@ -176,6 +176,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             is_premium: userData.is_premium ?? false,
             premium_expires_at: userData.premium_expires_at,
             last_activity: userData.last_activity,
+            is_admin: userData.user_type === "admin" || userData.user_type === "moderator", // Add is_admin based on user_type
           };
 
           dispatch({ type: "AUTH_SUCCESS", payload: user });
@@ -235,6 +236,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         is_premium: response.user.is_premium ?? false,
         premium_expires_at: response.user.premium_expires_at,
         last_activity: response.user.last_activity,
+        is_admin: response.user.user_type === "admin" || response.user.user_type === "moderator", // Add is_admin based on user_type
       };
 
       dispatch({ type: "AUTH_SUCCESS", payload: user });
@@ -276,6 +278,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         is_premium: response.user.is_premium ?? false,
         premium_expires_at: response.user.premium_expires_at,
         last_activity: response.user.last_activity,
+        is_admin: response.user.user_type === "admin" || response.user.user_type === "moderator", // Add is_admin based on user_type
       };
 
       dispatch({ type: "AUTH_SUCCESS", payload: user });

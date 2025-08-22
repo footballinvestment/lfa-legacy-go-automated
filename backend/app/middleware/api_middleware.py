@@ -126,7 +126,13 @@ class CORSMiddleware(BaseHTTPMiddleware):
 
         # Add CORS headers
         if self.is_origin_allowed(origin):
-            response.headers["Access-Control-Allow-Origin"] = origin
+            # Always set CORS headers for allowed origins
+            if origin:
+                response.headers["Access-Control-Allow-Origin"] = origin
+            else:
+                # For requests without origin, allow localhost:3000
+                response.headers["Access-Control-Allow-Origin"] = "http://localhost:3000"
+            
             if self.allow_credentials:
                 response.headers["Access-Control-Allow-Credentials"] = "true"
 
@@ -134,8 +140,10 @@ class CORSMiddleware(BaseHTTPMiddleware):
 
     def is_origin_allowed(self, origin: str) -> bool:
         """Check if origin is allowed"""
+        # Always allow localhost requests for development
         if not origin:
-            return False
+            # Allow requests without origin (direct API calls, localhost)
+            return True
 
         if "*" in self.allowed_origins:
             return True

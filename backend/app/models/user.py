@@ -82,6 +82,15 @@ class User(Base):
 
     # ✅ JAVÍTÁS: login_count mező hozzáadva a hiányzó funkcionalitáshoz
     login_count = Column(Integer, default=0)
+    
+    # ✅ JAVÍTÁS: last_purchase_date mező hozzáadva a credits funkcionalitáshoz
+    last_purchase_date = Column(DateTime, nullable=True)
+    
+    # ✅ JAVÍTÁS: total_credits_purchased mező hozzáadva a credits funkcionalitáshoz
+    total_credits_purchased = Column(Integer, default=0)
+    
+    # ✅ JAVÍTÁS: transaction_history mező hozzáadva a credits funkcionalitáshoz
+    transaction_history = Column(JSON, default=list)
 
     # Relationships - EGYSZERŰSÍTETT (moderation relationships eltávolítva a konfliktus elkerülésére)
     sessions = relationship("UserSession", back_populates="user")
@@ -129,6 +138,11 @@ class User(Base):
     def can_afford(self, cost: int) -> bool:
         """Check if user can afford a certain cost"""
         return self.credits >= cost
+    
+    def add_credits(self, amount: int):
+        """Add credits to user account"""
+        if amount > 0:
+            self.credits += amount
 
 
 class UserSession(Base):
