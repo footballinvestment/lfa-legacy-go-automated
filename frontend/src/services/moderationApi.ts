@@ -1,9 +1,16 @@
 // frontend/src/services/moderationApi.ts
 // API service for moderation endpoints
 
-import { AdminUser, Violation, ViolationCreate, BulkUserOperation, BulkOperationResult, UserReport } from '../types/moderation';
+import {
+  AdminUser,
+  Violation,
+  ViolationCreate,
+  BulkUserOperation,
+  BulkOperationResult,
+  UserReport,
+} from "../types/moderation";
 
-const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8000";
 
 // Enhanced error types for better error handling
 interface ApiError extends Error {
@@ -17,12 +24,12 @@ class ModerationApiService {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
-    const token = localStorage.getItem('auth_token');
-    
+    const token = localStorage.getItem("auth_token");
+
     try {
       const response = await fetch(`${API_BASE}${endpoint}`, {
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           ...(token && { Authorization: `Bearer ${token}` }),
           ...options.headers,
         },
@@ -31,67 +38,66 @@ class ModerationApiService {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
-        
+
         // Create enhanced error object
         const error: ApiError = new Error(
-          errorData?.detail || 
-          this.getStatusErrorMessage(response.status) || 
-          `HTTP ${response.status}: ${response.statusText}`
+          errorData?.detail ||
+            this.getStatusErrorMessage(response.status) ||
+            `HTTP ${response.status}: ${response.statusText}`
         );
-        
+
         error.status = response.status;
         error.code = errorData?.code;
         error.details = errorData;
-        
+
         // Log error for debugging
         console.error(`API Error [${response.status}] ${endpoint}:`, {
           status: response.status,
           statusText: response.statusText,
           errorData,
           endpoint,
-          method: options.method || 'GET'
+          method: options.method || "GET",
         });
-        
+
         throw error;
       }
 
       return response.json();
-      
     } catch (error) {
       // Handle network errors
-      if (error instanceof TypeError && error.message.includes('fetch')) {
+      if (error instanceof TypeError && error.message.includes("fetch")) {
         const networkError: ApiError = new Error(
-          'Network error: Please check your internet connection and try again.'
+          "Network error: Please check your internet connection and try again."
         );
-        networkError.code = 'NETWORK_ERROR';
+        networkError.code = "NETWORK_ERROR";
         throw networkError;
       }
-      
+
       // Re-throw API errors
       throw error;
     }
   }
-  
+
   private getStatusErrorMessage(status: number): string {
     switch (status) {
       case 400:
-        return 'Bad request: Please check your input and try again.';
+        return "Bad request: Please check your input and try again.";
       case 401:
-        return 'Unauthorized: Please log in again.';
+        return "Unauthorized: Please log in again.";
       case 403:
-        return 'Forbidden: You do not have permission to perform this action.';
+        return "Forbidden: You do not have permission to perform this action.";
       case 404:
-        return 'Not found: The requested resource could not be found.';
+        return "Not found: The requested resource could not be found.";
       case 409:
-        return 'Conflict: This operation conflicts with existing data.';
+        return "Conflict: This operation conflicts with existing data.";
       case 422:
-        return 'Validation error: Please check your input data.';
+        return "Validation error: Please check your input data.";
       case 429:
-        return 'Too many requests: Please wait and try again.';
+        return "Too many requests: Please wait and try again.";
       case 500:
-        return 'Server error: Something went wrong on our end.';
+        return "Server error: Something went wrong on our end.";
       case 503:
-        return 'Service unavailable: The server is temporarily unavailable.';
+        return "Service unavailable: The server is temporarily unavailable.";
       default:
         return `Request failed with status ${status}`;
     }
@@ -107,29 +113,36 @@ class ModerationApiService {
     }
   }
 
-  async updateUser(userId: number, updates: Partial<AdminUser>): Promise<AdminUser> {
+  async updateUser(
+    userId: number,
+    updates: Partial<AdminUser>
+  ): Promise<AdminUser> {
     return this.request<AdminUser>(`/api/admin/users/${userId}`, {
-      method: 'PATCH',
+      method: "PATCH",
       body: JSON.stringify(updates),
     });
   }
 
-  async getUsers(params?: { page?: number; limit?: number; search?: string }): Promise<{
+  async getUsers(params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+  }): Promise<{
     users: AdminUser[];
     total: number;
     page: number;
     limit: number;
   }> {
-    const queryString = params 
+    const queryString = params
       ? new URLSearchParams(params as any).toString()
-      : '';
-    
+      : "";
+
     return this.request<{
       users: AdminUser[];
       total: number;
       page: number;
       limit: number;
-    }>(`/api/admin/users${queryString ? `?${queryString}` : ''}`);
+    }>(`/api/admin/users${queryString ? `?${queryString}` : ""}`);
   }
 
   // Violation management
@@ -137,12 +150,18 @@ class ModerationApiService {
     return this.request<Violation[]>(`/api/admin/users/${userId}/violations`);
   }
 
-  async addViolation(userId: number, violation: ViolationCreate): Promise<Violation> {
+  async addViolation(
+    userId: number,
+    violation: ViolationCreate
+  ): Promise<Violation> {
     try {
-      return await this.request<Violation>(`/api/admin/users/${userId}/violations`, {
-        method: 'POST',
-        body: JSON.stringify(violation),
-      });
+      return await this.request<Violation>(
+        `/api/admin/users/${userId}/violations`,
+        {
+          method: "POST",
+          body: JSON.stringify(violation),
+        }
+      );
     } catch (error) {
       console.error(`Failed to add violation for user ${userId}:`, error);
       throw error;
@@ -157,7 +176,7 @@ class ModerationApiService {
     return this.request<Violation>(
       `/api/admin/users/${userId}/violations/${violationId}`,
       {
-        method: 'PATCH',
+        method: "PATCH",
         body: JSON.stringify(updates),
       }
     );
@@ -166,14 +185,16 @@ class ModerationApiService {
   async deleteViolation(userId: number, violationId: number): Promise<void> {
     return this.request<void>(
       `/api/admin/users/${userId}/violations/${violationId}`,
-      { method: 'DELETE' }
+      { method: "DELETE" }
     );
   }
 
   // Bulk operations
-  async bulkUserOperation(operation: BulkUserOperation): Promise<BulkOperationResult> {
-    return this.request<BulkOperationResult>('/api/admin/users/bulk', {
-      method: 'POST',
+  async bulkUserOperation(
+    operation: BulkUserOperation
+  ): Promise<BulkOperationResult> {
+    return this.request<BulkOperationResult>("/api/admin/users/bulk", {
+      method: "POST",
       body: JSON.stringify(operation),
     });
   }
@@ -190,31 +211,31 @@ class ModerationApiService {
     page: number;
     limit: number;
   }> {
-    const queryString = params 
+    const queryString = params
       ? new URLSearchParams(params as any).toString()
-      : '';
-    
+      : "";
+
     return this.request<{
       logs: any[];
       total: number;
       page: number;
       limit: number;
-    }>(`/api/admin/moderation/logs${queryString ? `?${queryString}` : ''}`);
+    }>(`/api/admin/moderation/logs${queryString ? `?${queryString}` : ""}`);
   }
 
   // Reports
   async getReports(status?: string): Promise<UserReport[]> {
-    const queryString = status ? `?status=${status}` : '';
+    const queryString = status ? `?status=${status}` : "";
     return this.request<UserReport[]>(`/api/admin/reports${queryString}`);
   }
 
   async updateReport(
     reportId: number,
-    action: 'dismiss' | 'create_violation' | 'escalate',
+    action: "dismiss" | "create_violation" | "escalate",
     data?: any
   ): Promise<UserReport> {
     return this.request<UserReport>(`/api/admin/reports/${reportId}`, {
-      method: 'PATCH',
+      method: "PATCH",
       body: JSON.stringify({ action, ...data }),
     });
   }

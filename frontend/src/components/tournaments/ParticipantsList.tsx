@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Box,
   Typography,
@@ -21,7 +21,7 @@ import {
   DialogTitle,
   DialogContent,
   LinearProgress,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Search,
   FilterList,
@@ -31,7 +31,7 @@ import {
   EmojiEvents,
   Person,
   Close,
-} from '@mui/icons-material';
+} from "@mui/icons-material";
 
 interface Participant {
   user_id: number;
@@ -55,47 +55,58 @@ const ParticipantsList: React.FC<ParticipantsListProps> = ({
   participants,
   tournamentId,
 }) => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState('registration_date');
-  const [filterLevel, setFilterLevel] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState("registration_date");
+  const [filterLevel, setFilterLevel] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [selectedParticipant, setSelectedParticipant] = useState<Participant | null>(null);
+  const [selectedParticipant, setSelectedParticipant] =
+    useState<Participant | null>(null);
   const [profileDialog, setProfileDialog] = useState(false);
 
   // Filter and sort participants
   const filteredAndSortedParticipants = React.useMemo(() => {
-    let filtered = participants.filter(participant => {
-      const matchesSearch = !searchQuery || 
-        participant.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    let filtered = participants.filter((participant) => {
+      const matchesSearch =
+        !searchQuery ||
+        participant.username
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase()) ||
         participant.full_name.toLowerCase().includes(searchQuery.toLowerCase());
-      
-      const matchesLevel = !filterLevel || participant.level.toString() === filterLevel;
-      
+
+      const matchesLevel =
+        !filterLevel || participant.level.toString() === filterLevel;
+
       return matchesSearch && matchesLevel;
     });
 
     // Sort participants
     filtered.sort((a, b) => {
       switch (sortBy) {
-        case 'level':
+        case "level":
           return b.level - a.level;
-        case 'win_rate':
+        case "win_rate":
           return b.win_rate - a.win_rate;
-        case 'games_played':
+        case "games_played":
           return b.games_played - a.games_played;
-        case 'username':
+        case "username":
           return a.username.localeCompare(b.username);
-        case 'registration_date':
+        case "registration_date":
         default:
-          return new Date(a.registration_date).getTime() - new Date(b.registration_date).getTime();
+          return (
+            new Date(a.registration_date).getTime() -
+            new Date(b.registration_date).getTime()
+          );
       }
     });
 
     return filtered;
   }, [participants, searchQuery, sortBy, filterLevel]);
 
-  const handleMenuClick = (event: React.MouseEvent<HTMLElement>, participant: Participant) => {
+  const handleMenuClick = (
+    event: React.MouseEvent<HTMLElement>,
+    participant: Participant
+  ) => {
     setAnchorEl(event.currentTarget);
     setSelectedParticipant(participant);
   };
@@ -111,24 +122,26 @@ const ParticipantsList: React.FC<ParticipantsListProps> = ({
   };
 
   const getWinRateColor = (winRate: number) => {
-    if (winRate >= 70) return 'success';
-    if (winRate >= 50) return 'warning';
-    return 'error';
+    if (winRate >= 70) return "success";
+    if (winRate >= 50) return "warning";
+    return "error";
   };
 
   const getLevelColor = (level: number) => {
-    if (level >= 20) return 'error';
-    if (level >= 10) return 'warning';
-    return 'primary';
+    if (level >= 20) return "error";
+    if (level >= 10) return "warning";
+    return "primary";
   };
 
-  const uniqueLevels = [...new Set(participants.map(p => p.level))].sort((a, b) => a - b);
+  const uniqueLevels = [...new Set(participants.map((p) => p.level))].sort(
+    (a, b) => a - b
+  );
 
   return (
     <Box>
       {/* Search and Filters */}
       <Box sx={{ mb: 3 }}>
-        <Box sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
+        <Box sx={{ display: "flex", gap: 2, mb: 2, alignItems: "center" }}>
           <TextField
             placeholder="Search participants..."
             value={searchQuery}
@@ -143,7 +156,7 @@ const ParticipantsList: React.FC<ParticipantsListProps> = ({
             sx={{ flex: 1 }}
             size="small"
           />
-          
+
           <Button
             variant="outlined"
             startIcon={<FilterList />}
@@ -156,7 +169,7 @@ const ParticipantsList: React.FC<ParticipantsListProps> = ({
 
         {/* Filter Controls */}
         {showFilters && (
-          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+          <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
             <FormControl size="small" sx={{ minWidth: 120 }}>
               <InputLabel>Sort By</InputLabel>
               <Select
@@ -180,7 +193,7 @@ const ParticipantsList: React.FC<ParticipantsListProps> = ({
                 label="Level"
               >
                 <MenuItem value="">All Levels</MenuItem>
-                {uniqueLevels.map(level => (
+                {uniqueLevels.map((level) => (
                   <MenuItem key={level} value={level.toString()}>
                     Level {level}
                   </MenuItem>
@@ -191,9 +204,9 @@ const ParticipantsList: React.FC<ParticipantsListProps> = ({
             <Button
               variant="text"
               onClick={() => {
-                setSearchQuery('');
-                setFilterLevel('');
-                setSortBy('registration_date');
+                setSearchQuery("");
+                setFilterLevel("");
+                setSortBy("registration_date");
               }}
               size="small"
             >
@@ -205,7 +218,8 @@ const ParticipantsList: React.FC<ParticipantsListProps> = ({
 
       {/* Results Count */}
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        Showing {filteredAndSortedParticipants.length} of {participants.length} participants
+        Showing {filteredAndSortedParticipants.length} of {participants.length}{" "}
+        participants
       </Typography>
 
       {/* Participants Grid */}
@@ -213,26 +227,26 @@ const ParticipantsList: React.FC<ParticipantsListProps> = ({
         <Grid container spacing={2}>
           {filteredAndSortedParticipants.map((participant, index) => (
             <Grid key={participant.user_id} size={{ xs: 12, sm: 6, md: 4 }}>
-              <Card 
-                sx={{ 
-                  height: '100%',
-                  transition: 'transform 0.2s, box-shadow 0.2s',
-                  '&:hover': {
-                    transform: 'translateY(-2px)',
+              <Card
+                sx={{
+                  height: "100%",
+                  transition: "transform 0.2s, box-shadow 0.2s",
+                  "&:hover": {
+                    transform: "translateY(-2px)",
                     boxShadow: 3,
                   },
                 }}
               >
                 <CardContent>
                   {/* Participant Header */}
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
                     <Avatar
-                      sx={{ 
-                        width: 40, 
+                      sx={{
+                        width: 40,
                         height: 40,
-                        bgcolor: 'primary.main',
-                        fontSize: '1rem',
-                        fontWeight: 'bold',
+                        bgcolor: "primary.main",
+                        fontSize: "1rem",
+                        fontWeight: "bold",
                         mr: 2,
                       }}
                     >
@@ -246,7 +260,7 @@ const ParticipantsList: React.FC<ParticipantsListProps> = ({
                         @{participant.username}
                       </Typography>
                     </Box>
-                    <IconButton 
+                    <IconButton
                       onClick={(e) => handleMenuClick(e, participant)}
                       size="small"
                     >
@@ -268,7 +282,13 @@ const ParticipantsList: React.FC<ParticipantsListProps> = ({
 
                   {/* Participant Stats */}
                   <Box sx={{ mb: 2 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        mb: 1,
+                      }}
+                    >
                       <Chip
                         label={`Level ${participant.level}`}
                         color={getLevelColor(participant.level)}
@@ -282,11 +302,14 @@ const ParticipantsList: React.FC<ParticipantsListProps> = ({
                         variant="outlined"
                       />
                     </Box>
-                    
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <TrendingUp sx={{ mr: 1, fontSize: 16, color: 'text.secondary' }} />
+
+                    <Box sx={{ display: "flex", alignItems: "center" }}>
+                      <TrendingUp
+                        sx={{ mr: 1, fontSize: 16, color: "text.secondary" }}
+                      />
                       <Typography variant="body2" color="text.secondary">
-                        {participant.games_played} games • {participant.games_won} wins
+                        {participant.games_played} games •{" "}
+                        {participant.games_won} wins
                       </Typography>
                     </Box>
                   </Box>
@@ -309,8 +332,8 @@ const ParticipantsList: React.FC<ParticipantsListProps> = ({
           ))}
         </Grid>
       ) : (
-        <Box sx={{ textAlign: 'center', py: 6 }}>
-          <Person sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+        <Box sx={{ textAlign: "center", py: 6 }}>
+          <Person sx={{ fontSize: 64, color: "text.secondary", mb: 2 }} />
           <Typography variant="h6" color="text.secondary">
             No participants found
           </Typography>
@@ -337,13 +360,19 @@ const ParticipantsList: React.FC<ParticipantsListProps> = ({
       </Menu>
 
       {/* Profile Dialog */}
-      <Dialog 
-        open={profileDialog} 
+      <Dialog
+        open={profileDialog}
         onClose={() => setProfileDialog(false)}
         maxWidth="md"
         fullWidth
       >
-        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <DialogTitle
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
           Player Profile
           <IconButton onClick={() => setProfileDialog(false)}>
             <Close />
@@ -352,14 +381,14 @@ const ParticipantsList: React.FC<ParticipantsListProps> = ({
         <DialogContent>
           {selectedParticipant && (
             <Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+              <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
                 <Avatar
-                  sx={{ 
-                    width: 64, 
+                  sx={{
+                    width: 64,
                     height: 64,
-                    bgcolor: 'primary.main',
-                    fontSize: '1.5rem',
-                    fontWeight: 'bold',
+                    bgcolor: "primary.main",
+                    fontSize: "1.5rem",
+                    fontWeight: "bold",
                     mr: 3,
                   }}
                 >
@@ -380,7 +409,15 @@ const ParticipantsList: React.FC<ParticipantsListProps> = ({
 
               <Grid container spacing={2}>
                 <Grid size={{ xs: 12, sm: 6 }}>
-                  <Box sx={{ textAlign: 'center', p: 2, border: 1, borderColor: 'divider', borderRadius: 1 }}>
+                  <Box
+                    sx={{
+                      textAlign: "center",
+                      p: 2,
+                      border: 1,
+                      borderColor: "divider",
+                      borderRadius: 1,
+                    }}
+                  >
                     <Typography variant="h4" color="primary">
                       {selectedParticipant.games_played}
                     </Typography>
@@ -390,7 +427,15 @@ const ParticipantsList: React.FC<ParticipantsListProps> = ({
                   </Box>
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
-                  <Box sx={{ textAlign: 'center', p: 2, border: 1, borderColor: 'divider', borderRadius: 1 }}>
+                  <Box
+                    sx={{
+                      textAlign: "center",
+                      p: 2,
+                      border: 1,
+                      borderColor: "divider",
+                      borderRadius: 1,
+                    }}
+                  >
                     <Typography variant="h4" color="success.main">
                       {selectedParticipant.win_rate.toFixed(1)}%
                     </Typography>

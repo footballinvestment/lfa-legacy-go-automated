@@ -1,8 +1,16 @@
 // Tournament-related type definitions for LFA Legacy GO
 
-export type TournamentStatus = 'upcoming' | 'active' | 'completed' | 'cancelled';
-export type TournamentFormat = 'single_elimination' | 'double_elimination' | 'round_robin' | 'swiss';
-export type MatchStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
+export type TournamentStatus =
+  | "upcoming"
+  | "active"
+  | "completed"
+  | "cancelled";
+export type TournamentFormat =
+  | "single_elimination"
+  | "double_elimination"
+  | "round_robin"
+  | "swiss";
+export type MatchStatus = "pending" | "in_progress" | "completed" | "cancelled";
 
 export interface Tournament {
   id: number;
@@ -31,7 +39,7 @@ export interface Tournament {
     min?: number;
     max?: number;
   };
-  skillLevel?: 'beginner' | 'intermediate' | 'advanced' | 'professional';
+  skillLevel?: "beginner" | "intermediate" | "advanced" | "professional";
   weatherConditions?: {
     indoor: boolean;
     allowedWeather?: string[];
@@ -45,7 +53,7 @@ export interface TournamentParticipant {
   userName: string;
   userEmail: string;
   registrationDate: string;
-  status: 'registered' | 'confirmed' | 'withdrew' | 'disqualified';
+  status: "registered" | "confirmed" | "withdrew" | "disqualified";
   seedNumber?: number;
   teamName?: string;
   emergencyContact?: {
@@ -88,7 +96,13 @@ export interface MatchEvent {
   id: number;
   matchId: number;
   participantId: number;
-  eventType: 'goal' | 'yellow_card' | 'red_card' | 'substitution' | 'timeout' | 'injury';
+  eventType:
+    | "goal"
+    | "yellow_card"
+    | "red_card"
+    | "substitution"
+    | "timeout"
+    | "injury";
   timestamp: number; // seconds from match start
   description?: string;
   playerName?: string;
@@ -130,7 +144,7 @@ export interface TournamentInvitation {
   inviterName: string;
   inviteeEmail: string;
   inviteeId?: number;
-  status: 'pending' | 'accepted' | 'declined' | 'expired';
+  status: "pending" | "accepted" | "declined" | "expired";
   invitedAt: string;
   respondedAt?: string;
   expiresAt: string;
@@ -178,7 +192,7 @@ export interface TournamentCreateRequest {
     min?: number;
     max?: number;
   };
-  skillLevel?: 'beginner' | 'intermediate' | 'advanced' | 'professional';
+  skillLevel?: "beginner" | "intermediate" | "advanced" | "professional";
   tags?: string[];
   imageUrl?: string;
 }
@@ -222,8 +236,8 @@ export interface TournamentSearchFilters {
   startDateTo?: string;
   tags?: string[];
   hasAvailableSpots?: boolean;
-  sortBy?: 'startDate' | 'entryFee' | 'prizePool' | 'participants' | 'created';
-  sortOrder?: 'asc' | 'desc';
+  sortBy?: "startDate" | "entryFee" | "prizePool" | "participants" | "created";
+  sortOrder?: "asc" | "desc";
 }
 
 export interface TournamentListResponse {
@@ -275,23 +289,23 @@ export interface OfflineCapability {
 
 export interface OfflineAction {
   id: string;
-  type: 'join_tournament' | 'update_match_score' | 'submit_result';
+  type: "join_tournament" | "update_match_score" | "submit_result";
   data: any;
   timestamp: string;
   retryCount: number;
 }
 
 export interface TouchGesture {
-  type: 'swipe' | 'pinch' | 'tap' | 'long_press';
-  direction?: 'left' | 'right' | 'up' | 'down';
-  target: 'tournament_card' | 'match_card' | 'bracket_node';
+  type: "swipe" | "pinch" | "tap" | "long_press";
+  direction?: "left" | "right" | "up" | "down";
+  target: "tournament_card" | "match_card" | "bracket_node";
   action: string;
 }
 
 export interface MobileViewport {
   width: number;
   height: number;
-  orientation: 'portrait' | 'landscape';
+  orientation: "portrait" | "landscape";
   isDarkMode: boolean;
   safeArea: {
     top: number;
@@ -307,8 +321,8 @@ export interface PWAManifest {
   short_name: string;
   description: string;
   start_url: string;
-  display: 'standalone' | 'fullscreen' | 'minimal-ui' | 'browser';
-  orientation: 'portrait' | 'landscape' | 'any';
+  display: "standalone" | "fullscreen" | "minimal-ui" | "browser";
+  orientation: "portrait" | "landscape" | "any";
   theme_color: string;
   background_color: string;
   icons: PWAIcon[];
@@ -320,20 +334,20 @@ export interface PWAIcon {
   src: string;
   sizes: string;
   type: string;
-  purpose?: 'any' | 'maskable' | 'monochrome';
+  purpose?: "any" | "maskable" | "monochrome";
 }
 
 export interface PWAScreenshot {
   src: string;
   sizes: string;
   type: string;
-  platform?: 'wide' | 'narrow';
+  platform?: "wide" | "narrow";
   label?: string;
 }
 
 export interface ServiceWorkerConfig {
   enabled: boolean;
-  cachingStrategy: 'cache_first' | 'network_first' | 'stale_while_revalidate';
+  cachingStrategy: "cache_first" | "network_first" | "stale_while_revalidate";
   offlinePages: string[];
   backgroundSync: boolean;
   pushNotifications: boolean;

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Box,
   Card,
@@ -22,7 +22,7 @@ import {
   Collapse,
   useTheme,
   alpha,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Bookmark,
   BookmarkBorder,
@@ -37,9 +37,9 @@ import {
   ExpandLess,
   Star,
   StarBorder,
-} from '@mui/icons-material';
-import { SavedSearch } from '../../types/search';
-import { useSearch } from '../../contexts/SearchContext';
+} from "@mui/icons-material";
+import { SavedSearch } from "../../types/search";
+import { useSearch } from "../../contexts/SearchContext";
 
 interface SavedSearchesProps {
   searches: SavedSearch[];
@@ -52,20 +52,25 @@ const SavedSearches: React.FC<SavedSearchesProps> = ({
   searches,
   onSelect,
   compact = false,
-  maxItems = 5
+  maxItems = 5,
 }) => {
   const theme = useTheme();
   const { loadSavedSearch, deleteSavedSearch, saveCurrentSearch } = useSearch();
-  
+
   const [expanded, setExpanded] = useState(!compact);
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
-  const [selectedSearch, setSelectedSearch] = useState<SavedSearch | null>(null);
+  const [selectedSearch, setSelectedSearch] = useState<SavedSearch | null>(
+    null
+  );
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [editName, setEditName] = useState('');
+  const [editName, setEditName] = useState("");
 
   // Handle menu open
-  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, search: SavedSearch) => {
+  const handleMenuOpen = (
+    event: React.MouseEvent<HTMLElement>,
+    search: SavedSearch
+  ) => {
     event.stopPropagation();
     setMenuAnchor(event.currentTarget);
     setSelectedSearch(search);
@@ -95,7 +100,7 @@ const SavedSearches: React.FC<SavedSearchesProps> = ({
   // Handle bookmark toggle
   const handleBookmarkToggle = (search: SavedSearch) => {
     // This would typically update the bookmark status in the backend
-    console.log('Toggle bookmark for:', search.name);
+    console.log("Toggle bookmark for:", search.name);
     handleMenuClose();
   };
 
@@ -112,9 +117,9 @@ const SavedSearches: React.FC<SavedSearchesProps> = ({
   const confirmEdit = () => {
     if (selectedSearch && editName.trim()) {
       // Update search name (would typically call API)
-      console.log('Update search name:', editName);
+      console.log("Update search name:", editName);
       setEditDialogOpen(false);
-      setEditName('');
+      setEditName("");
       setSelectedSearch(null);
     }
   };
@@ -131,9 +136,9 @@ const SavedSearches: React.FC<SavedSearchesProps> = ({
   // Format date
   const formatDate = (date: Date) => {
     return new Date(date).toLocaleDateString(undefined, {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
+      month: "short",
+      day: "numeric",
+      year: "numeric",
     });
   };
 
@@ -141,20 +146,22 @@ const SavedSearches: React.FC<SavedSearchesProps> = ({
   const getSearchDescription = (search: SavedSearch) => {
     const { criteria } = search;
     const parts = [];
-    
+
     if (criteria.query) {
       parts.push(`"${criteria.query}"`);
     }
-    
-    if (criteria.category !== 'all') {
+
+    if (criteria.category !== "all") {
       parts.push(`in ${criteria.category}`);
     }
-    
+
     if (criteria.filters.length > 0) {
-      parts.push(`${criteria.filters.length} filter${criteria.filters.length > 1 ? 's' : ''}`);
+      parts.push(
+        `${criteria.filters.length} filter${criteria.filters.length > 1 ? "s" : ""}`
+      );
     }
-    
-    return parts.join(' • ') || 'All results';
+
+    return parts.join(" • ") || "All results";
   };
 
   if (searches.length === 0) {
@@ -165,24 +172,29 @@ const SavedSearches: React.FC<SavedSearchesProps> = ({
 
   return (
     <Card sx={{ mt: 2, borderRadius: 2 }}>
-      <CardContent sx={{ p: compact ? 2 : 3, '&:last-child': { pb: compact ? 2 : 3 } }}>
+      <CardContent
+        sx={{ p: compact ? 2 : 3, "&:last-child": { pb: compact ? 2 : 3 } }}
+      >
         <Box
           display="flex"
           alignItems="center"
           justifyContent="space-between"
-          sx={{ cursor: compact ? 'pointer' : 'default' }}
+          sx={{ cursor: compact ? "pointer" : "default" }}
           onClick={() => compact && setExpanded(!expanded)}
         >
           <Box display="flex" alignItems="center" gap={1}>
             <Bookmark color="primary" />
-            <Typography variant={compact ? "body2" : "h6"} sx={{ fontWeight: 600 }}>
+            <Typography
+              variant={compact ? "body2" : "h6"}
+              sx={{ fontWeight: 600 }}
+            >
               Saved Searches
             </Typography>
             <Chip
               label={searches.length}
               size="small"
               variant="outlined"
-              sx={{ fontSize: '0.75rem' }}
+              sx={{ fontSize: "0.75rem" }}
             />
           </Box>
 
@@ -202,7 +214,7 @@ const SavedSearches: React.FC<SavedSearchesProps> = ({
                 sx={{
                   borderRadius: 2,
                   mb: 1,
-                  '&:last-child': { mb: 0 }
+                  "&:last-child": { mb: 0 },
                 }}
               >
                 <ListItemButton
@@ -212,10 +224,10 @@ const SavedSearches: React.FC<SavedSearchesProps> = ({
                   }}
                   sx={{
                     borderRadius: 2,
-                    transition: 'all 0.2s ease',
-                    '&:hover': {
+                    transition: "all 0.2s ease",
+                    "&:hover": {
                       backgroundColor: alpha(theme.palette.primary.main, 0.04),
-                    }
+                    },
                   }}
                 >
                   <ListItemText
@@ -231,25 +243,35 @@ const SavedSearches: React.FC<SavedSearchesProps> = ({
                           label={search.criteria.category}
                           size="small"
                           variant="outlined"
-                          sx={{ 
-                            fontSize: '0.7rem',
+                          sx={{
+                            fontSize: "0.7rem",
                             height: 20,
-                            textTransform: 'capitalize'
+                            textTransform: "capitalize",
                           }}
                         />
                       </Box>
                     }
                     secondary={
                       <Box mt={0.5}>
-                        <Typography variant="caption" color="text.secondary" display="block">
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          display="block"
+                        >
                           {getSearchDescription(search)}
                         </Typography>
-                        <Box display="flex" alignItems="center" justifyContent="space-between" mt={0.5}>
+                        <Box
+                          display="flex"
+                          alignItems="center"
+                          justifyContent="space-between"
+                          mt={0.5}
+                        >
                           <Typography variant="caption" color="text.secondary">
                             Last used: {formatDate(search.lastUsed)}
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
-                            Used {search.useCount} time{search.useCount !== 1 ? 's' : ''}
+                            Used {search.useCount} time
+                            {search.useCount !== 1 ? "s" : ""}
                           </Typography>
                         </Box>
                       </Box>
@@ -272,7 +294,11 @@ const SavedSearches: React.FC<SavedSearchesProps> = ({
               <ListItem>
                 <ListItemText
                   primary={
-                    <Typography variant="caption" color="primary" sx={{ fontWeight: 500 }}>
+                    <Typography
+                      variant="caption"
+                      color="primary"
+                      sx={{ fontWeight: 500 }}
+                    >
                       +{searches.length - maxItems} more saved searches
                     </Typography>
                   }
@@ -289,34 +315,38 @@ const SavedSearches: React.FC<SavedSearchesProps> = ({
         open={Boolean(menuAnchor)}
         onClose={handleMenuClose}
         PaperProps={{
-          sx: { minWidth: 200, borderRadius: 2 }
+          sx: { minWidth: 200, borderRadius: 2 },
         }}
       >
-        <MenuItem onClick={() => selectedSearch && loadSavedSearch(selectedSearch.id)}>
+        <MenuItem
+          onClick={() => selectedSearch && loadSavedSearch(selectedSearch.id)}
+        >
           <Search sx={{ mr: 2 }} />
           Run Search
         </MenuItem>
-        
-        <MenuItem onClick={() => selectedSearch && handleBookmarkToggle(selectedSearch)}>
+
+        <MenuItem
+          onClick={() => selectedSearch && handleBookmarkToggle(selectedSearch)}
+        >
           {selectedSearch?.isBookmarked ? (
             <StarBorder sx={{ mr: 2 }} />
           ) : (
             <Star sx={{ mr: 2 }} />
           )}
-          {selectedSearch?.isBookmarked ? 'Remove Star' : 'Add Star'}
+          {selectedSearch?.isBookmarked ? "Remove Star" : "Add Star"}
         </MenuItem>
-        
+
         <MenuItem onClick={handleEdit}>
           <Edit sx={{ mr: 2 }} />
           Rename
         </MenuItem>
-        
+
         <MenuItem onClick={handleShare}>
           <Share sx={{ mr: 2 }} />
           Share
         </MenuItem>
-        
-        <MenuItem onClick={handleDelete} sx={{ color: 'error.main' }}>
+
+        <MenuItem onClick={handleDelete} sx={{ color: "error.main" }}>
           <Delete sx={{ mr: 2 }} />
           Delete
         </MenuItem>
@@ -342,9 +372,7 @@ const SavedSearches: React.FC<SavedSearchesProps> = ({
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setEditDialogOpen(false)}>
-            Cancel
-          </Button>
+          <Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
           <Button onClick={confirmEdit} variant="contained">
             Save
           </Button>
@@ -361,13 +389,12 @@ const SavedSearches: React.FC<SavedSearchesProps> = ({
         <DialogTitle>Delete Saved Search</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to delete "{selectedSearch?.name}"? This action cannot be undone.
+            Are you sure you want to delete "{selectedSearch?.name}"? This
+            action cannot be undone.
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)}>
-            Cancel
-          </Button>
+          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
           <Button onClick={confirmDelete} variant="contained" color="error">
             Delete
           </Button>

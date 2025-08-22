@@ -1,0 +1,123 @@
+{
+  "test_timestamp": "2025-08-21 12:56:29",
+  "endpoints": {
+    "/": {
+      "endpoint": "/",
+      "total_requests": 50,
+      "successful_requests": 50,
+      "errors": 0,
+      "total_time": 0.12,
+      "requests_per_second": 404.59,
+      "response_times": {
+        "min": 1.11,
+        "max": 52.18,
+        "avg": 2.47,
+        "median": 1.37,
+        "p95": 2.08,
+        "p99": 52.18
+      },
+      "status_codes": {
+        "200": 50
+      },
+      "performance_score": 100
+    },
+    "/health": {
+      "endpoint": "/health",
+      "total_requests": 50,
+      "successful_requests": 50,
+      "errors": 0,
+      "total_time": 0.1,
+      "requests_per_second": 477.44,
+      "response_times": {
+        "min": 1.39,
+        "max": 25.88,
+        "avg": 2.09,
+        "median": 1.58,
+        "p95": 1.93,
+        "p99": 25.88
+      },
+      "status_codes": {
+        "200": 50
+      },
+      "performance_score": 100
+    },
+    "/api/health": {
+      "endpoint": "/api/health",
+      "total_requests": 50,
+      "successful_requests": 50,
+      "errors": 0,
+      "total_time": 0.08,
+      "requests_per_second": 656.41,
+      "response_times": {
+        "min": 1.25,
+        "max": 2.03,
+        "avg": 1.52,
+        "median": 1.52,
+        "p95": 1.72,
+        "p99": 2.03
+      },
+      "status_codes": {
+        "200": 50
+      },
+      "performance_score": 100
+    },
+    "/api/performance/summary": {
+      "endpoint": "/api/performance/summary",
+      "total_requests": 50,
+      "successful_requests": 50,
+      "errors": 0,
+      "total_time": 0.07,
+      "requests_per_second": 679.06,
+      "response_times": {
+        "min": 1.29,
+        "max": 1.85,
+        "avg": 1.47,
+        "median": 1.45,
+        "p95": 1.72,
+        "p99": 1.85
+      },
+      "status_codes": {
+        "200": 50
+      },
+      "performance_score": 100
+    }
+  },
+  "concurrent_tests": {
+    "health": {
+      "endpoint": "/health",
+      "concurrent_users": 10,
+      "requests_per_user": 5,
+      "total_requests": 50,
+      "successful_requests": 50,
+      "errors": 0,
+      "total_time": 0.04,
+      "requests_per_second": 1239.2,
+      "response_times": {
+        "min": 2.49,
+        "max": 10.05,
+        "avg": 7.23,
+        "median": 7.37,
+        "p95": 9.63,
+        "p99": 10.05
+      },
+      "performance_score": 100
+    }
+  },
+  "memory_test": {
+    "duration": 30,
+    "memory_mb": {
+      "min": 4069.11,
+      "max": 4160.95,
+      "avg": 4098.35,
+      "final": 4096.92
+    },
+    "cpu_percent": {
+      "min": 18.3,
+      "max": 38.8,
+      "avg": 27.12
+    },
+    "memory_stable": true,
+    "performance_score": 60
+  },
+  "overall_score": 93
+}

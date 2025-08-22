@@ -1,39 +1,39 @@
-import { createTheme } from '@mui/material/styles';
+import { createTheme } from "@mui/material/styles";
 
 export const theme = createTheme({
   palette: {
-    mode: 'dark',
+    mode: "dark",
     primary: {
-      main: '#10b981',
-      light: '#34d399',
-      dark: '#059669',
+      main: "#10b981",
+      light: "#34d399",
+      dark: "#059669",
     },
     secondary: {
-      main: '#3b82f6',
-      light: '#60a5fa',
-      dark: '#1d4ed8',
+      main: "#3b82f6",
+      light: "#60a5fa",
+      dark: "#1d4ed8",
     },
     background: {
-      default: '#0f172a',
-      paper: '#1e293b',
+      default: "#0f172a",
+      paper: "#1e293b",
     },
     text: {
-      primary: '#f8fafc',
-      secondary: '#cbd5e1',
+      primary: "#f8fafc",
+      secondary: "#cbd5e1",
     },
   },
   typography: {
     fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
     h1: {
-      fontSize: '2.5rem',
+      fontSize: "2.5rem",
       fontWeight: 700,
     },
     h2: {
-      fontSize: '2rem',
+      fontSize: "2rem",
       fontWeight: 600,
     },
     h3: {
-      fontSize: '1.75rem',
+      fontSize: "1.75rem",
       fontWeight: 600,
     },
   },
@@ -41,16 +41,16 @@ export const theme = createTheme({
     MuiButton: {
       styleOverrides: {
         root: {
-          textTransform: 'none',
-          borderRadius: '8px',
+          textTransform: "none",
+          borderRadius: "8px",
         },
       },
     },
     MuiCard: {
       styleOverrides: {
         root: {
-          borderRadius: '12px',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
+          borderRadius: "12px",
+          border: "1px solid rgba(255, 255, 255, 0.1)",
         },
       },
     },

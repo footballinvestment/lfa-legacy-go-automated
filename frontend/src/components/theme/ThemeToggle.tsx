@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   IconButton,
   Menu,
@@ -11,7 +11,7 @@ import {
   Divider,
   useTheme,
   Fade,
-} from '@mui/material';
+} from "@mui/material";
 import {
   LightMode,
   DarkMode,
@@ -20,35 +20,30 @@ import {
   Palette,
   Schedule,
   AutoAwesome,
-} from '@mui/icons-material';
-import { useAppTheme } from '../../contexts/ThemeContext';
-import ThemeSettings from './ThemeSettings';
+} from "@mui/icons-material";
+import { useAppTheme } from "../../contexts/ThemeContext";
+import ThemeSettings from "./ThemeSettings";
 
 interface ThemeToggleProps {
   showLabel?: boolean;
-  variant?: 'icon' | 'chip' | 'button';
-  size?: 'small' | 'medium' | 'large';
+  variant?: "icon" | "chip" | "button";
+  size?: "small" | "medium" | "large";
   showQuickActions?: boolean;
 }
 
 const ThemeToggle: React.FC<ThemeToggleProps> = ({
   showLabel = false,
-  variant = 'icon',
-  size = 'medium',
-  showQuickActions = true
+  variant = "icon",
+  size = "medium",
+  showQuickActions = true,
 }) => {
   const theme = useTheme();
-  const {
-    config,
-    toggleTheme,
-    setThemeMode,
-    setSystemTheme,
-    setColorScheme
-  } = useAppTheme();
-  
+  const { config, toggleTheme, setThemeMode, setSystemTheme, setColorScheme } =
+    useAppTheme();
+
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  
+
   const open = Boolean(anchorEl);
 
   // Get current theme icon and label
@@ -56,23 +51,23 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({
     if (config.systemTheme) {
       return {
         icon: <SettingsBrightness />,
-        label: 'System',
-        description: 'Follows system setting'
+        label: "System",
+        description: "Follows system setting",
       };
     }
-    
-    if (theme.palette.mode === 'dark') {
+
+    if (theme.palette.mode === "dark") {
       return {
         icon: <DarkMode />,
-        label: 'Dark',
-        description: 'Dark mode active'
+        label: "Dark",
+        description: "Dark mode active",
       };
     }
-    
+
     return {
       icon: <LightMode />,
-      label: 'Light',
-      description: 'Light mode active'
+      label: "Light",
+      description: "Light mode active",
     };
   };
 
@@ -93,8 +88,8 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({
   };
 
   // Handle theme mode selection
-  const handleThemeMode = (mode: 'light' | 'dark' | 'system') => {
-    if (mode === 'system') {
+  const handleThemeMode = (mode: "light" | "dark" | "system") => {
+    if (mode === "system") {
       setSystemTheme(true);
     } else {
       setSystemTheme(false);
@@ -104,7 +99,7 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({
   };
 
   // Handle quick color scheme change
-  const handleColorScheme = (scheme: 'blue' | 'green' | 'purple') => {
+  const handleColorScheme = (scheme: "blue" | "green" | "purple") => {
     setColorScheme(scheme);
     handleClose();
   };
@@ -118,24 +113,24 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({
   // Render based on variant
   const renderToggle = () => {
     switch (variant) {
-      case 'chip':
+      case "chip":
         return (
           <Box
             onClick={handleClick}
             sx={{
-              display: 'inline-flex',
-              alignItems: 'center',
+              display: "inline-flex",
+              alignItems: "center",
               gap: 1,
               px: 2,
               py: 1,
               borderRadius: 2,
-              cursor: 'pointer',
+              cursor: "pointer",
               backgroundColor: theme.palette.action.hover,
-              transition: 'all 0.2s ease',
-              '&:hover': {
+              transition: "all 0.2s ease",
+              "&:hover": {
                 backgroundColor: theme.palette.action.selected,
-                transform: 'scale(1.02)'
-              }
+                transform: "scale(1.02)",
+              },
             }}
           >
             {themeInfo.icon}
@@ -147,26 +142,26 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({
           </Box>
         );
 
-      case 'button':
+      case "button":
         return (
           <Box
             onClick={handleClick}
             sx={{
-              display: 'inline-flex',
-              alignItems: 'center',
+              display: "inline-flex",
+              alignItems: "center",
               gap: 1.5,
               px: 2,
               py: 1.5,
               border: 1,
-              borderColor: 'divider',
+              borderColor: "divider",
               borderRadius: 2,
-              cursor: 'pointer',
-              backgroundColor: 'background.paper',
-              transition: 'all 0.2s ease',
-              '&:hover': {
-                borderColor: 'primary.main',
-                boxShadow: 1
-              }
+              cursor: "pointer",
+              backgroundColor: "background.paper",
+              transition: "all 0.2s ease",
+              "&:hover": {
+                borderColor: "primary.main",
+                boxShadow: 1,
+              },
             }}
           >
             {themeInfo.icon}
@@ -188,12 +183,12 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({
               onClick={handleClick}
               size={size}
               sx={{
-                color: 'text.primary',
-                transition: 'all 0.3s ease',
-                '&:hover': {
+                color: "text.primary",
+                transition: "all 0.3s ease",
+                "&:hover": {
                   backgroundColor: theme.palette.action.hover,
-                  transform: 'rotate(180deg)'
-                }
+                  transform: "rotate(180deg)",
+                },
               }}
             >
               <Fade in key={theme.palette.mode} timeout={300}>
@@ -215,26 +210,26 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({
           anchorEl={anchorEl}
           open={open}
           onClose={handleClose}
-          transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-          anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+          transformOrigin={{ horizontal: "right", vertical: "top" }}
+          anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
           PaperProps={{
             sx: {
               mt: 1,
               minWidth: 200,
-              '& .MuiMenuItem-root': {
+              "& .MuiMenuItem-root": {
                 borderRadius: 1,
-                margin: '2px 8px',
-                '&:hover': {
+                margin: "2px 8px",
+                "&:hover": {
                   backgroundColor: theme.palette.action.hover,
-                }
-              }
-            }
+                },
+              },
+            },
           }}
         >
           {/* Theme Mode Options */}
-          <MenuItem 
-            onClick={() => handleThemeMode('light')}
-            selected={!config.systemTheme && theme.palette.mode === 'light'}
+          <MenuItem
+            onClick={() => handleThemeMode("light")}
+            selected={!config.systemTheme && theme.palette.mode === "light"}
           >
             <ListItemIcon>
               <LightMode fontSize="small" />
@@ -244,9 +239,9 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({
             </ListItemText>
           </MenuItem>
 
-          <MenuItem 
-            onClick={() => handleThemeMode('dark')}
-            selected={!config.systemTheme && theme.palette.mode === 'dark'}
+          <MenuItem
+            onClick={() => handleThemeMode("dark")}
+            selected={!config.systemTheme && theme.palette.mode === "dark"}
           >
             <ListItemIcon>
               <DarkMode fontSize="small" />
@@ -256,8 +251,8 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({
             </ListItemText>
           </MenuItem>
 
-          <MenuItem 
-            onClick={() => handleThemeMode('system')}
+          <MenuItem
+            onClick={() => handleThemeMode("system")}
             selected={config.systemTheme}
           >
             <ListItemIcon>
@@ -271,14 +266,14 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({
           <Divider sx={{ my: 1 }} />
 
           {/* Quick Color Schemes */}
-          <MenuItem onClick={() => handleColorScheme('blue')}>
+          <MenuItem onClick={() => handleColorScheme("blue")}>
             <ListItemIcon>
               <Box
                 sx={{
                   width: 20,
                   height: 20,
-                  borderRadius: '50%',
-                  backgroundColor: '#1976d2'
+                  borderRadius: "50%",
+                  backgroundColor: "#1976d2",
                 }}
               />
             </ListItemIcon>
@@ -287,14 +282,14 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({
             </ListItemText>
           </MenuItem>
 
-          <MenuItem onClick={() => handleColorScheme('green')}>
+          <MenuItem onClick={() => handleColorScheme("green")}>
             <ListItemIcon>
               <Box
                 sx={{
                   width: 20,
                   height: 20,
-                  borderRadius: '50%',
-                  backgroundColor: '#2e7d32'
+                  borderRadius: "50%",
+                  backgroundColor: "#2e7d32",
                 }}
               />
             </ListItemIcon>
@@ -303,14 +298,14 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({
             </ListItemText>
           </MenuItem>
 
-          <MenuItem onClick={() => handleColorScheme('purple')}>
+          <MenuItem onClick={() => handleColorScheme("purple")}>
             <ListItemIcon>
               <Box
                 sx={{
                   width: 20,
                   height: 20,
-                  borderRadius: '50%',
-                  backgroundColor: '#7b1fa2'
+                  borderRadius: "50%",
+                  backgroundColor: "#7b1fa2",
                 }}
               />
             </ListItemIcon>
@@ -349,9 +344,9 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({
       )}
 
       {/* Theme Settings Dialog */}
-      <ThemeSettings 
-        open={settingsOpen} 
-        onClose={() => setSettingsOpen(false)} 
+      <ThemeSettings
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
       />
     </>
   );

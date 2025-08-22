@@ -1,0 +1,57 @@
+# Google Cloud App Engine configuration
+# For deploying LFA Legacy GO Backend to GCP
+
+runtime: python311
+
+# Instance configuration
+instance_class: F2
+automatic_scaling:
+  min_instances: 1
+  max_instances: 10
+  target_cpu_utilization: 0.7
+  target_throughput_utilization: 0.7
+
+# Environment variables (set these in GCP console or via gcloud)
+env_variables:
+  # Database configuration
+  DB_POOL_SIZE: "10"
+  DB_MAX_OVERFLOW: "20"
+  DB_POOL_TIMEOUT: "30"  
+  DB_POOL_RECYCLE: "3600"
+  DB_POOL_PRE_PING: "true"
+  
+  # Application settings
+  ENVIRONMENT: "production"
+  LOG_LEVEL: "INFO"
+  
+  # Performance settings  
+  MAX_REQUEST_SIZE: "10485760"  # 10MB in bytes
+  REQUEST_TIMEOUT: "30"
+
+# Health check configuration
+readiness_check:
+  path: "/health"
+  check_interval_sec: 5
+  timeout_sec: 4
+  failure_threshold: 2
+  success_threshold: 2
+  
+liveness_check:
+  path: "/health"
+  check_interval_sec: 30
+  timeout_sec: 4
+  failure_threshold: 4
+  success_threshold: 2
+
+# Resource limits
+resources:
+  cpu: 1
+  memory_gb: 2
+  disk_size_gb: 10
+
+# Network configuration
+network:
+  session_affinity: false
+
+# Application entry point - ASGI worker for FastAPI
+entrypoint: gunicorn -k uvicorn.workers.UvicornWorker -b :$PORT app.main:app

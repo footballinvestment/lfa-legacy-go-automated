@@ -13,13 +13,11 @@ from .game_result_service import GameResultService, LeaderboardService
 __all__ = [
     # Weather services
     "WeatherService",
-    "WeatherAPIService", 
+    "WeatherAPIService",
     "WeatherAnalyticsService",
-    
     # Booking services
     "EnhancedBookingService",
-    
     # === NEW: Game Results Services ===
     "GameResultService",
-    "LeaderboardService"
+    "LeaderboardService",
 ]

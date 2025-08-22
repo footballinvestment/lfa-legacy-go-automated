@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback } from "react";
 import {
   Box,
   TextField,
@@ -16,7 +16,7 @@ import {
   Menu,
   MenuItem,
   Skeleton,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Search,
   PersonAdd,
@@ -25,12 +25,12 @@ import {
   MoreVert,
   Star,
   TrendingUp,
-} from '@mui/icons-material';
-import { debounce } from 'lodash';
-import { socialService, User } from '../../services/api';
+} from "@mui/icons-material";
+import { debounce } from "lodash";
+import { socialService, User } from "../../services/api";
 
 const UserSearch: React.FC = () => {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -52,7 +52,7 @@ const UserSearch: React.FC = () => {
         const results = await socialService.searchUsers(query);
         setSearchResults(results);
       } catch (err: any) {
-        setError(err.message || 'Failed to search users');
+        setError(err.message || "Failed to search users");
         setSearchResults([]);
       } finally {
         setLoading(false);
@@ -71,28 +71,31 @@ const UserSearch: React.FC = () => {
     try {
       await socialService.sendFriendRequest(userId);
       // Update the UI to show request sent
-      setSearchResults(prev => 
-        prev.map(user => 
-          user.id === userId 
-            ? { ...user, friendship_status: 'request_sent' } 
+      setSearchResults((prev) =>
+        prev.map((user) =>
+          user.id === userId
+            ? { ...user, friendship_status: "request_sent" }
             : user
         )
       );
     } catch (err: any) {
-      setError(err.message || 'Failed to send friend request');
+      setError(err.message || "Failed to send friend request");
     }
   };
 
   const handleSendChallenge = async (userId: number) => {
     try {
-      await socialService.sendChallenge(userId, 'football');
+      await socialService.sendChallenge(userId, "football");
       // Show success message or navigate to challenge details
     } catch (err: any) {
-      setError(err.message || 'Failed to send challenge');
+      setError(err.message || "Failed to send challenge");
     }
   };
 
-  const handleMenuClick = (event: React.MouseEvent<HTMLElement>, user: User) => {
+  const handleMenuClick = (
+    event: React.MouseEvent<HTMLElement>,
+    user: User
+  ) => {
     setAnchorEl(event.currentTarget);
     setSelectedUser(user);
   };
@@ -113,19 +116,27 @@ const UserSearch: React.FC = () => {
 
   const getFriendshipStatusColor = (status?: string) => {
     switch (status) {
-      case 'friends': return 'success';
-      case 'request_sent': return 'warning';
-      case 'request_received': return 'info';
-      default: return 'default';
+      case "friends":
+        return "success";
+      case "request_sent":
+        return "warning";
+      case "request_received":
+        return "info";
+      default:
+        return "default";
     }
   };
 
   const getFriendshipStatusText = (status?: string) => {
     switch (status) {
-      case 'friends': return 'Friends';
-      case 'request_sent': return 'Request Sent';
-      case 'request_received': return 'Request Received';
-      default: return 'Not Connected';
+      case "friends":
+        return "Friends";
+      case "request_sent":
+        return "Request Sent";
+      case "request_received":
+        return "Request Received";
+      default:
+        return "Not Connected";
     }
   };
 
@@ -147,9 +158,9 @@ const UserSearch: React.FC = () => {
           }}
           sx={{ mb: 2 }}
         />
-        
+
         {loading && <LinearProgress />}
-        
+
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
@@ -163,14 +174,16 @@ const UserSearch: React.FC = () => {
           <Typography variant="h6" sx={{ mb: 2 }}>
             Search Results ({searchResults.length})
           </Typography>
-          
+
           {loading ? (
             <Grid container spacing={2}>
               {[1, 2, 3, 4].map((i) => (
                 <Grid key={i} size={{ xs: 12, sm: 6, md: 4 }}>
                   <Card>
                     <CardContent>
-                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", mb: 2 }}
+                      >
                         <Skeleton variant="circular" width={48} height={48} />
                         <Box sx={{ ml: 2, flex: 1 }}>
                           <Skeleton variant="text" width="60%" />
@@ -187,26 +200,28 @@ const UserSearch: React.FC = () => {
             <Grid container spacing={2}>
               {searchResults.map((user) => (
                 <Grid key={user.id} size={{ xs: 12, sm: 6, md: 4 }}>
-                  <Card 
-                    sx={{ 
-                      height: '100%',
-                      transition: 'transform 0.2s, box-shadow 0.2s',
-                      '&:hover': {
-                        transform: 'translateY(-2px)',
+                  <Card
+                    sx={{
+                      height: "100%",
+                      transition: "transform 0.2s, box-shadow 0.2s",
+                      "&:hover": {
+                        transform: "translateY(-2px)",
                         boxShadow: 3,
                       },
                     }}
                   >
                     <CardContent>
                       {/* User Header */}
-                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", mb: 2 }}
+                      >
                         <Avatar
-                          sx={{ 
-                            width: 48, 
+                          sx={{
+                            width: 48,
                             height: 48,
-                            bgcolor: 'primary.main',
-                            fontSize: '1.2rem',
-                            fontWeight: 'bold'
+                            bgcolor: "primary.main",
+                            fontSize: "1.2rem",
+                            fontWeight: "bold",
                           }}
                         >
                           {user.username.charAt(0).toUpperCase()}
@@ -215,11 +230,15 @@ const UserSearch: React.FC = () => {
                           <Typography variant="h6" fontWeight="bold" noWrap>
                             {user.full_name}
                           </Typography>
-                          <Typography variant="body2" color="text.secondary" noWrap>
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            noWrap
+                          >
                             @{user.username}
                           </Typography>
                         </Box>
-                        <IconButton 
+                        <IconButton
                           onClick={(e) => handleMenuClick(e, user)}
                           size="small"
                         >
@@ -229,21 +248,27 @@ const UserSearch: React.FC = () => {
 
                       {/* User Stats */}
                       <Box sx={{ mb: 2 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                          <Star sx={{ color: 'warning.main', mr: 1, fontSize: 20 }} />
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", mb: 1 }}
+                        >
+                          <Star
+                            sx={{ color: "warning.main", mr: 1, fontSize: 20 }}
+                          />
                           <Typography variant="body2">
                             Level {getUserLevel(user)}
                           </Typography>
-                          <Chip 
+                          <Chip
                             label={`${getUserWinRate(user).toFixed(1)}% Win Rate`}
                             size="small"
                             color="primary"
                             variant="outlined"
-                            sx={{ ml: 'auto' }}
+                            sx={{ ml: "auto" }}
                           />
                         </Box>
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <TrendingUp sx={{ color: 'success.main', mr: 1, fontSize: 20 }} />
+                        <Box sx={{ display: "flex", alignItems: "center" }}>
+                          <TrendingUp
+                            sx={{ color: "success.main", mr: 1, fontSize: 20 }}
+                          />
                           <Typography variant="body2" color="text.secondary">
                             {user.games_played || 0} games played
                           </Typography>
@@ -253,16 +278,20 @@ const UserSearch: React.FC = () => {
                       {/* Friendship Status */}
                       <Box sx={{ mb: 2 }}>
                         <Chip
-                          label={getFriendshipStatusText(user.friendship_status)}
-                          color={getFriendshipStatusColor(user.friendship_status)}
+                          label={getFriendshipStatusText(
+                            user.friendship_status
+                          )}
+                          color={getFriendshipStatusColor(
+                            user.friendship_status
+                          )}
                           size="small"
                           variant="outlined"
                         />
                       </Box>
 
                       {/* Action Buttons */}
-                      <Box sx={{ display: 'flex', gap: 1 }}>
-                        {user.friendship_status === 'friends' ? (
+                      <Box sx={{ display: "flex", gap: 1 }}>
+                        {user.friendship_status === "friends" ? (
                           <Button
                             variant="contained"
                             fullWidth
@@ -272,12 +301,8 @@ const UserSearch: React.FC = () => {
                           >
                             Challenge
                           </Button>
-                        ) : user.friendship_status === 'request_sent' ? (
-                          <Button
-                            variant="outlined"
-                            fullWidth
-                            disabled
-                          >
+                        ) : user.friendship_status === "request_sent" ? (
+                          <Button variant="outlined" fullWidth disabled>
                             Request Sent
                           </Button>
                         ) : (
@@ -297,8 +322,8 @@ const UserSearch: React.FC = () => {
               ))}
             </Grid>
           ) : (
-            <Box sx={{ textAlign: 'center', py: 4 }}>
-              <Search sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
+            <Box sx={{ textAlign: "center", py: 4 }}>
+              <Search sx={{ fontSize: 48, color: "text.secondary", mb: 2 }} />
               <Typography variant="h6" color="text.secondary">
                 No players found
               </Typography>
@@ -312,13 +337,14 @@ const UserSearch: React.FC = () => {
 
       {/* Empty State */}
       {searchQuery.length < 2 && (
-        <Box sx={{ textAlign: 'center', py: 6 }}>
-          <PersonAdd sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+        <Box sx={{ textAlign: "center", py: 6 }}>
+          <PersonAdd sx={{ fontSize: 64, color: "text.secondary", mb: 2 }} />
           <Typography variant="h6" color="text.secondary" gutterBottom>
             Find New Players
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Search for players by username or name to connect and challenge them!
+            Search for players by username or name to connect and challenge
+            them!
           </Typography>
         </Box>
       )}
@@ -329,9 +355,7 @@ const UserSearch: React.FC = () => {
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}
       >
-        <MenuItem onClick={handleMenuClose}>
-          View Profile
-        </MenuItem>
+        <MenuItem onClick={handleMenuClose}>View Profile</MenuItem>
         <MenuItem onClick={handleMenuClose}>
           <Block sx={{ mr: 1 }} />
           Block User

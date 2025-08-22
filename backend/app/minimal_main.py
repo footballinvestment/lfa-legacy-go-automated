@@ -12,7 +12,7 @@ app = FastAPI(
     description="Minimal test version for Railway deployment",
     version="3.0.0",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
 )
 
 # Add basic CORS
@@ -24,24 +24,28 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.get("/")
 async def root():
     return {
-        "message": "LFA Legacy GO API - Minimal Version", 
+        "message": "LFA Legacy GO API - Minimal Version",
         "status": "running",
         "environment": os.getenv("RAILWAY_ENVIRONMENT", "local"),
-        "port": os.getenv("PORT", "8000")
+        "port": os.getenv("PORT", "8000"),
     }
+
 
 @app.get("/health")
 async def health():
     return {
         "status": "healthy",
         "environment": os.getenv("RAILWAY_ENVIRONMENT", "local"),
-        "database": "not_connected"
+        "database": "not_connected",
     }
+
 
 if __name__ == "__main__":
     import uvicorn
+
     port = int(os.getenv("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)

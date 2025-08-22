@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Box,
   Container,
@@ -11,17 +11,17 @@ import {
   Tab,
   Chip,
   useTheme,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Search,
   TrendingUp,
   Analytics,
   Bookmark,
   History,
-} from '@mui/icons-material';
-import AdvancedSearchComponent from './AdvancedSearchComponent';
-import { useSearch } from '../../contexts/SearchContext';
-import { SearchCategory } from '../../types/search';
+} from "@mui/icons-material";
+import AdvancedSearchComponent from "./AdvancedSearchComponent";
+import { useSearch } from "../../contexts/SearchContext";
+import { SearchCategory } from "../../types/search";
 
 const SearchPage: React.FC = () => {
   const theme = useTheme();
@@ -30,19 +30,19 @@ const SearchPage: React.FC = () => {
 
   // Sample popular searches
   const popularSearches = [
-    { query: 'football tournament', category: 'tournaments', count: 156 },
-    { query: 'beginner friendly', category: 'tournaments', count: 89 },
-    { query: 'new york', category: 'locations', count: 78 },
-    { query: 'weekend matches', category: 'matches', count: 65 },
-    { query: 'intermediate players', category: 'users', count: 43 }
+    { query: "football tournament", category: "tournaments", count: 156 },
+    { query: "beginner friendly", category: "tournaments", count: 89 },
+    { query: "new york", category: "locations", count: 78 },
+    { query: "weekend matches", category: "matches", count: 65 },
+    { query: "intermediate players", category: "users", count: 43 },
   ];
 
   // Sample trending searches
   const trendingSearches = [
-    { query: 'championship final', trend: '+45%' },
-    { query: 'local leagues', trend: '+32%' },
-    { query: 'practice matches', trend: '+28%' },
-    { query: 'youth tournaments', trend: '+21%' }
+    { query: "championship final", trend: "+45%" },
+    { query: "local leagues", trend: "+32%" },
+    { query: "practice matches", trend: "+28%" },
+    { query: "youth tournaments", trend: "+21%" },
   ];
 
   // Handle tab change
@@ -51,9 +51,12 @@ const SearchPage: React.FC = () => {
   };
 
   // Handle popular search click
-  const handlePopularSearchClick = (query: string, category: SearchCategory) => {
+  const handlePopularSearchClick = (
+    query: string,
+    category: SearchCategory
+  ) => {
     // This would trigger a search with the clicked query
-    console.log('Search for:', query, 'in', category);
+    console.log("Search for:", query, "in", category);
   };
 
   const renderOverviewTab = () => (
@@ -67,7 +70,7 @@ const SearchPage: React.FC = () => {
         showSavedSearches={true}
         showHistory={true}
         onResultSelect={(result) => {
-          console.log('Selected result:', result);
+          console.log("Selected result:", result);
         }}
       />
 
@@ -95,14 +98,19 @@ const SearchPage: React.FC = () => {
                       p: 2,
                       borderRadius: 2,
                       backgroundColor: theme.palette.action.hover,
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      '&:hover': {
+                      cursor: "pointer",
+                      transition: "all 0.2s ease",
+                      "&:hover": {
                         backgroundColor: theme.palette.action.selected,
-                        transform: 'translateY(-1px)'
-                      }
+                        transform: "translateY(-1px)",
+                      },
                     }}
-                    onClick={() => handlePopularSearchClick(search.query, search.category as SearchCategory)}
+                    onClick={() =>
+                      handlePopularSearchClick(
+                        search.query,
+                        search.category as SearchCategory
+                      )
+                    }
                   >
                     <Box>
                       <Typography variant="body2" sx={{ fontWeight: 500 }}>
@@ -112,7 +120,11 @@ const SearchPage: React.FC = () => {
                         label={search.category}
                         size="small"
                         variant="outlined"
-                        sx={{ fontSize: '0.7rem', textTransform: 'capitalize', mt: 0.5 }}
+                        sx={{
+                          fontSize: "0.7rem",
+                          textTransform: "capitalize",
+                          mt: 0.5,
+                        }}
                       />
                     </Box>
                     <Typography variant="caption" color="text.secondary">
@@ -147,12 +159,12 @@ const SearchPage: React.FC = () => {
                       p: 2,
                       borderRadius: 2,
                       backgroundColor: theme.palette.action.hover,
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      '&:hover': {
+                      cursor: "pointer",
+                      transition: "all 0.2s ease",
+                      "&:hover": {
                         backgroundColor: theme.palette.action.selected,
-                        transform: 'translateY(-1px)'
-                      }
+                        transform: "translateY(-1px)",
+                      },
                     }}
                   >
                     <Typography variant="body2" sx={{ fontWeight: 500 }}>
@@ -163,7 +175,7 @@ const SearchPage: React.FC = () => {
                       size="small"
                       color="success"
                       variant="outlined"
-                      sx={{ fontSize: '0.7rem' }}
+                      sx={{ fontSize: "0.7rem" }}
                     />
                   </Box>
                 ))}
@@ -179,7 +191,7 @@ const SearchPage: React.FC = () => {
     <Grid container spacing={3}>
       {/* Search Statistics */}
       <Grid item xs={12} md={6} lg={3}>
-        <Card sx={{ borderRadius: 2, textAlign: 'center' }}>
+        <Card sx={{ borderRadius: 2, textAlign: "center" }}>
           <CardContent>
             <Typography variant="h4" color="primary" sx={{ fontWeight: 600 }}>
               {results?.totalCount || 0}
@@ -192,9 +204,13 @@ const SearchPage: React.FC = () => {
       </Grid>
 
       <Grid item xs={12} md={6} lg={3}>
-        <Card sx={{ borderRadius: 2, textAlign: 'center' }}>
+        <Card sx={{ borderRadius: 2, textAlign: "center" }}>
           <CardContent>
-            <Typography variant="h4" color="success.main" sx={{ fontWeight: 600 }}>
+            <Typography
+              variant="h4"
+              color="success.main"
+              sx={{ fontWeight: 600 }}
+            >
               {savedSearches.length}
             </Typography>
             <Typography variant="body2" color="text.secondary">
@@ -205,7 +221,7 @@ const SearchPage: React.FC = () => {
       </Grid>
 
       <Grid item xs={12} md={6} lg={3}>
-        <Card sx={{ borderRadius: 2, textAlign: 'center' }}>
+        <Card sx={{ borderRadius: 2, textAlign: "center" }}>
           <CardContent>
             <Typography variant="h4" color="info.main" sx={{ fontWeight: 600 }}>
               {searchHistory.length}
@@ -218,9 +234,13 @@ const SearchPage: React.FC = () => {
       </Grid>
 
       <Grid item xs={12} md={6} lg={3}>
-        <Card sx={{ borderRadius: 2, textAlign: 'center' }}>
+        <Card sx={{ borderRadius: 2, textAlign: "center" }}>
           <CardContent>
-            <Typography variant="h4" color="warning.main" sx={{ fontWeight: 600 }}>
+            <Typography
+              variant="h4"
+              color="warning.main"
+              sx={{ fontWeight: 600 }}
+            >
               {criteria.filters.length}
             </Typography>
             <Typography variant="body2" color="text.secondary">
@@ -237,29 +257,29 @@ const SearchPage: React.FC = () => {
             <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
               Current Search Configuration
             </Typography>
-            
+
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6} md={3}>
                 <Typography variant="subtitle2" color="text.secondary">
                   Query
                 </Typography>
                 <Typography variant="body2">
-                  {criteria.query || 'No query'}
+                  {criteria.query || "No query"}
                 </Typography>
               </Grid>
-              
+
               <Grid item xs={12} sm={6} md={3}>
                 <Typography variant="subtitle2" color="text.secondary">
                   Category
                 </Typography>
-                <Chip 
-                  label={criteria.category} 
-                  size="small" 
+                <Chip
+                  label={criteria.category}
+                  size="small"
                   variant="outlined"
-                  sx={{ textTransform: 'capitalize' }}
+                  sx={{ textTransform: "capitalize" }}
                 />
               </Grid>
-              
+
               <Grid item xs={12} sm={6} md={3}>
                 <Typography variant="subtitle2" color="text.secondary">
                   Sort By
@@ -268,7 +288,7 @@ const SearchPage: React.FC = () => {
                   {criteria.sortBy} ({criteria.sortOrder})
                 </Typography>
               </Grid>
-              
+
               <Grid item xs={12} sm={6} md={3}>
                 <Typography variant="subtitle2" color="text.secondary">
                   Filters
@@ -295,23 +315,16 @@ const SearchPage: React.FC = () => {
           </Typography>
         </Box>
         <Typography variant="body1" color="text.secondary">
-          Find tournaments, users, locations, and matches with powerful search and filtering capabilities
+          Find tournaments, users, locations, and matches with powerful search
+          and filtering capabilities
         </Typography>
       </Box>
 
       {/* Navigation Tabs */}
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+      <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
         <Tabs value={activeTab} onChange={handleTabChange}>
-          <Tab 
-            icon={<Search />} 
-            label="Search" 
-            iconPosition="start"
-          />
-          <Tab 
-            icon={<Analytics />} 
-            label="Analytics" 
-            iconPosition="start"
-          />
+          <Tab icon={<Search />} label="Search" iconPosition="start" />
+          <Tab icon={<Analytics />} label="Analytics" iconPosition="start" />
         </Tabs>
       </Box>
 

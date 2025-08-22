@@ -426,8 +426,8 @@ const TournamentList: React.FC = () => {
           tournament.status === "registration"
             ? "#e3f2fd"
             : tournament.status === "in_progress"
-            ? "#fff3e0"
-            : "#e8f5e8"
+              ? "#fff3e0"
+              : "#e8f5e8"
         }, white)`,
         cursor: "pointer",
       }}

@@ -1,0 +1,201 @@
+{
+  "timestamp": "2025-08-21T18:12:31.417662",
+  "connection_time_ms": 900.95,
+  "table_statistics": [
+    {
+      "name": "users",
+      "live_rows": 2,
+      "dead_rows": 0,
+      "inserts": 2,
+      "updates": 0,
+      "deletes": 0
+    },
+    {
+      "name": "locations",
+      "live_rows": 0,
+      "dead_rows": 0,
+      "inserts": 0,
+      "updates": 0,
+      "deletes": 0
+    },
+    {
+      "name": "leaderboards",
+      "live_rows": 0,
+      "dead_rows": 0,
+      "inserts": 0,
+      "updates": 0,
+      "deletes": 0
+    },
+    {
+      "name": "challenges",
+      "live_rows": 0,
+      "dead_rows": 0,
+      "inserts": 0,
+      "updates": 0,
+      "deletes": 0
+    },
+    {
+      "name": "tournaments",
+      "live_rows": 0,
+      "dead_rows": 0,
+      "inserts": 0,
+      "updates": 0,
+      "deletes": 0
+    },
+    {
+      "name": "game_achievements",
+      "live_rows": 0,
+      "dead_rows": 0,
+      "inserts": 0,
+      "updates": 0,
+      "deletes": 0
+    },
+    {
+      "name": "game_results",
+      "live_rows": 0,
+      "dead_rows": 0,
+      "inserts": 0,
+      "updates": 0,
+      "deletes": 0
+    },
+    {
+      "name": "player_achievements",
+      "live_rows": 0,
+      "dead_rows": 0,
+      "inserts": 0,
+      "updates": 0,
+      "deletes": 0
+    },
+    {
+      "name": "tournament_achievements",
+      "live_rows": 0,
+      "dead_rows": 0,
+      "inserts": 0,
+      "updates": 0,
+      "deletes": 0
+    },
+    {
+      "name": "player_statistics",
+      "live_rows": 0,
+      "dead_rows": 0,
+      "inserts": 0,
+      "updates": 0,
+      "deletes": 0
+    },
+    {
+      "name": "coupon_usage",
+      "live_rows": 0,
+      "dead_rows": 0,
+      "inserts": 0,
+      "updates": 0,
+      "deletes": 0
+    },
+    {
+      "name": "coupons",
+      "live_rows": 0,
+      "dead_rows": 0,
+      "inserts": 0,
+      "updates": 0,
+      "deletes": 0
+    },
+    {
+      "name": "tournament_matches",
+      "live_rows": 0,
+      "dead_rows": 0,
+      "inserts": 0,
+      "updates": 0,
+      "deletes": 0
+    },
+    {
+      "name": "game_definitions",
+      "live_rows": 0,
+      "dead_rows": 0,
+      "inserts": 0,
+      "updates": 0,
+      "deletes": 0
+    },
+    {
+      "name": "friend_requests",
+      "live_rows": 0,
+      "dead_rows": 0,
+      "inserts": 0,
+      "updates": 0,
+      "deletes": 0
+    },
+    {
+      "name": "user_blocks",
+      "live_rows": 0,
+      "dead_rows": 0,
+      "inserts": 0,
+      "updates": 0,
+      "deletes": 0
+    },
+    {
+      "name": "tournament_participants",
+      "live_rows": 0,
+      "dead_rows": 0,
+      "inserts": 0,
+      "updates": 0,
+      "deletes": 0
+    },
+    {
+      "name": "user_sessions",
+      "live_rows": 0,
+      "dead_rows": 0,
+      "inserts": 0,
+      "updates": 0,
+      "deletes": 0
+    },
+    {
+      "name": "friendships",
+      "live_rows": 0,
+      "dead_rows": 0,
+      "inserts": 0,
+      "updates": 0,
+      "deletes": 0
+    },
+    {
+      "name": "game_sessions",
+      "live_rows": 0,
+      "dead_rows": 0,
+      "inserts": 0,
+      "updates": 0,
+      "deletes": 0
+    },
+    {
+      "name": "user_tournament_achievements",
+      "live_rows": 0,
+      "dead_rows": 0,
+      "inserts": 0,
+      "updates": 0,
+      "deletes": 0
+    }
+  ],
+  "query_performance": {
+    "Count users": {
+      "time_ms": 62.06,
+      "rows": 1
+    },
+    "Count game sessions": {
+      "time_ms": 32.6,
+      "rows": 1
+    },
+    "Count tournaments": {
+      "time_ms": 31.44,
+      "rows": 1
+    },
+    "User by ID": {
+      "time_ms": 32.14,
+      "rows": 1
+    },
+    "Sessions by status": {
+      "time_ms": 110.11,
+      "rows": 1
+    }
+  },
+  "recommendations": [
+    "Database connection is slow - check network/connection pooling",
+    "Query 'Count users' is slow (62.06ms) - check indexes",
+    "Query 'Sessions by status' is slow (110.11ms) - check indexes"
+  ]
+}

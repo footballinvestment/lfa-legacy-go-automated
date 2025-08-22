@@ -1,4 +1,4 @@
-import React, { Component, ReactNode } from 'react';
+import React, { Component, ReactNode } from "react";
 import {
   Box,
   Paper,
@@ -6,10 +6,10 @@ import {
   Button,
   Alert,
   AlertTitle,
-  Stack
-} from '@mui/material';
-import RefreshIcon from '@mui/icons-material/Refresh';
-import BugReportIcon from '@mui/icons-material/BugReport';
+  Stack,
+} from "@mui/material";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import BugReportIcon from "@mui/icons-material/BugReport";
 
 interface Props {
   children: ReactNode;
@@ -29,24 +29,24 @@ class ErrorBoundary extends Component<Props, State> {
     this.state = {
       hasError: false,
       error: null,
-      errorInfo: null
+      errorInfo: null,
     };
   }
 
   static getDerivedStateFromError(error: Error): Partial<State> {
     return {
       hasError: true,
-      error
+      error,
     };
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     // Log error details
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
-    
+    console.error("ErrorBoundary caught an error:", error, errorInfo);
+
     this.setState({
       error,
-      errorInfo
+      errorInfo,
     });
 
     // Call optional error handler
@@ -55,7 +55,7 @@ class ErrorBoundary extends Component<Props, State> {
     }
 
     // In production, you might want to send error to monitoring service
-    if (process.env.NODE_ENV === 'production') {
+    if (process.env.NODE_ENV === "production") {
       // Example: sendErrorToMonitoringService(error, errorInfo);
     }
   }
@@ -64,7 +64,7 @@ class ErrorBoundary extends Component<Props, State> {
     this.setState({
       hasError: false,
       error: null,
-      errorInfo: null
+      errorInfo: null,
     });
   };
 
@@ -73,7 +73,7 @@ class ErrorBoundary extends Component<Props, State> {
     this.setState({
       hasError: false,
       error: null,
-      errorInfo: null
+      errorInfo: null,
     });
   };
 
@@ -86,25 +86,25 @@ class ErrorBoundary extends Component<Props, State> {
 
       // Default error UI
       return (
-        <Box 
-          display="flex" 
-          justifyContent="center" 
-          alignItems="center" 
+        <Box
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
           minHeight="400px"
           p={3}
         >
           <Paper elevation={3} sx={{ maxWidth: 600, p: 4 }}>
             <Stack spacing={3} alignItems="center">
               <BugReportIcon color="error" sx={{ fontSize: 64 }} />
-              
-              <Alert severity="error" sx={{ width: '100%' }}>
+
+              <Alert severity="error" sx={{ width: "100%" }}>
                 <AlertTitle>Something went wrong</AlertTitle>
                 An unexpected error occurred while rendering this component.
               </Alert>
 
               <Typography variant="body2" color="text.secondary" align="center">
-                This error has been automatically logged. You can try refreshing the component
-                or reloading the page to recover.
+                This error has been automatically logged. You can try refreshing
+                the component or reloading the page to recover.
               </Typography>
 
               <Stack direction="row" spacing={2}>
@@ -115,25 +115,31 @@ class ErrorBoundary extends Component<Props, State> {
                 >
                   Try Again
                 </Button>
-                
-                <Button
-                  variant="contained"
-                  onClick={this.handleReload}
-                >
+
+                <Button variant="contained" onClick={this.handleReload}>
                   Reload Page
                 </Button>
               </Stack>
 
-              {process.env.NODE_ENV === 'development' && this.state.error && (
-                <Box sx={{ mt: 3, width: '100%' }}>
+              {process.env.NODE_ENV === "development" && this.state.error && (
+                <Box sx={{ mt: 3, width: "100%" }}>
                   <Typography variant="h6" gutterBottom>
                     Error Details (Development Only)
                   </Typography>
-                  <Paper 
-                    variant="outlined" 
-                    sx={{ p: 2, bgcolor: 'grey.50', maxHeight: 200, overflow: 'auto' }}
+                  <Paper
+                    variant="outlined"
+                    sx={{
+                      p: 2,
+                      bgcolor: "grey.50",
+                      maxHeight: 200,
+                      overflow: "auto",
+                    }}
                   >
-                    <Typography variant="body2" component="pre" sx={{ fontSize: 12 }}>
+                    <Typography
+                      variant="body2"
+                      component="pre"
+                      sx={{ fontSize: 12 }}
+                    >
                       {this.state.error.toString()}
                       {this.state.errorInfo?.componentStack}
                     </Typography>

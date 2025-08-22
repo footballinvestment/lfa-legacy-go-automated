@@ -1,12 +1,12 @@
 // frontend/src/services/__tests__/moderationApi.test.ts
 // Unit tests for moderation API service
-import { moderationApi } from '../moderationApi';
-import type { 
-  ViolationCreate, 
-  ViolationUpdate, 
+import { moderationApi } from "../moderationApi";
+import type {
+  ViolationCreate,
+  ViolationUpdate,
   BulkUserOperation,
   AdminUserUpdate,
-} from '../../types/moderation';
+} from "../../types/moderation";
 
 // Mock fetch globally
 const mockFetch = jest.fn();
@@ -21,10 +21,10 @@ const localStorageMock = {
 };
 global.localStorage = localStorageMock as any;
 
-describe('ModerationApi', () => {
+describe("ModerationApi", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    localStorageMock.getItem.mockReturnValue('mock-jwt-token');
+    localStorageMock.getItem.mockReturnValue("mock-jwt-token");
   });
 
   // Helper function to create mock response
@@ -37,82 +37,82 @@ describe('ModerationApi', () => {
     } as Response);
   };
 
-  describe('Authentication', () => {
-    it('includes authorization header when token exists', async () => {
-      const mockUserData = { id: 1, name: 'Test User' };
+  describe("Authentication", () => {
+    it("includes authorization header when token exists", async () => {
+      const mockUserData = { id: 1, name: "Test User" };
       mockFetch.mockResolvedValueOnce(createMockResponse(mockUserData));
 
       await moderationApi.getUser(1);
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/admin/users/1'),
+        expect.stringContaining("/api/admin/users/1"),
         expect.objectContaining({
           headers: expect.objectContaining({
-            'Authorization': 'Bearer mock-jwt-token',
+            Authorization: "Bearer mock-jwt-token",
           }),
         })
       );
     });
 
-    it('works without token when not available', async () => {
+    it("works without token when not available", async () => {
       localStorageMock.getItem.mockReturnValue(null);
-      const mockUserData = { id: 1, name: 'Test User' };
+      const mockUserData = { id: 1, name: "Test User" };
       mockFetch.mockResolvedValueOnce(createMockResponse(mockUserData));
 
       await moderationApi.getUser(1);
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/admin/users/1'),
+        expect.stringContaining("/api/admin/users/1"),
         expect.objectContaining({
           headers: expect.not.objectContaining({
-            'Authorization': expect.anything(),
+            Authorization: expect.anything(),
           }),
         })
       );
     });
   });
 
-  describe('User Management', () => {
-    it('gets user details successfully', async () => {
+  describe("User Management", () => {
+    it("gets user details successfully", async () => {
       const mockUser = {
         id: 123,
-        name: 'Test User',
-        email: 'test@example.com',
-        status: 'active',
+        name: "Test User",
+        email: "test@example.com",
+        status: "active",
         violations: [],
       };
-      
+
       mockFetch.mockResolvedValueOnce(createMockResponse(mockUser));
 
       const result = await moderationApi.getUser(123);
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/admin/users/123'),
+        expect.stringContaining("/api/admin/users/123"),
         expect.objectContaining({
-          method: 'GET',
+          method: "GET",
         })
       );
       expect(result).toEqual(mockUser);
     });
 
-    it('updates user successfully', async () => {
+    it("updates user successfully", async () => {
       const updateData: AdminUserUpdate = {
-        name: 'Updated Name',
-        email: 'updated@example.com',
-        status: 'suspended',
+        name: "Updated Name",
+        email: "updated@example.com",
+        status: "suspended",
       };
-      
+
       const mockUpdatedUser = { id: 123, ...updateData };
       mockFetch.mockResolvedValueOnce(createMockResponse(mockUpdatedUser));
 
       const result = await moderationApi.updateUser(123, updateData);
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/admin/users/123'),
+        expect.stringContaining("/api/admin/users/123"),
         expect.objectContaining({
-          method: 'PATCH',
+          method: "PATCH",
           headers: expect.objectContaining({
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           }),
           body: JSON.stringify(updateData),
         })
@@ -120,28 +120,27 @@ describe('ModerationApi', () => {
       expect(result).toEqual(mockUpdatedUser);
     });
 
-    it('handles user not found error', async () => {
-      mockFetch.mockResolvedValueOnce(createMockResponse(
-        { detail: 'User not found' }, 
-        404
-      ));
+    it("handles user not found error", async () => {
+      mockFetch.mockResolvedValueOnce(
+        createMockResponse({ detail: "User not found" }, 404)
+      );
 
-      await expect(moderationApi.getUser(999))
-        .rejects
-        .toThrow('User not found');
+      await expect(moderationApi.getUser(999)).rejects.toThrow(
+        "User not found"
+      );
     });
   });
 
-  describe('Violation Management', () => {
-    it('gets user violations successfully', async () => {
+  describe("Violation Management", () => {
+    it("gets user violations successfully", async () => {
       const mockViolations = {
         items: [
           {
             id: 1,
             user_id: 123,
-            type: 'warning',
-            reason: 'Test violation',
-            status: 'active',
+            type: "warning",
+            reason: "Test violation",
+            status: "active",
           },
         ],
         total: 1,
@@ -155,33 +154,41 @@ describe('ModerationApi', () => {
       const result = await moderationApi.getUserViolations(123);
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/admin/users/123/violations?page=1&limit=25'),
-        expect.objectContaining({ method: 'GET' })
+        expect.stringContaining(
+          "/api/admin/users/123/violations?page=1&limit=25"
+        ),
+        expect.objectContaining({ method: "GET" })
       );
       expect(result).toEqual(mockViolations);
     });
 
-    it('gets violations with filters', async () => {
-      const mockViolations = { items: [], total: 0, page: 1, limit: 25, total_pages: 0 };
+    it("gets violations with filters", async () => {
+      const mockViolations = {
+        items: [],
+        total: 0,
+        page: 1,
+        limit: 25,
+        total_pages: 0,
+      };
       mockFetch.mockResolvedValueOnce(createMockResponse(mockViolations));
 
       await moderationApi.getUserViolations(123, {
-        status: 'active',
+        status: "active",
         page: 2,
         limit: 10,
       });
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('status=active&page=2&limit=10'),
+        expect.stringContaining("status=active&page=2&limit=10"),
         expect.anything()
       );
     });
 
-    it('creates violation successfully', async () => {
+    it("creates violation successfully", async () => {
       const violationData: ViolationCreate = {
-        type: 'warning',
-        reason: 'Test violation',
-        notes: 'Test notes',
+        type: "warning",
+        reason: "Test violation",
+        notes: "Test notes",
         created_by: 1,
       };
 
@@ -189,8 +196,8 @@ describe('ModerationApi', () => {
         id: 1,
         user_id: 123,
         ...violationData,
-        created_at: '2024-01-15T10:00:00Z',
-        status: 'active',
+        created_at: "2024-01-15T10:00:00Z",
+        status: "active",
       };
 
       mockFetch.mockResolvedValueOnce(createMockResponse(mockCreatedViolation));
@@ -198,27 +205,27 @@ describe('ModerationApi', () => {
       const result = await moderationApi.createViolation(123, violationData);
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/admin/users/123/violations'),
+        expect.stringContaining("/api/admin/users/123/violations"),
         expect.objectContaining({
-          method: 'POST',
+          method: "POST",
           body: JSON.stringify(violationData),
         })
       );
       expect(result).toEqual(mockCreatedViolation);
     });
 
-    it('updates violation successfully', async () => {
+    it("updates violation successfully", async () => {
       const updateData: ViolationUpdate = {
-        reason: 'Updated reason',
-        status: 'resolved',
+        reason: "Updated reason",
+        status: "resolved",
       };
 
       const mockUpdatedViolation = {
         id: 1,
         user_id: 123,
-        type: 'warning',
-        reason: 'Updated reason',
-        status: 'resolved',
+        type: "warning",
+        reason: "Updated reason",
+        status: "resolved",
       };
 
       mockFetch.mockResolvedValueOnce(createMockResponse(mockUpdatedViolation));
@@ -226,44 +233,50 @@ describe('ModerationApi', () => {
       const result = await moderationApi.updateViolation(123, 1, updateData);
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/admin/users/123/violations/1'),
+        expect.stringContaining("/api/admin/users/123/violations/1"),
         expect.objectContaining({
-          method: 'PATCH',
+          method: "PATCH",
           body: JSON.stringify(updateData),
         })
       );
       expect(result).toEqual(mockUpdatedViolation);
     });
 
-    it('deletes violation successfully', async () => {
-      mockFetch.mockResolvedValueOnce(createMockResponse(
-        { detail: 'Violation deleted successfully' }
-      ));
+    it("deletes violation successfully", async () => {
+      mockFetch.mockResolvedValueOnce(
+        createMockResponse({ detail: "Violation deleted successfully" })
+      );
 
       await moderationApi.deleteViolation(123, 1);
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/admin/users/123/violations/1'),
+        expect.stringContaining("/api/admin/users/123/violations/1"),
         expect.objectContaining({
-          method: 'DELETE',
+          method: "DELETE",
         })
       );
     });
   });
 
-  describe('Bulk Operations', () => {
-    it('performs bulk user operation successfully', async () => {
+  describe("Bulk Operations", () => {
+    it("performs bulk user operation successfully", async () => {
       const bulkOperation: BulkUserOperation = {
-        action: 'suspend',
+        action: "suspend",
         user_ids: [1, 2, 3],
-        params: { reason: 'Bulk test' },
+        params: { reason: "Bulk test" },
       };
 
       const mockResult = {
         results: {
-          '1': { status: 'ok' as const, message: 'User suspended successfully' },
-          '2': { status: 'ok' as const, message: 'User suspended successfully' },
-          '3': { status: 'failed' as const, message: 'User not found' },
+          "1": {
+            status: "ok" as const,
+            message: "User suspended successfully",
+          },
+          "2": {
+            status: "ok" as const,
+            message: "User suspended successfully",
+          },
+          "3": { status: "failed" as const, message: "User not found" },
         },
         summary: {
           total: 3,
@@ -277,25 +290,25 @@ describe('ModerationApi', () => {
       const result = await moderationApi.bulkUserOperation(bulkOperation);
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/admin/users/bulk'),
+        expect.stringContaining("/api/admin/users/bulk"),
         expect.objectContaining({
-          method: 'POST',
+          method: "POST",
           body: JSON.stringify(bulkOperation),
         })
       );
       expect(result).toEqual(mockResult);
     });
 
-    it('handles bulk operation with all failures', async () => {
+    it("handles bulk operation with all failures", async () => {
       const bulkOperation: BulkUserOperation = {
-        action: 'ban',
+        action: "ban",
         user_ids: [999],
-        params: { reason: 'Test ban' },
+        params: { reason: "Test ban" },
       };
 
       const mockResult = {
         results: {
-          '999': { status: 'failed' as const, message: 'User not found' },
+          "999": { status: "failed" as const, message: "User not found" },
         },
         summary: {
           total: 1,
@@ -312,17 +325,17 @@ describe('ModerationApi', () => {
     });
   });
 
-  describe('Reports Management', () => {
-    it('gets reports successfully', async () => {
+  describe("Reports Management", () => {
+    it("gets reports successfully", async () => {
       const mockReports = [
         {
           id: 1,
           reporter_id: 10,
           reported_user_id: 20,
-          type: 'harassment',
-          description: 'Test report',
-          status: 'open',
-          created_at: '2024-01-15T10:00:00Z',
+          type: "harassment",
+          description: "Test report",
+          status: "open",
+          created_at: "2024-01-15T10:00:00Z",
         },
       ];
 
@@ -331,59 +344,59 @@ describe('ModerationApi', () => {
       const result = await moderationApi.getReports();
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/admin/reports'),
-        expect.objectContaining({ method: 'GET' })
+        expect.stringContaining("/api/admin/reports"),
+        expect.objectContaining({ method: "GET" })
       );
       expect(result).toEqual(mockReports);
     });
 
-    it('gets reports with status filter', async () => {
+    it("gets reports with status filter", async () => {
       const mockReports = [];
       mockFetch.mockResolvedValueOnce(createMockResponse(mockReports));
 
-      await moderationApi.getReports('open');
+      await moderationApi.getReports("open");
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('status=open'),
+        expect.stringContaining("status=open"),
         expect.anything()
       );
     });
 
-    it('updates report successfully', async () => {
+    it("updates report successfully", async () => {
       const mockUpdatedReport = {
         id: 1,
-        status: 'dismissed',
-        resolution_notes: 'Test dismissal',
+        status: "dismissed",
+        resolution_notes: "Test dismissal",
       };
 
       mockFetch.mockResolvedValueOnce(createMockResponse(mockUpdatedReport));
 
-      const result = await moderationApi.updateReport(1, 'dismiss', {
-        notes: 'Test dismissal',
+      const result = await moderationApi.updateReport(1, "dismiss", {
+        notes: "Test dismissal",
       });
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/admin/reports/1?action=dismiss'),
+        expect.stringContaining("/api/admin/reports/1?action=dismiss"),
         expect.objectContaining({
-          method: 'PATCH',
-          body: JSON.stringify({ notes: 'Test dismissal' }),
+          method: "PATCH",
+          body: JSON.stringify({ notes: "Test dismissal" }),
         })
       );
       expect(result).toEqual(mockUpdatedReport);
     });
   });
 
-  describe('Moderation Logs', () => {
-    it('gets moderation logs successfully', async () => {
+  describe("Moderation Logs", () => {
+    it("gets moderation logs successfully", async () => {
       const mockLogs = {
         logs: [
           {
             id: 1,
             actor_id: 1,
             target_user_id: 123,
-            action: 'violation_created',
-            details: { violation_type: 'warning' },
-            created_at: '2024-01-15T10:00:00Z',
+            action: "violation_created",
+            details: { violation_type: "warning" },
+            created_at: "2024-01-15T10:00:00Z",
           },
         ],
         total: 1,
@@ -396,13 +409,13 @@ describe('ModerationApi', () => {
       const result = await moderationApi.getModerationLogs();
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/admin/moderation/logs?page=1&limit=25'),
-        expect.objectContaining({ method: 'GET' })
+        expect.stringContaining("/api/admin/moderation/logs?page=1&limit=25"),
+        expect.objectContaining({ method: "GET" })
       );
       expect(result).toEqual(mockLogs);
     });
 
-    it('gets logs with filters', async () => {
+    it("gets logs with filters", async () => {
       const mockLogs = { logs: [], total: 0, page: 1, limit: 25 };
       mockFetch.mockResolvedValueOnce(createMockResponse(mockLogs));
 
@@ -414,71 +427,65 @@ describe('ModerationApi', () => {
       });
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('page=2&limit=10&actor_id=1&target_user_id=123'),
+        expect.stringContaining(
+          "page=2&limit=10&actor_id=1&target_user_id=123"
+        ),
         expect.anything()
       );
     });
   });
 
-  describe('Error Handling', () => {
-    it('throws error on HTTP 400 response', async () => {
-      mockFetch.mockResolvedValueOnce(createMockResponse(
-        { detail: 'Bad request' }, 
-        400
-      ));
+  describe("Error Handling", () => {
+    it("throws error on HTTP 400 response", async () => {
+      mockFetch.mockResolvedValueOnce(
+        createMockResponse({ detail: "Bad request" }, 400)
+      );
 
-      await expect(moderationApi.getUser(123))
-        .rejects
-        .toThrow('Bad request');
+      await expect(moderationApi.getUser(123)).rejects.toThrow("Bad request");
     });
 
-    it('throws error on HTTP 500 response', async () => {
-      mockFetch.mockResolvedValueOnce(createMockResponse(
-        { detail: 'Internal server error' }, 
-        500
-      ));
+    it("throws error on HTTP 500 response", async () => {
+      mockFetch.mockResolvedValueOnce(
+        createMockResponse({ detail: "Internal server error" }, 500)
+      );
 
-      await expect(moderationApi.getUser(123))
-        .rejects
-        .toThrow('Internal server error');
+      await expect(moderationApi.getUser(123)).rejects.toThrow(
+        "Internal server error"
+      );
     });
 
-    it('handles network errors', async () => {
-      mockFetch.mockRejectedValueOnce(new Error('Network error'));
+    it("handles network errors", async () => {
+      mockFetch.mockRejectedValueOnce(new Error("Network error"));
 
-      await expect(moderationApi.getUser(123))
-        .rejects
-        .toThrow('Network error');
+      await expect(moderationApi.getUser(123)).rejects.toThrow("Network error");
     });
 
-    it('handles malformed JSON response', async () => {
+    it("handles malformed JSON response", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: () => Promise.reject(new Error('Invalid JSON')),
-        text: () => Promise.resolve('Invalid JSON response'),
+        json: () => Promise.reject(new Error("Invalid JSON")),
+        text: () => Promise.resolve("Invalid JSON response"),
       } as Response);
 
-      await expect(moderationApi.getUser(123))
-        .rejects
-        .toThrow('Invalid JSON');
+      await expect(moderationApi.getUser(123)).rejects.toThrow("Invalid JSON");
     });
 
-    it('provides generic error message when detail is missing', async () => {
+    it("provides generic error message when detail is missing", async () => {
       mockFetch.mockResolvedValueOnce(createMockResponse({}, 404));
 
-      await expect(moderationApi.getUser(123))
-        .rejects
-        .toThrow('Request failed with status 404');
+      await expect(moderationApi.getUser(123)).rejects.toThrow(
+        "Request failed with status 404"
+      );
     });
   });
 
-  describe('Request Configuration', () => {
-    it('sets correct content type for POST requests', async () => {
+  describe("Request Configuration", () => {
+    it("sets correct content type for POST requests", async () => {
       const violationData: ViolationCreate = {
-        type: 'warning',
-        reason: 'Test',
-        notes: 'Notes',
+        type: "warning",
+        reason: "Test",
+        notes: "Notes",
         created_by: 1,
       };
 
@@ -490,13 +497,13 @@ describe('ModerationApi', () => {
         expect.anything(),
         expect.objectContaining({
           headers: expect.objectContaining({
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           }),
         })
       );
     });
 
-    it('constructs URLs correctly', async () => {
+    it("constructs URLs correctly", async () => {
       mockFetch.mockResolvedValueOnce(createMockResponse({}));
 
       await moderationApi.getUser(123);
@@ -507,8 +514,10 @@ describe('ModerationApi', () => {
       );
     });
 
-    it('handles query parameters correctly', async () => {
-      mockFetch.mockResolvedValueOnce(createMockResponse({ logs: [], total: 0, page: 1, limit: 25 }));
+    it("handles query parameters correctly", async () => {
+      mockFetch.mockResolvedValueOnce(
+        createMockResponse({ logs: [], total: 0, page: 1, limit: 25 })
+      );
 
       await moderationApi.getModerationLogs({
         page: 2,
@@ -517,7 +526,7 @@ describe('ModerationApi', () => {
       });
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('page=2&limit=50&actor_id=1'),
+        expect.stringContaining("page=2&limit=50&actor_id=1"),
         expect.anything()
       );
     });

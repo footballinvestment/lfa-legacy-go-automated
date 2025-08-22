@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Typography,
@@ -38,7 +38,7 @@ import {
   ListItemAvatar,
   CircularProgress,
   Badge,
-} from '@mui/material';
+} from "@mui/material";
 import {
   ArrowBack,
   Dashboard,
@@ -65,8 +65,8 @@ import {
   TrendingUp,
   TrendingDown,
   MoreVert,
-} from '@mui/icons-material';
-import { useSafeAuth } from '../SafeAuthContext';
+} from "@mui/icons-material";
+import { useSafeAuth } from "../SafeAuthContext";
 
 // Interfaces for Admin Panel
 interface SystemMetrics {
@@ -74,7 +74,7 @@ interface SystemMetrics {
   activeUsers: number;
   totalTournaments: number;
   activeTournaments: number;
-  systemHealth: 'healthy' | 'warning' | 'critical';
+  systemHealth: "healthy" | "warning" | "critical";
   memoryUsage: number;
   cpuUsage: number;
   diskUsage: number;
@@ -98,7 +98,7 @@ interface AdminUser {
 
 interface SystemAlert {
   id: string;
-  type: 'error' | 'warning' | 'info' | 'success';
+  type: "error" | "warning" | "info" | "success";
   title: string;
   message: string;
   timestamp: string;
@@ -120,7 +120,7 @@ const AdminPanel: React.FC = () => {
   // Check if user is admin (basic auth check)
   useEffect(() => {
     if (!state.user?.is_admin) {
-      navigate('/dashboard');
+      navigate("/dashboard");
       return;
     }
     loadAdminData();
@@ -129,17 +129,17 @@ const AdminPanel: React.FC = () => {
   const loadAdminData = async () => {
     try {
       setLoading(true);
-      
+
       // Simulate loading admin data (replace with real API calls)
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
       // Mock system metrics
       setMetrics({
         totalUsers: 1247,
         activeUsers: 89,
         totalTournaments: 156,
         activeTournaments: 12,
-        systemHealth: 'healthy',
+        systemHealth: "healthy",
         memoryUsage: 67,
         cpuUsage: 23,
         diskUsage: 45,
@@ -150,56 +150,55 @@ const AdminPanel: React.FC = () => {
       setUsers([
         {
           id: 1,
-          username: 'striker23',
-          full_name: 'Alex Rodriguez',
-          email: 'alex@example.com',
+          username: "striker23",
+          full_name: "Alex Rodriguez",
+          email: "alex@example.com",
           level: 7,
           credits: 150,
           is_active: true,
           is_admin: false,
-          last_activity: '2025-08-17T17:30:00Z',
-          registration_date: '2024-12-01',
+          last_activity: "2025-08-17T17:30:00Z",
+          registration_date: "2024-12-01",
           games_played: 34,
           total_spent: 89.99,
         },
         {
           id: 2,
-          username: 'goalkeeper',
-          full_name: 'Sarah Chen',
-          email: 'sarah@example.com',
+          username: "goalkeeper",
+          full_name: "Sarah Chen",
+          email: "sarah@example.com",
           level: 6,
           credits: 75,
           is_active: true,
           is_admin: false,
-          last_activity: '2025-08-17T16:45:00Z',
-          registration_date: '2024-11-15',
+          last_activity: "2025-08-17T16:45:00Z",
+          registration_date: "2024-11-15",
           games_played: 28,
-          total_spent: 45.50,
+          total_spent: 45.5,
         },
       ]);
 
       // Mock system alerts
       setAlerts([
         {
-          id: '1',
-          type: 'info',
-          title: 'System Update',
-          message: 'Backend successfully updated to version 3.1.0',
-          timestamp: '2025-08-17T18:00:00Z',
+          id: "1",
+          type: "info",
+          title: "System Update",
+          message: "Backend successfully updated to version 3.1.0",
+          timestamp: "2025-08-17T18:00:00Z",
           resolved: true,
         },
         {
-          id: '2',
-          type: 'warning',
-          title: 'High Memory Usage',
-          message: 'Frontend memory usage above 2GB threshold',
-          timestamp: '2025-08-17T17:45:00Z',
+          id: "2",
+          type: "warning",
+          title: "High Memory Usage",
+          message: "Frontend memory usage above 2GB threshold",
+          timestamp: "2025-08-17T17:45:00Z",
           resolved: false,
         },
       ]);
-
     } catch (error) {
-      console.error('Failed to load admin data:', error);
+      console.error("Failed to load admin data:", error);
     } finally {
       setLoading(false);
     }
@@ -221,18 +220,22 @@ const AdminPanel: React.FC = () => {
     const activity = new Date(timestamp);
     const diffMs = now.getTime() - activity.getTime();
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    
-    if (diffHours < 1) return 'Active now';
+
+    if (diffHours < 1) return "Active now";
     if (diffHours < 24) return `${diffHours}h ago`;
     return `${Math.floor(diffHours / 24)}d ago`;
   };
 
   const getHealthColor = (health: string) => {
     switch (health) {
-      case 'healthy': return 'success';
-      case 'warning': return 'warning';
-      case 'critical': return 'error';
-      default: return 'default';
+      case "healthy":
+        return "success";
+      case "warning":
+        return "warning";
+      case "critical":
+        return "error";
+      default:
+        return "default";
     }
   };
 
@@ -248,14 +251,16 @@ const AdminPanel: React.FC = () => {
 
   if (loading) {
     return (
-      <Box sx={{ 
-        minHeight: '60vh', 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center',
-        flexDirection: 'column',
-        gap: 2,
-      }}>
+      <Box
+        sx={{
+          minHeight: "60vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexDirection: "column",
+          gap: 2,
+        }}
+      >
         <CircularProgress size={60} />
         <Typography variant="h6" color="text.secondary">
           Loading Admin Dashboard...
@@ -267,17 +272,19 @@ const AdminPanel: React.FC = () => {
   return (
     <Box sx={{ p: 3 }}>
       {/* Header */}
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        mb: 4 
-      }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <IconButton onClick={() => navigate('/dashboard')}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 4,
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <IconButton onClick={() => navigate("/dashboard")}>
             <ArrowBack />
           </IconButton>
-          <AdminPanelSettings sx={{ fontSize: 32, color: 'primary.main' }} />
+          <AdminPanelSettings sx={{ fontSize: 32, color: "primary.main" }} />
           <Box>
             <Typography variant="h4" fontWeight="bold">
               Admin Dashboard
@@ -288,17 +295,17 @@ const AdminPanel: React.FC = () => {
           </Box>
         </Box>
 
-        <Box sx={{ display: 'flex', gap: 1 }}>
+        <Box sx={{ display: "flex", gap: 1 }}>
           <Button
             variant="outlined"
             startIcon={<Refresh />}
             onClick={handleRefresh}
             disabled={refreshing}
           >
-            {refreshing ? 'Refreshing...' : 'Refresh'}
+            {refreshing ? "Refreshing..." : "Refresh"}
           </Button>
           {metrics && (
-            <Chip 
+            <Chip
               icon={<NetworkCheck />}
               label={`System ${metrics.systemHealth}`}
               color={getHealthColor(metrics.systemHealth) as any}
@@ -313,8 +320,8 @@ const AdminPanel: React.FC = () => {
         <Grid container spacing={3} sx={{ mb: 4 }}>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <Card>
-              <CardContent sx={{ textAlign: 'center' }}>
-                <People sx={{ fontSize: 40, color: 'primary.main', mb: 1 }} />
+              <CardContent sx={{ textAlign: "center" }}>
+                <People sx={{ fontSize: 40, color: "primary.main", mb: 1 }} />
                 <Typography variant="h4" fontWeight="bold">
                   {metrics.totalUsers}
                 </Typography>
@@ -330,8 +337,10 @@ const AdminPanel: React.FC = () => {
 
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <Card>
-              <CardContent sx={{ textAlign: 'center' }}>
-                <EmojiEvents sx={{ fontSize: 40, color: 'secondary.main', mb: 1 }} />
+              <CardContent sx={{ textAlign: "center" }}>
+                <EmojiEvents
+                  sx={{ fontSize: 40, color: "secondary.main", mb: 1 }}
+                />
                 <Typography variant="h4" fontWeight="bold">
                   {metrics.totalTournaments}
                 </Typography>
@@ -347,19 +356,19 @@ const AdminPanel: React.FC = () => {
 
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <Card>
-              <CardContent sx={{ textAlign: 'center' }}>
-                <Memory sx={{ fontSize: 40, color: 'warning.main', mb: 1 }} />
+              <CardContent sx={{ textAlign: "center" }}>
+                <Memory sx={{ fontSize: 40, color: "warning.main", mb: 1 }} />
                 <Typography variant="h4" fontWeight="bold">
                   {metrics.memoryUsage}%
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   Memory Usage
                 </Typography>
-                <LinearProgress 
-                  variant="determinate" 
-                  value={metrics.memoryUsage} 
+                <LinearProgress
+                  variant="determinate"
+                  value={metrics.memoryUsage}
                   sx={{ mt: 1 }}
-                  color={metrics.memoryUsage > 80 ? 'error' : 'primary'}
+                  color={metrics.memoryUsage > 80 ? "error" : "primary"}
                 />
               </CardContent>
             </Card>
@@ -367,8 +376,8 @@ const AdminPanel: React.FC = () => {
 
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <Card>
-              <CardContent sx={{ textAlign: 'center' }}>
-                <Speed sx={{ fontSize: 40, color: 'info.main', mb: 1 }} />
+              <CardContent sx={{ textAlign: "center" }}>
+                <Speed sx={{ fontSize: 40, color: "info.main", mb: 1 }} />
                 <Typography variant="h4" fontWeight="bold">
                   {metrics.apiResponseTime}ms
                 </Typography>
@@ -389,7 +398,7 @@ const AdminPanel: React.FC = () => {
         <Tabs
           value={activeTab}
           onChange={(_, newValue) => setActiveTab(newValue)}
-          sx={{ borderBottom: 1, borderColor: 'divider' }}
+          sx={{ borderBottom: 1, borderColor: "divider" }}
           variant="scrollable"
           scrollButtons="auto"
         >
@@ -415,9 +424,9 @@ const AdminPanel: React.FC = () => {
                     <Typography variant="body2" color="text.secondary">
                       CPU Usage: {metrics?.cpuUsage}%
                     </Typography>
-                    <LinearProgress 
-                      variant="determinate" 
-                      value={metrics?.cpuUsage || 0} 
+                    <LinearProgress
+                      variant="determinate"
+                      value={metrics?.cpuUsage || 0}
                       sx={{ mb: 1 }}
                     />
                   </Box>
@@ -425,9 +434,9 @@ const AdminPanel: React.FC = () => {
                     <Typography variant="body2" color="text.secondary">
                       Disk Usage: {metrics?.diskUsage}%
                     </Typography>
-                    <LinearProgress 
-                      variant="determinate" 
-                      value={metrics?.diskUsage || 0} 
+                    <LinearProgress
+                      variant="determinate"
+                      value={metrics?.diskUsage || 0}
                       sx={{ mb: 1 }}
                     />
                   </Box>
@@ -437,14 +446,16 @@ const AdminPanel: React.FC = () => {
                 </CardContent>
               </Card>
             </Grid>
-            
+
             <Grid size={{ xs: 12, md: 4 }}>
               <Card>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
                     Quick Actions
                   </Typography>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  <Box
+                    sx={{ display: "flex", flexDirection: "column", gap: 1 }}
+                  >
                     <Button variant="outlined" startIcon={<People />}>
                       View All Users
                     </Button>
@@ -468,15 +479,15 @@ const AdminPanel: React.FC = () => {
         {activeTab === 1 && (
           <Card>
             <CardContent>
-              <Box sx={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'center', 
-                mb: 3 
-              }}>
-                <Typography variant="h6">
-                  User Management
-                </Typography>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  mb: 3,
+                }}
+              >
+                <Typography variant="h6">User Management</Typography>
                 <Button variant="contained" startIcon={<PersonAdd />}>
                   Add User
                 </Button>
@@ -498,15 +509,24 @@ const AdminPanel: React.FC = () => {
                     {users.map((user) => (
                       <TableRow key={user.id}>
                         <TableCell>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                            <Avatar sx={{ bgcolor: 'primary.main' }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 2,
+                            }}
+                          >
+                            <Avatar sx={{ bgcolor: "primary.main" }}>
                               {user.username[0].toUpperCase()}
                             </Avatar>
                             <Box>
                               <Typography variant="body2" fontWeight="bold">
                                 {user.full_name}
                               </Typography>
-                              <Typography variant="caption" color="text.secondary">
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                              >
                                 @{user.username}
                               </Typography>
                             </Box>
@@ -517,9 +537,9 @@ const AdminPanel: React.FC = () => {
                         </TableCell>
                         <TableCell>{user.credits}</TableCell>
                         <TableCell>
-                          <Chip 
-                            label={user.is_active ? 'Active' : 'Inactive'}
-                            color={user.is_active ? 'success' : 'default'}
+                          <Chip
+                            label={user.is_active ? "Active" : "Inactive"}
+                            color={user.is_active ? "success" : "default"}
                             size="small"
                           />
                         </TableCell>
@@ -527,7 +547,7 @@ const AdminPanel: React.FC = () => {
                           {formatLastActivity(user.last_activity)}
                         </TableCell>
                         <TableCell>
-                          <IconButton 
+                          <IconButton
                             size="small"
                             onClick={() => {
                               setSelectedUser(user);
@@ -536,9 +556,9 @@ const AdminPanel: React.FC = () => {
                           >
                             <Edit />
                           </IconButton>
-                          <IconButton 
+                          <IconButton
                             size="small"
-                            onClick={() => handleUserAction('block', user.id)}
+                            onClick={() => handleUserAction("block", user.id)}
                           >
                             <Block />
                           </IconButton>
@@ -563,10 +583,12 @@ const AdminPanel: React.FC = () => {
                 {alerts.map((alert) => (
                   <ListItem key={alert.id} divider>
                     <ListItemIcon>
-                      {alert.type === 'error' && <Error color="error" />}
-                      {alert.type === 'warning' && <Warning color="warning" />}
-                      {alert.type === 'info' && <Info color="info" />}
-                      {alert.type === 'success' && <CheckCircle color="success" />}
+                      {alert.type === "error" && <Error color="error" />}
+                      {alert.type === "warning" && <Warning color="warning" />}
+                      {alert.type === "info" && <Info color="info" />}
+                      {alert.type === "success" && (
+                        <CheckCircle color="success" />
+                      )}
                     </ListItemIcon>
                     <ListItemText
                       primary={alert.title}
@@ -582,8 +604,8 @@ const AdminPanel: React.FC = () => {
                       }
                     />
                     <Chip
-                      label={alert.resolved ? 'Resolved' : 'Active'}
-                      color={alert.resolved ? 'success' : 'warning'}
+                      label={alert.resolved ? "Resolved" : "Active"}
+                      color={alert.resolved ? "success" : "warning"}
                       size="small"
                     />
                   </ListItem>
@@ -609,8 +631,8 @@ const AdminPanel: React.FC = () => {
       </Box>
 
       {/* User Edit Dialog */}
-      <Dialog 
-        open={userDialogOpen} 
+      <Dialog
+        open={userDialogOpen}
         onClose={() => setUserDialogOpen(false)}
         maxWidth="sm"
         fullWidth
@@ -618,7 +640,9 @@ const AdminPanel: React.FC = () => {
         <DialogTitle>Edit User</DialogTitle>
         <DialogContent>
           {selectedUser && (
-            <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Box
+              sx={{ pt: 2, display: "flex", flexDirection: "column", gap: 2 }}
+            >
               <TextField
                 label="Full Name"
                 defaultValue={selectedUser.full_name}
@@ -638,7 +662,7 @@ const AdminPanel: React.FC = () => {
               <FormControl fullWidth>
                 <InputLabel>Status</InputLabel>
                 <Select
-                  value={selectedUser.is_active ? 'active' : 'inactive'}
+                  value={selectedUser.is_active ? "active" : "inactive"}
                   label="Status"
                 >
                   <MenuItem value="active">Active</MenuItem>

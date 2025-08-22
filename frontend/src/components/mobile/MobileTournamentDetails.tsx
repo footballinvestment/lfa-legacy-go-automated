@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Box,
   Container,
@@ -32,7 +32,7 @@ import {
   Alert,
   Skeleton,
   useTheme,
-} from '@mui/material';
+} from "@mui/material";
 import {
   ArrowBack,
   Share,
@@ -59,18 +59,23 @@ import {
   Cancel,
   Warning,
   Add,
-} from '@mui/icons-material';
-import { TransitionProps } from '@mui/material/transitions';
-import { Tournament, TournamentParticipant, Match, TournamentStats } from '../../types/tournament';
-import { useSafeAuth } from '../../SafeAuthContext';
-import ErrorBoundary from '../common/ErrorBoundary';
+} from "@mui/icons-material";
+import { TransitionProps } from "@mui/material/transitions";
+import {
+  Tournament,
+  TournamentParticipant,
+  Match,
+  TournamentStats,
+} from "../../types/tournament";
+import { useSafeAuth } from "../../SafeAuthContext";
+import ErrorBoundary from "../common/ErrorBoundary";
 
 // SwipeableViews component for tab switching - can be replaced with a simple Box if library not available
-const SwipeableViews: React.FC<{ index: number; onChangeIndex: (index: number) => void; children: React.ReactNode[] }> = ({ 
-  index, 
-  onChangeIndex, 
-  children 
-}) => {
+const SwipeableViews: React.FC<{
+  index: number;
+  onChangeIndex: (index: number) => void;
+  children: React.ReactNode[];
+}> = ({ index, onChangeIndex, children }) => {
   return <Box>{children[index]}</Box>;
 };
 
@@ -78,7 +83,7 @@ const Transition = React.forwardRef(function Transition(
   props: TransitionProps & {
     children: React.ReactElement;
   },
-  ref: React.Ref<unknown>,
+  ref: React.Ref<unknown>
 ) {
   return <Slide direction="up" ref={ref} {...props} />;
 });
@@ -94,12 +99,12 @@ const MobileTournamentDetails: React.FC<MobileTournamentDetailsProps> = ({
   tournamentId,
   open,
   onClose,
-  onJoin
+  onJoin,
 }) => {
   const theme = useTheme();
   const { user } = useSafeAuth();
   const isAuthenticated = user !== null;
-  
+
   // State management
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [participants, setParticipants] = useState<TournamentParticipant[]>([]);
@@ -123,7 +128,7 @@ const MobileTournamentDetails: React.FC<MobileTournamentDetailsProps> = ({
       userEmail: "alex@example.com",
       registrationDate: new Date().toISOString(),
       status: "confirmed",
-      seedNumber: 1
+      seedNumber: 1,
     },
     {
       id: 2,
@@ -133,7 +138,7 @@ const MobileTournamentDetails: React.FC<MobileTournamentDetailsProps> = ({
       userEmail: "maria@example.com",
       registrationDate: new Date().toISOString(),
       status: "confirmed",
-      seedNumber: 2
+      seedNumber: 2,
     },
     {
       id: 3,
@@ -142,8 +147,8 @@ const MobileTournamentDetails: React.FC<MobileTournamentDetailsProps> = ({
       userName: "James Chen",
       userEmail: "james@example.com",
       registrationDate: new Date().toISOString(),
-      status: "registered"
-    }
+      status: "registered",
+    },
   ];
 
   const mockMatches: Match[] = [
@@ -158,8 +163,8 @@ const MobileTournamentDetails: React.FC<MobileTournamentDetailsProps> = ({
       participant2Name: "Maria Santos",
       status: "pending",
       scheduledTime: new Date(Date.now() + 3600000).toISOString(),
-      location: "Field A"
-    }
+      location: "Field A",
+    },
   ];
 
   const mockStats: TournamentStats = {
@@ -171,14 +176,15 @@ const MobileTournamentDetails: React.FC<MobileTournamentDetailsProps> = ({
     topScorer: {
       participantId: 1,
       participantName: "Alex Rodriguez",
-      goals: 4
-    }
+      goals: 4,
+    },
   };
 
   const mockTournament: Tournament = {
     id: tournamentId,
     name: "Friday Night Football Championship",
-    description: "Weekly competitive tournament for serious players. This is a high-energy event that brings together the best local talent for an exciting evening of football competition.",
+    description:
+      "Weekly competitive tournament for serious players. This is a high-energy event that brings together the best local talent for an exciting evening of football competition.",
     location: "Central Park Sports Complex, NYC",
     startDate: new Date(Date.now() + 86400000).toISOString(),
     endDate: new Date(Date.now() + 172800000).toISOString(),
@@ -186,34 +192,35 @@ const MobileTournamentDetails: React.FC<MobileTournamentDetailsProps> = ({
     currentParticipants: 12,
     entryFee: 25,
     prizePool: 300,
-    status: 'upcoming',
+    status: "upcoming",
     organizerId: 1,
     organizerName: "NYC Football League",
-    rules: "1. All FIFA rules apply\n2. No slide tackles in penalty area\n3. 7v7 format\n4. 30-minute halves\n5. 3-point system for wins\n6. Yellow cards carry over between matches\n7. Red card = suspension from next match\n8. Equipment must be approved by referee",
+    rules:
+      "1. All FIFA rules apply\n2. No slide tackles in penalty area\n3. 7v7 format\n4. 30-minute halves\n5. 3-point system for wins\n6. Yellow cards carry over between matches\n7. Red card = suspension from next match\n8. Equipment must be approved by referee",
     format: "Single elimination with consolation bracket",
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     skillLevel: "intermediate",
     ageRestriction: { min: 18, max: 35 },
     registrationDeadline: new Date(Date.now() + 43200000).toISOString(),
-    tags: ["competitive", "weekly", "nyc", "7v7"]
+    tags: ["competitive", "weekly", "nyc", "7v7"],
   };
 
   // Load tournament data
   const loadTournamentData = useCallback(async () => {
     if (!open) return;
-    
+
     setLoading(true);
     try {
       // Simulate API calls
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
+      await new Promise((resolve) => setTimeout(resolve, 800));
+
       setTournament(mockTournament);
       setParticipants(mockParticipants);
       setMatches(mockMatches);
       setStats(mockStats);
     } catch (error) {
-      console.error('Failed to load tournament data:', error);
+      console.error("Failed to load tournament data:", error);
     } finally {
       setLoading(false);
     }
@@ -222,16 +229,16 @@ const MobileTournamentDetails: React.FC<MobileTournamentDetailsProps> = ({
   // Handle share tournament
   const handleShare = async () => {
     if (!tournament) return;
-    
+
     if (navigator.share) {
       try {
         await navigator.share({
-          title: tournament?.name || 'Tournament',
-          text: `Check out this tournament: ${tournament?.description || ''}`,
-          url: window.location.href
+          title: tournament?.name || "Tournament",
+          text: `Check out this tournament: ${tournament?.description || ""}`,
+          url: window.location.href,
         });
       } catch (err) {
-        console.log('Share cancelled');
+        console.log("Share cancelled");
       }
     } else {
       setShareDialogOpen(true);
@@ -276,7 +283,11 @@ const MobileTournamentDetails: React.FC<MobileTournamentDetailsProps> = ({
       {loading ? (
         <Box>
           <Skeleton variant="text" width="80%" height={32} />
-          <Skeleton variant="rectangular" height={200} sx={{ my: 2, borderRadius: 2 }} />
+          <Skeleton
+            variant="rectangular"
+            height={200}
+            sx={{ my: 2, borderRadius: 2 }}
+          />
           <Skeleton variant="text" width="100%" />
           <Skeleton variant="text" width="60%" />
         </Box>
@@ -286,14 +297,14 @@ const MobileTournamentDetails: React.FC<MobileTournamentDetailsProps> = ({
           <Paper
             sx={{
               height: 200,
-              bgcolor: 'primary.main',
+              bgcolor: "primary.main",
               borderRadius: 3,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
               mb: 3,
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              color: 'white'
+              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              color: "white",
             }}
           >
             <SportsSoccer sx={{ fontSize: 64, opacity: 0.7 }} />
@@ -307,10 +318,11 @@ const MobileTournamentDetails: React.FC<MobileTournamentDetailsProps> = ({
           {/* Tournament Details Grid */}
           <Grid container spacing={2} sx={{ mb: 3 }}>
             <Grid item xs={6}>
-              <Paper sx={{ p: 2, textAlign: 'center', borderRadius: 2 }}>
+              <Paper sx={{ p: 2, textAlign: "center", borderRadius: 2 }}>
                 <People color="primary" sx={{ mb: 1 }} />
                 <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                  {tournament?.currentParticipants}/{tournament?.maxParticipants}
+                  {tournament?.currentParticipants}/
+                  {tournament?.maxParticipants}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
                   Players
@@ -318,7 +330,7 @@ const MobileTournamentDetails: React.FC<MobileTournamentDetailsProps> = ({
               </Paper>
             </Grid>
             <Grid item xs={6}>
-              <Paper sx={{ p: 2, textAlign: 'center', borderRadius: 2 }}>
+              <Paper sx={{ p: 2, textAlign: "center", borderRadius: 2 }}>
                 <EmojiEvents color="primary" sx={{ mb: 1 }} />
                 <Typography variant="h6" sx={{ fontWeight: 600 }}>
                   ${tournament?.prizePool || 0}
@@ -336,7 +348,7 @@ const MobileTournamentDetails: React.FC<MobileTournamentDetailsProps> = ({
               <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
                 Tournament Details
               </Typography>
-              
+
               <Box sx={{ mb: 2 }}>
                 <Box display="flex" alignItems="center" gap={2} mb={1}>
                   <Schedule color="action" />
@@ -345,15 +357,21 @@ const MobileTournamentDetails: React.FC<MobileTournamentDetailsProps> = ({
                       Start Date
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      {new Date(tournament?.startDate || '').toLocaleDateString()} at{' '}
-                      {new Date(tournament?.startDate || '').toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
+                      {new Date(
+                        tournament?.startDate || ""
+                      ).toLocaleDateString()}{" "}
+                      at{" "}
+                      {new Date(tournament?.startDate || "").toLocaleTimeString(
+                        [],
+                        {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        }
+                      )}
                     </Typography>
                   </Box>
                 </Box>
-                
+
                 <Box display="flex" alignItems="center" gap={2} mb={1}>
                   <LocationOn color="action" />
                   <Box>
@@ -365,7 +383,7 @@ const MobileTournamentDetails: React.FC<MobileTournamentDetailsProps> = ({
                     </Typography>
                   </Box>
                 </Box>
-                
+
                 <Box display="flex" alignItems="center" gap={2} mb={1}>
                   <Payment color="action" />
                   <Box>
@@ -377,7 +395,7 @@ const MobileTournamentDetails: React.FC<MobileTournamentDetailsProps> = ({
                     </Typography>
                   </Box>
                 </Box>
-                
+
                 <Box display="flex" alignItems="center" gap={2}>
                   <Info color="action" />
                   <Box>
@@ -398,7 +416,12 @@ const MobileTournamentDetails: React.FC<MobileTournamentDetailsProps> = ({
                   </Typography>
                   <Box display="flex" gap={1} flexWrap="wrap">
                     {tournament?.tags?.map((tag) => (
-                      <Chip key={tag} label={tag} size="small" variant="outlined" />
+                      <Chip
+                        key={tag}
+                        label={tag}
+                        size="small"
+                        variant="outlined"
+                      />
                     ))}
                   </Box>
                 </Box>
@@ -414,7 +437,7 @@ const MobileTournamentDetails: React.FC<MobileTournamentDetailsProps> = ({
                 alignItems="center"
                 justifyContent="space-between"
                 onClick={() => setRulesExpanded(!rulesExpanded)}
-                sx={{ cursor: 'pointer' }}
+                sx={{ cursor: "pointer" }}
               >
                 <Box display="flex" alignItems="center" gap={2}>
                   <Rule color="action" />
@@ -424,14 +447,14 @@ const MobileTournamentDetails: React.FC<MobileTournamentDetailsProps> = ({
                 </Box>
                 {rulesExpanded ? <ExpandLess /> : <ExpandMore />}
               </Box>
-              
+
               <Collapse in={rulesExpanded}>
                 <Box mt={2}>
-                  <Typography 
-                    variant="body2" 
-                    sx={{ 
-                      whiteSpace: 'pre-line',
-                      lineHeight: 1.6
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      whiteSpace: "pre-line",
+                      lineHeight: 1.6,
                     }}
                   >
                     {tournament?.rules}
@@ -449,7 +472,8 @@ const MobileTournamentDetails: React.FC<MobileTournamentDetailsProps> = ({
               </Typography>
               {tournament?.ageRestriction && (
                 <Typography variant="body2">
-                  • Age: {tournament.ageRestriction.min}-{tournament.ageRestriction.max} years
+                  • Age: {tournament.ageRestriction.min}-
+                  {tournament.ageRestriction.max} years
                 </Typography>
               )}
               {tournament?.skillLevel && (
@@ -463,12 +487,16 @@ const MobileTournamentDetails: React.FC<MobileTournamentDetailsProps> = ({
           {/* Registration Deadline */}
           {tournament?.registrationDeadline && (
             <Alert severity="warning" sx={{ mb: 3 }}>
-              Registration closes on{' '}
-              {new Date(tournament.registrationDeadline).toLocaleDateString()} at{' '}
-              {new Date(tournament.registrationDeadline).toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit'
-              })}
+              Registration closes on{" "}
+              {new Date(tournament.registrationDeadline).toLocaleDateString()}{" "}
+              at{" "}
+              {new Date(tournament.registrationDeadline).toLocaleTimeString(
+                [],
+                {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                }
+              )}
             </Alert>
           )}
         </Box>
@@ -498,44 +526,49 @@ const MobileTournamentDetails: React.FC<MobileTournamentDetailsProps> = ({
             <React.Fragment key={participant.id}>
               <ListItem>
                 <ListItemAvatar>
-                  <Avatar>
-                    {participant.userName.charAt(0)}
-                  </Avatar>
+                  <Avatar>{participant.userName.charAt(0)}</Avatar>
                 </ListItemAvatar>
                 <ListItemText
                   primary={participant.userName}
                   secondary={
                     <>
-                      Joined {new Date(participant.registrationDate).toLocaleDateString()}
-                      {participant.seedNumber && ` • Seed #${participant.seedNumber}`}
+                      Joined{" "}
+                      {new Date(
+                        participant.registrationDate
+                      ).toLocaleDateString()}
+                      {participant.seedNumber &&
+                        ` • Seed #${participant.seedNumber}`}
                     </>
                   }
                 />
                 <Chip
                   label={participant.status}
                   size="small"
-                  color={participant.status === 'confirmed' ? 'success' : 'default'}
+                  color={
+                    participant.status === "confirmed" ? "success" : "default"
+                  }
                   variant="outlined"
                 />
               </ListItem>
               {index < participants.length - 1 && <Divider />}
             </React.Fragment>
           ))}
-          
+
           {/* Empty slots */}
-          {tournament && tournament.currentParticipants < tournament.maxParticipants && (
-            <ListItem>
-              <ListItemAvatar>
-                <Avatar sx={{ bgcolor: 'grey.200' }}>
-                  <Person color="disabled" />
-                </Avatar>
-              </ListItemAvatar>
-              <ListItemText
-                primary="Open Slot"
-                secondary={`${tournament.maxParticipants - tournament.currentParticipants} spots remaining`}
-              />
-            </ListItem>
-          )}
+          {tournament &&
+            tournament.currentParticipants < tournament.maxParticipants && (
+              <ListItem>
+                <ListItemAvatar>
+                  <Avatar sx={{ bgcolor: "grey.200" }}>
+                    <Person color="disabled" />
+                  </Avatar>
+                </ListItemAvatar>
+                <ListItemText
+                  primary="Open Slot"
+                  secondary={`${tournament.maxParticipants - tournament.currentParticipants} spots remaining`}
+                />
+              </ListItem>
+            )}
         </List>
       )}
     </Container>
@@ -554,30 +587,35 @@ const MobileTournamentDetails: React.FC<MobileTournamentDetailsProps> = ({
                 <Typography variant="h6" gutterBottom>
                   Round {match.roundNumber}, Match {match.matchNumber}
                 </Typography>
-                
-                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+
+                <Box
+                  display="flex"
+                  justifyContent="space-between"
+                  alignItems="center"
+                  mb={2}
+                >
                   <Typography variant="body2">
-                    {match.participant1Name || 'TBD'}
+                    {match.participant1Name || "TBD"}
                   </Typography>
                   <Typography variant="h6">vs</Typography>
                   <Typography variant="body2">
-                    {match.participant2Name || 'TBD'}
+                    {match.participant2Name || "TBD"}
                   </Typography>
                 </Box>
-                
+
                 {match.scheduledTime && (
                   <Box display="flex" alignItems="center" gap={1} mb={1}>
                     <Schedule fontSize="small" color="action" />
                     <Typography variant="body2" color="text.secondary">
-                      {new Date(match.scheduledTime).toLocaleDateString()} at{' '}
+                      {new Date(match.scheduledTime).toLocaleDateString()} at{" "}
                       {new Date(match.scheduledTime).toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit'
+                        hour: "2-digit",
+                        minute: "2-digit",
                       })}
                     </Typography>
                   </Box>
                 )}
-                
+
                 {match.location && (
                   <Box display="flex" alignItems="center" gap={1}>
                     <LocationOn fontSize="small" color="action" />
@@ -586,11 +624,11 @@ const MobileTournamentDetails: React.FC<MobileTournamentDetailsProps> = ({
                     </Typography>
                   </Box>
                 )}
-                
+
                 <Chip
-                  label={match.status.replace('_', ' ').toUpperCase()}
+                  label={match.status.replace("_", " ").toUpperCase()}
                   size="small"
-                  color={match.status === 'completed' ? 'success' : 'default'}
+                  color={match.status === "completed" ? "success" : "default"}
                   sx={{ mt: 1 }}
                 />
               </CardContent>
@@ -599,7 +637,7 @@ const MobileTournamentDetails: React.FC<MobileTournamentDetailsProps> = ({
         </List>
       ) : (
         <Box textAlign="center" py={4}>
-          <SportsSoccer sx={{ fontSize: 48, color: 'text.disabled', mb: 2 }} />
+          <SportsSoccer sx={{ fontSize: 48, color: "text.disabled", mb: 2 }} />
           <Typography variant="body1" color="text.secondary">
             Match schedule will be available after registration closes
           </Typography>
@@ -616,7 +654,10 @@ const MobileTournamentDetails: React.FC<MobileTournamentDetailsProps> = ({
       TransitionComponent={Transition}
     >
       <ErrorBoundary>
-        <AppBar position="sticky" sx={{ bgcolor: 'background.paper', color: 'text.primary' }}>
+        <AppBar
+          position="sticky"
+          sx={{ bgcolor: "background.paper", color: "text.primary" }}
+        >
           <Toolbar>
             <IconButton
               edge="start"
@@ -626,11 +667,11 @@ const MobileTournamentDetails: React.FC<MobileTournamentDetailsProps> = ({
             >
               <ArrowBack />
             </IconButton>
-            
+
             <Typography variant="h6" sx={{ flex: 1, fontWeight: 600 }}>
-              {loading ? 'Loading...' : tournament?.name}
+              {loading ? "Loading..." : tournament?.name}
             </Typography>
-            
+
             <IconButton
               color="inherit"
               onClick={handleWatchlistToggle}
@@ -638,7 +679,7 @@ const MobileTournamentDetails: React.FC<MobileTournamentDetailsProps> = ({
             >
               {isWatchlisted ? <Favorite color="error" /> : <FavoriteBorder />}
             </IconButton>
-            
+
             <IconButton
               color="inherit"
               onClick={() => setQrDialogOpen(true)}
@@ -646,7 +687,7 @@ const MobileTournamentDetails: React.FC<MobileTournamentDetailsProps> = ({
             >
               <QrCode />
             </IconButton>
-            
+
             <IconButton color="inherit" onClick={handleShare}>
               <Share />
             </IconButton>
@@ -657,24 +698,31 @@ const MobileTournamentDetails: React.FC<MobileTournamentDetailsProps> = ({
           {!loading && tournament && (
             <>
               {/* Tournament Status Banner */}
-              <Paper 
-                sx={{ 
+              <Paper
+                sx={{
                   mx: 2,
                   mt: 2,
                   p: 2,
                   borderRadius: 2,
-                  bgcolor: tournament.status === 'upcoming' ? 'primary.main' : 
-                          tournament.status === 'active' ? 'success.main' : 'grey.500',
-                  color: 'white'
+                  bgcolor:
+                    tournament.status === "upcoming"
+                      ? "primary.main"
+                      : tournament.status === "active"
+                        ? "success.main"
+                        : "grey.500",
+                  color: "white",
                 }}
               >
-                <Typography variant="h6" sx={{ fontWeight: 600, textAlign: 'center' }}>
+                <Typography
+                  variant="h6"
+                  sx={{ fontWeight: 600, textAlign: "center" }}
+                >
                   {tournament.status.toUpperCase()} TOURNAMENT
                 </Typography>
               </Paper>
 
               {/* Tab Navigation */}
-              <Box sx={{ borderBottom: 1, borderColor: 'divider', mt: 2 }}>
+              <Box sx={{ borderBottom: 1, borderColor: "divider", mt: 2 }}>
                 <Tabs
                   value={activeTab}
                   onChange={handleTabChange}
@@ -687,10 +735,7 @@ const MobileTournamentDetails: React.FC<MobileTournamentDetailsProps> = ({
               </Box>
 
               {/* Tab Content */}
-              <SwipeableViews
-                index={activeTab}
-                onChangeIndex={setActiveTab}
-              >
+              <SwipeableViews index={activeTab} onChangeIndex={setActiveTab}>
                 {renderInfoTab()}
                 {renderParticipantsTab()}
                 {renderMatchesTab()}
@@ -701,7 +746,11 @@ const MobileTournamentDetails: React.FC<MobileTournamentDetailsProps> = ({
           {loading && (
             <Container maxWidth="sm" sx={{ px: 2, py: 3 }}>
               <LinearProgress sx={{ mb: 3 }} />
-              <Skeleton variant="rectangular" height={200} sx={{ mb: 2, borderRadius: 2 }} />
+              <Skeleton
+                variant="rectangular"
+                height={200}
+                sx={{ mb: 2, borderRadius: 2 }}
+              />
               <Skeleton variant="text" width="80%" height={32} />
               <Skeleton variant="text" width="100%" />
               <Skeleton variant="text" width="60%" />
@@ -710,24 +759,27 @@ const MobileTournamentDetails: React.FC<MobileTournamentDetailsProps> = ({
         </Box>
 
         {/* Join Tournament FAB */}
-        {!loading && tournament && tournament.status === 'upcoming' && 
-         tournament.currentParticipants < tournament.maxParticipants && isAuthenticated && (
-          <Fab
-            color="primary"
-            variant="extended"
-            onClick={handleJoinTournament}
-            sx={{
-              position: 'fixed',
-              bottom: 16,
-              left: '50%',
-              transform: 'translateX(-50%)',
-              zIndex: 1000
-            }}
-          >
-            <Add sx={{ mr: 1 }} />
-            Join Tournament
-          </Fab>
-        )}
+        {!loading &&
+          tournament &&
+          tournament.status === "upcoming" &&
+          tournament.currentParticipants < tournament.maxParticipants &&
+          isAuthenticated && (
+            <Fab
+              color="primary"
+              variant="extended"
+              onClick={handleJoinTournament}
+              sx={{
+                position: "fixed",
+                bottom: 16,
+                left: "50%",
+                transform: "translateX(-50%)",
+                zIndex: 1000,
+              }}
+            >
+              <Add sx={{ mr: 1 }} />
+              Join Tournament
+            </Fab>
+          )}
 
         {/* Join Confirmation Dialog */}
         <Dialog
@@ -741,11 +793,13 @@ const MobileTournamentDetails: React.FC<MobileTournamentDetailsProps> = ({
             {tournament && (
               <Box>
                 <Typography variant="body1" gutterBottom>
-                  Are you sure you want to join <strong>{tournament.name}</strong>?
+                  Are you sure you want to join{" "}
+                  <strong>{tournament.name}</strong>?
                 </Typography>
                 <Box mt={2}>
                   <Alert severity="info">
-                    Entry fee of <strong>${tournament.entryFee}</strong> will be charged upon confirmation.
+                    Entry fee of <strong>${tournament.entryFee}</strong> will be
+                    charged upon confirmation.
                   </Alert>
                 </Box>
               </Box>
@@ -775,14 +829,14 @@ const MobileTournamentDetails: React.FC<MobileTournamentDetailsProps> = ({
                 sx={{
                   width: 200,
                   height: 200,
-                  margin: '0 auto',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  bgcolor: 'grey.100'
+                  margin: "0 auto",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  bgcolor: "grey.100",
                 }}
               >
-                <QrCode sx={{ fontSize: 120, color: 'grey.600' }} />
+                <QrCode sx={{ fontSize: 120, color: "grey.600" }} />
               </Paper>
               <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
                 Share this QR code for others to quickly join the tournament

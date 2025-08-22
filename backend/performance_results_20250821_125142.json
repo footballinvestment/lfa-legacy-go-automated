@@ -1,0 +1,54 @@
+{
+  "test_timestamp": "2025-08-21 12:51:12",
+  "endpoints": {
+    "/": {
+      "endpoint": "/",
+      "error": "No successful requests",
+      "errors": 50,
+      "performance_score": 0
+    },
+    "/health": {
+      "endpoint": "/health",
+      "error": "No successful requests",
+      "errors": 50,
+      "performance_score": 0
+    },
+    "/api/health": {
+      "endpoint": "/api/health",
+      "error": "No successful requests",
+      "errors": 50,
+      "performance_score": 0
+    },
+    "/api/performance/summary": {
+      "endpoint": "/api/performance/summary",
+      "error": "No successful requests",
+      "errors": 50,
+      "performance_score": 0
+    }
+  },
+  "concurrent_tests": {
+    "health": {
+      "endpoint": "/health",
+      "error": "No successful requests",
+      "errors": 50,
+      "performance_score": 0
+    }
+  },
+  "memory_test": {
+    "duration": 30,
+    "memory_mb": {
+      "min": 3516.86,
+      "max": 3690.28,
+      "avg": 3572.88,
+      "final": 3597.19
+    },
+    "cpu_percent": {
+      "min": 23.5,
+      "max": 43.3,
+      "avg": 27.45
+    },
+    "memory_stable": false,
+    "performance_score": 60
+  },
+  "overall_score": 10
+}

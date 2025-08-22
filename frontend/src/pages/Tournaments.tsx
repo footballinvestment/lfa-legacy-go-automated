@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -9,9 +9,9 @@ import {
   Chip,
   CircularProgress,
   Alert,
-} from '@mui/material';
-import { EmojiEvents, LocationOn, Schedule } from '@mui/icons-material';
-import { tournamentService } from '../services/api';
+} from "@mui/material";
+import { EmojiEvents, LocationOn, Schedule } from "@mui/icons-material";
+import { tournamentService } from "../services/api";
 
 interface Tournament {
   id: number;
@@ -36,7 +36,7 @@ const Tournaments: React.FC = () => {
         const data = await tournamentService.getTournaments();
         setTournaments(data);
       } catch (err: any) {
-        setError(err.message || 'Failed to load tournaments');
+        setError(err.message || "Failed to load tournaments");
       } finally {
         setLoading(false);
       }
@@ -51,13 +51,13 @@ const Tournaments: React.FC = () => {
       // ✅ FIXED: Refresh tournaments data instead of page reload
       loadTournaments();
     } catch (err: any) {
-      alert(err.message || 'Registration failed');
+      alert(err.message || "Registration failed");
     }
   };
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+      <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
         <CircularProgress />
       </Box>
     );
@@ -80,37 +80,53 @@ const Tournaments: React.FC = () => {
       <Grid container spacing={3} sx={{ mt: 2 }}>
         {tournaments.map((tournament) => (
           <Grid item xs={12} md={6} lg={4} key={tournament.id}>
-            <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+            <Card
+              sx={{ height: "100%", display: "flex", flexDirection: "column" }}
+            >
               <CardContent sx={{ flexGrow: 1 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                <Box
+                  sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}
+                >
                   <EmojiEvents color="primary" />
                   <Typography variant="h6" component="h2" fontWeight="bold">
                     {tournament.name}
                   </Typography>
                 </Box>
 
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mb: 2 }}
+                >
                   {tournament.description}
                 </Typography>
 
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                <Box
+                  sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}
+                >
                   <LocationOn fontSize="small" />
                   <Typography variant="body2">
                     {tournament.location_name}
                   </Typography>
                 </Box>
 
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                <Box
+                  sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}
+                >
                   <Schedule fontSize="small" />
                   <Typography variant="body2">
                     {new Date(tournament.start_time).toLocaleDateString()}
                   </Typography>
                 </Box>
 
-                <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+                <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
                   <Chip
                     label={tournament.status}
-                    color={tournament.status === 'registration' ? 'primary' : 'default'}
+                    color={
+                      tournament.status === "registration"
+                        ? "primary"
+                        : "default"
+                    }
                     size="small"
                   />
                   <Chip
@@ -129,10 +145,10 @@ const Tournaments: React.FC = () => {
                 <Button
                   variant="contained"
                   fullWidth
-                  disabled={tournament.status !== 'registration'}
+                  disabled={tournament.status !== "registration"}
                   onClick={() => handleRegister(tournament.id)}
                 >
-                  {tournament.status === 'registration' ? 'Register' : 'Closed'}
+                  {tournament.status === "registration" ? "Register" : "Closed"}
                 </Button>
               </Box>
             </Card>

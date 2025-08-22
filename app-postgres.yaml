@@ -1,0 +1,75 @@
+# Google Cloud App Engine configuration for PostgreSQL deployment
+# Usage: gcloud app deploy app-postgres.yaml
+
+runtime: python311
+
+# Instance configuration optimized for PostgreSQL workload
+instance_class: F4  # Upgraded for database connections
+automatic_scaling:
+  min_instances: 1
+  max_instances: 15  # Increased for PostgreSQL concurrency
+  target_cpu_utilization: 0.6
+  target_throughput_utilization: 0.6
+
+# PostgreSQL environment variables
+env_variables:
+  # Database connection
+  DATABASE_URL: "postgresql://lfa_user:NVI29jPjzKO68kJi8SMcp4cT@/lfa_legacy_go?host=/cloudsql/lfa-legacy-go:europe-west1:lfa-legacy-go-postgres"
+  
+  # Cloud SQL connection
+  CLOUD_SQL_CONNECTION_NAME: "lfa-legacy-go:europe-west1:lfa-legacy-go-postgres"
+  POSTGRES_PASSWORD: "NVI29jPjzKO68kJi8SMcp4cT"
+  
+  # Connection pool settings (optimized for PostgreSQL)
+  DB_POOL_SIZE: "25"        # Increased for concurrent connections
+  DB_MAX_OVERFLOW: "40"     # Higher overflow for burst traffic
+  DB_POOL_TIMEOUT: "30"
+  DB_POOL_RECYCLE: "3600"
+  DB_POOL_PRE_PING: "true"
+  
+  # Application settings
+  ENVIRONMENT: "production"
+  LOG_LEVEL: "INFO"
+  JSON_LOGGING: "true"
+  
+  # Performance settings
+  MAX_REQUEST_SIZE: "10MB"
+  REQUEST_TIMEOUT: "60"     # Increased for database operations
+  
+  # PostgreSQL specific
+  POSTGRES_HOST: "/cloudsql/lfa-legacy-go:europe-west1:lfa-legacy-go-postgres"
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: "lfa_legacy_go"
+  POSTGRES_USER: "lfa_user"
+
+# Cloud SQL proxy configuration
+beta_settings:
+  cloud_sql_instances: "lfa-legacy-go:europe-west1:lfa-legacy-go-postgres"
+
+# Enhanced health checks for PostgreSQL
+readiness_check:
+  path: "/health"
+  check_interval_sec: 5
+  timeout_sec: 4
+  failure_threshold: 2
+  success_threshold: 2
+
+liveness_check:
+  path: "/health/live"
+  check_interval_sec: 30
+  timeout_sec: 10  # Longer timeout for database checks
+  failure_threshold: 4
+  success_threshold: 2
+
+# Increased resources for PostgreSQL connections
+resources:
+  cpu: 2      # Doubled for database workload
+  memory_gb: 4  # Doubled for connection pooling
+  disk_size_gb: 20
+
+# Network configuration
+network:
+  session_affinity: true  # Enable for database connection optimization
+
+# Application entry point
+entrypoint: gunicorn -b :$PORT -w 4 --worker-class uvicorn.workers.UvicornWorker --timeout 60 --max-requests 1000 --max-requests-jitter 50 app.main:app

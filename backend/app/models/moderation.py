@@ -1,7 +1,16 @@
 # === backend/app/models/moderation.py ===
 # JAVÍTOTT FÁJL - back_populates referenciák eltávolítva
 
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Boolean, JSON
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Text,
+    DateTime,
+    ForeignKey,
+    Boolean,
+    JSON,
+)
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from datetime import datetime
@@ -13,13 +22,17 @@ class UserViolation(Base):
     __tablename__ = "user_violations"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
     type = Column(String(100), nullable=False, index=True)
     reason = Column(Text)
     notes = Column(Text)
     created_by = Column(Integer, ForeignKey("users.id"), index=True)
     created_at = Column(DateTime(timezone=True), default=func.now(), index=True)
-    updated_at = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now())
+    updated_at = Column(
+        DateTime(timezone=True), default=func.now(), onupdate=func.now()
+    )
     status = Column(String(20), default="active", index=True)
 
     # ✅ JAVÍTOTT: back_populates eltávolítva
@@ -27,7 +40,9 @@ class UserViolation(Base):
     created_by_user = relationship("User", foreign_keys=[created_by], lazy="select")
 
     def __repr__(self):
-        return f"<UserViolation(id={self.id}, user_id={self.user_id}, type='{self.type}')>"
+        return (
+            f"<UserViolation(id={self.id}, user_id={self.user_id}, type='{self.type}')>"
+        )
 
     def to_dict(self):
         """Convert violation to dictionary for API responses"""
@@ -40,7 +55,7 @@ class UserViolation(Base):
             "created_by": self.created_by,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
-            "status": self.status
+            "status": self.status,
         }
 
 
@@ -73,7 +88,7 @@ class ModerationLog(Base):
             "details": self.details or {},
             "ip_address": self.ip_address,
             "user_agent": self.user_agent,
-            "created_at": self.created_at.isoformat() if self.created_at else None
+            "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 
 
@@ -82,7 +97,9 @@ class UserReport(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     reporter_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
-    reported_user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    reported_user_id = Column(
+        Integer, ForeignKey("users.id"), nullable=False, index=True
+    )
     type = Column(String(100), nullable=False)
     description = Column(Text, nullable=False)
     evidence = Column(Text)
@@ -90,7 +107,9 @@ class UserReport(Base):
     assigned_to = Column(Integer, ForeignKey("users.id"), index=True)
     resolution_notes = Column(Text)
     created_at = Column(DateTime(timezone=True), default=func.now(), index=True)
-    updated_at = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now())
+    updated_at = Column(
+        DateTime(timezone=True), default=func.now(), onupdate=func.now()
+    )
 
     # ✅ JAVÍTOTT: back_populates eltávolítva
     reporter = relationship("User", foreign_keys=[reporter_id], lazy="select")
@@ -113,5 +132,5 @@ class UserReport(Base):
             "assigned_to": self.assigned_to,
             "resolution_notes": self.resolution_notes,
             "created_at": self.created_at.isoformat() if self.created_at else None,
-            "updated_at": self.updated_at.isoformat() if self.updated_at else None
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }

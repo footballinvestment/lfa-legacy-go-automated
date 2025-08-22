@@ -25,7 +25,7 @@ export interface AdminUser {
   email: string;
   name: string;
   roles: string[];
-  status: 'active' | 'suspended' | 'banned' | 'pending';
+  status: "active" | "suspended" | "banned" | "pending";
   created_at: string;
   last_login?: string;
   profile?: {
@@ -56,7 +56,14 @@ export interface ModerationLog {
 }
 
 export interface BulkUserOperation {
-  action: 'suspend' | 'unsuspend' | 'add_role' | 'remove_role' | 'ban' | 'unban' | 'delete';
+  action:
+    | "suspend"
+    | "unsuspend"
+    | "add_role"
+    | "remove_role"
+    | "ban"
+    | "unban"
+    | "delete";
   user_ids: number[];
   params?: {
     role?: string;
@@ -67,7 +74,7 @@ export interface BulkUserOperation {
 export interface BulkOperationResult {
   results: {
     [user_id: string]: {
-      status: 'ok' | 'failed';
+      status: "ok" | "failed";
       message: string;
     };
   };
@@ -85,7 +92,7 @@ export interface UserReport {
   type: string;
   description: string;
   evidence?: string;
-  status: 'open' | 'dismissed' | 'resolved';
+  status: "open" | "dismissed" | "resolved";
   assigned_to?: number;
   resolution_notes?: string;
   created_at: string;

@@ -1,7 +1,17 @@
 # === backend/app/models/user.py ===
 # JAVÍTOTT USER MODEL - LOGIN_COUNT HIBA JAVÍTVA
 
-from sqlalchemy import Column, Integer, String, Boolean, Text, DateTime, JSON, Float, ForeignKey
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Boolean,
+    Text,
+    DateTime,
+    JSON,
+    Float,
+    ForeignKey,
+)
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from datetime import datetime
@@ -15,6 +25,7 @@ from typing import Optional, Dict, Any, List, Union
 # SQLAlchemy Models
 # =============================================================================
 
+
 class User(Base):
     __tablename__ = "users"
 
@@ -23,20 +34,20 @@ class User(Base):
     username = Column(String(50), unique=True, index=True, nullable=False)
     email = Column(String(100), unique=True, index=True, nullable=False)
     hashed_password = Column(String(255), nullable=False)
-    
+
     # Profile fields (matching database schema)
     full_name = Column(String(100), nullable=False)
     display_name = Column(String(100))
     bio = Column(Text)
     profile_picture = Column(String(200))
     favorite_position = Column(String(50))
-    
+
     # Status and verification (matching database schema)
     is_active = Column(Boolean, default=True)
-    user_type = Column(String(20), default='user')
+    user_type = Column(String(20), default="user")
     is_premium = Column(Boolean, default=False)
     premium_expires_at = Column(DateTime)
-    
+
     # Game statistics (matching database schema)
     level = Column(Integer, default=1)
     xp = Column(Integer, default=0)
@@ -51,30 +62,30 @@ class User(Base):
     average_performance = Column(Float, default=0.0)
     skill_ratings = Column(JSON, default=dict)
     skills = Column(JSON, default=dict)
-    
+
     # Social statistics (matching database schema)
     friend_count = Column(Integer, default=0)
     challenge_wins = Column(Integer, default=0)
     challenge_losses = Column(Integer, default=0)
     tournament_wins = Column(Integer, default=0)
-    
+
     # Settings and preferences (matching database schema)
     notification_preferences = Column(JSON, default=dict)
     privacy_settings = Column(JSON, default=dict)
-    language = Column(String(10), default='en')
-    timezone = Column(String(50), default='UTC')
-    
+    language = Column(String(10), default="en")
+    timezone = Column(String(50), default="UTC")
+
     # Audit fields (matching database schema)
     created_at = Column(DateTime, default=datetime.utcnow)
     last_login = Column(DateTime)
     last_activity = Column(DateTime)
-    
+
     # ✅ JAVÍTÁS: login_count mező hozzáadva a hiányzó funkcionalitáshoz
     login_count = Column(Integer, default=0)
-    
+
     # Relationships - EGYSZERŰSÍTETT (moderation relationships eltávolítva a konfliktus elkerülésére)
     sessions = relationship("UserSession", back_populates="user")
-    
+
     def __repr__(self):
         return f"<User(id={self.id}, username={self.username})>"
 
@@ -113,11 +124,12 @@ class User(Base):
 
     def is_admin(self) -> bool:
         """Check if user has admin privileges"""
-        return self.user_type in ['admin', 'moderator']
+        return self.user_type in ["admin", "moderator"]
 
     def can_afford(self, cost: int) -> bool:
         """Check if user can afford a certain cost"""
         return self.credits >= cost
+
 
 class UserSession(Base):
     __tablename__ = "user_sessions"
@@ -130,50 +142,61 @@ class UserSession(Base):
     is_active = Column(Boolean, default=True)
     ip_address = Column(String(45))
     user_agent = Column(Text)
-    
+
     # Relationship
     user = relationship("User", back_populates="sessions")
 
     def __repr__(self):
         return f"<UserSession(id={self.id}, user_id={self.user_id})>"
 
+
 # =============================================================================
 # Pydantic Schemas
 # =============================================================================
 
+
 class UserBase(BaseModel):
     """Base user model with common fields"""
+
     username: str = Field(..., min_length=3, max_length=50)
-    email: str = Field(..., max_length=100)
+    email: str = Field(..., max_length=100, pattern=r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
     full_name: str = Field(..., min_length=2, max_length=100)
+
 
 class UserCreate(UserBase):
     """User creation model"""
+
     password: str = Field(..., min_length=6, max_length=100)
-    
+
     model_config = ConfigDict(from_attributes=True)
+
 
 class UserCreateProtected(BaseModel):
     """Protected user creation with additional validations"""
+
     username: str = Field(..., min_length=3, max_length=50, pattern=r"^[a-zA-Z0-9_]+$")
-    email: str = Field(..., max_length=100)
+    email: str = Field(..., max_length=100, pattern=r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
     password: str = Field(..., min_length=8, max_length=100)
     full_name: str = Field(..., min_length=2, max_length=100)
     display_name: Optional[str] = Field(None, max_length=100)
     bio: Optional[str] = Field(None, max_length=500)
     favorite_position: Optional[str] = Field(None, max_length=50)
-    
+
     model_config = ConfigDict(from_attributes=True)
+
 
 class UserLogin(BaseModel):
     """User login model"""
+
     username: str = Field(..., max_length=50)
     password: str = Field(..., max_length=100)
-    
+
     model_config = ConfigDict(from_attributes=True)
+
 
 class UserUpdate(BaseModel):
     """User update model"""
+
     full_name: Optional[str] = Field(None, min_length=2, max_length=100)
     display_name: Optional[str] = Field(None, max_length=100)
     bio: Optional[str] = Field(None, max_length=500)
@@ -182,19 +205,23 @@ class UserUpdate(BaseModel):
     privacy_settings: Optional[Dict[str, Any]] = None
     language: Optional[str] = Field(None, max_length=10)
     timezone: Optional[str] = Field(None, max_length=50)
-    
+
     model_config = ConfigDict(from_attributes=True)
+
 
 class PasswordChange(BaseModel):
     """Password change model"""
+
     current_password: str = Field(..., max_length=100)
     new_password: str = Field(..., min_length=6, max_length=100)
     confirm_password: str = Field(..., max_length=100)
-    
+
     model_config = ConfigDict(from_attributes=True)
+
 
 class UserResponse(BaseModel):
     """User response model for API"""
+
     id: int
     username: str
     email: str
@@ -216,11 +243,13 @@ class UserResponse(BaseModel):
     average_performance: Optional[float] = None
     last_activity: Optional[datetime] = None
     created_at: datetime
-    
+
     model_config = ConfigDict(from_attributes=True)
+
 
 class PublicUserProfile(BaseModel):
     """Public user profile (limited information)"""
+
     id: int
     username: str
     display_name: Optional[str] = None
@@ -231,11 +260,13 @@ class PublicUserProfile(BaseModel):
     games_won: int
     achievement_points: int
     average_performance: Optional[float] = None
-    
+
     model_config = ConfigDict(from_attributes=True)
+
 
 class UserStats(BaseModel):
     """User statistics model"""
+
     games_played: int
     games_won: int
     win_rate: float
@@ -248,21 +279,25 @@ class UserStats(BaseModel):
     challenge_wins: int
     challenge_losses: int
     tournament_wins: int
-    
+
     model_config = ConfigDict(from_attributes=True)
+
 
 class LoginResponse(BaseModel):
     """Login response model"""
+
     access_token: str
     token_type: str = "bearer"
     expires_in: int
     user: UserResponse
-    
+
     model_config = ConfigDict(from_attributes=True)
+
 
 class TokenData(BaseModel):
     """Token data model"""
+
     username: Optional[str] = None
     user_id: Optional[int] = None
-    
+
     model_config = ConfigDict(from_attributes=True)

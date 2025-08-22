@@ -41,8 +41,15 @@ try:
                     print(f"✅ Updated 'admin' to admin user type!")
                     return True
             
-            # Create admin with raw SQL - only required fields
-            password_hash = pwd_context.hash("admin123")
+            # Create admin with environment password
+            import os
+            admin_password = os.getenv("ADMIN_PASSWORD")
+            if not admin_password:
+                print("❌ ADMIN_PASSWORD environment variable is required!")
+                print("💡 Set it with: export ADMIN_PASSWORD='your_secure_password'")
+                return False
+                
+            password_hash = pwd_context.hash(admin_password)
             
             sql = """
             INSERT INTO users (username, email, full_name, hashed_password, user_type) 
@@ -97,8 +104,13 @@ try:
                     print(f"✅ Updated 'admin' to admin!")
                     return True
             
-            # Create minimal admin - let database handle all defaults
-            password_hash = pwd_context.hash("admin123")
+            # Create minimal admin with environment password
+            admin_password = os.getenv("ADMIN_PASSWORD")
+            if not admin_password:
+                print("❌ ADMIN_PASSWORD environment variable is required!")
+                return False
+                
+            password_hash = pwd_context.hash(admin_password)
             
             # Create user object with ONLY the essential fields
             admin_user = User()

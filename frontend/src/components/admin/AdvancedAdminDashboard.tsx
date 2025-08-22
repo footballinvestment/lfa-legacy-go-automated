@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Typography,
@@ -39,7 +39,7 @@ import {
   LinearProgress,
   Divider,
   FormControlLabel,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Dashboard,
   SupervisorAccount,
@@ -65,8 +65,8 @@ import {
   Search,
   FilterList,
   MoreVert,
-} from '@mui/icons-material';
-import { useSafeAuth } from '../../SafeAuthContext';
+} from "@mui/icons-material";
+import { useSafeAuth } from "../../SafeAuthContext";
 
 interface AdminMetrics {
   totalUsers: number;
@@ -80,16 +80,16 @@ interface AdminMetrics {
 }
 
 interface SystemHealth {
-  status: 'healthy' | 'warning' | 'critical';
+  status: "healthy" | "warning" | "critical";
   services: Array<{
     name: string;
-    status: 'online' | 'offline' | 'degraded';
+    status: "online" | "offline" | "degraded";
     responseTime: number;
     lastCheck: string;
   }>;
   databases: Array<{
     name: string;
-    status: 'connected' | 'disconnected' | 'slow';
+    status: "connected" | "disconnected" | "slow";
     connections: number;
     queries: number;
   }>;
@@ -109,13 +109,13 @@ interface UserAction {
   timestamp: string;
   ipAddress: string;
   userAgent: string;
-  status: 'success' | 'failed' | 'suspicious';
+  status: "success" | "failed" | "suspicious";
 }
 
 interface AdminAlert {
   id: string;
-  type: 'security' | 'system' | 'user' | 'tournament';
-  priority: 'low' | 'medium' | 'high' | 'critical';
+  type: "security" | "system" | "user" | "tournament";
+  priority: "low" | "medium" | "high" | "critical";
   title: string;
   description: string;
   timestamp: string;
@@ -125,13 +125,13 @@ interface AdminAlert {
 
 interface ModeratorAction {
   id: string;
-  targetType: 'user' | 'tournament' | 'content';
+  targetType: "user" | "tournament" | "content";
   targetId: string;
-  action: 'suspend' | 'ban' | 'approve' | 'reject' | 'delete';
+  action: "suspend" | "ban" | "approve" | "reject" | "delete";
   reason: string;
   moderatorId: string;
   timestamp: string;
-  status: 'pending' | 'completed' | 'failed';
+  status: "pending" | "completed" | "failed";
 }
 
 const AdvancedAdminDashboard: React.FC = () => {
@@ -144,7 +144,7 @@ const AdvancedAdminDashboard: React.FC = () => {
   const [moderationQueue, setModerationQueue] = useState<ModeratorAction[]>([]);
   const [systemHealth, setSystemHealth] = useState<SystemHealth | null>(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarMessage, setSnackbarMessage] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
@@ -164,29 +164,30 @@ const AdvancedAdminDashboard: React.FC = () => {
 
     const mockAlerts: AdminAlert[] = [
       {
-        id: '1',
-        type: 'security',
-        priority: 'high',
-        title: 'Multiple Failed Login Attempts',
-        description: 'User ID 1234 has 15 failed login attempts in the last hour',
+        id: "1",
+        type: "security",
+        priority: "high",
+        title: "Multiple Failed Login Attempts",
+        description:
+          "User ID 1234 has 15 failed login attempts in the last hour",
         timestamp: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
         resolved: false,
       },
       {
-        id: '2',
-        type: 'system',
-        priority: 'medium',
-        title: 'High CPU Usage',
-        description: 'Server CPU usage exceeded 85% for the last 10 minutes',
+        id: "2",
+        type: "system",
+        priority: "medium",
+        title: "High CPU Usage",
+        description: "Server CPU usage exceeded 85% for the last 10 minutes",
         timestamp: new Date(Date.now() - 25 * 60 * 1000).toISOString(),
         resolved: false,
       },
       {
-        id: '3',
-        type: 'tournament',
-        priority: 'low',
-        title: 'Tournament Approval Needed',
-        description: '5 tournaments are waiting for admin approval',
+        id: "3",
+        type: "tournament",
+        priority: "low",
+        title: "Tournament Approval Needed",
+        description: "5 tournaments are waiting for admin approval",
         timestamp: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
         resolved: false,
       },
@@ -194,39 +195,74 @@ const AdvancedAdminDashboard: React.FC = () => {
 
     const mockUserActions: UserAction[] = [
       {
-        id: '1',
-        userId: '1234',
-        userName: 'john.doe@example.com',
-        action: 'Login',
+        id: "1",
+        userId: "1234",
+        userName: "john.doe@example.com",
+        action: "Login",
         timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-        ipAddress: '192.168.1.100',
-        userAgent: 'Mozilla/5.0 Chrome/91.0',
-        status: 'success',
+        ipAddress: "192.168.1.100",
+        userAgent: "Mozilla/5.0 Chrome/91.0",
+        status: "success",
       },
       {
-        id: '2',
-        userId: '5678',
-        userName: 'suspicious.user@test.com',
-        action: 'Multiple Password Reset Attempts',
+        id: "2",
+        userId: "5678",
+        userName: "suspicious.user@test.com",
+        action: "Multiple Password Reset Attempts",
         timestamp: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
-        ipAddress: '10.0.0.50',
-        userAgent: 'Bot/1.0',
-        status: 'suspicious',
+        ipAddress: "10.0.0.50",
+        userAgent: "Bot/1.0",
+        status: "suspicious",
       },
     ];
 
     const mockSystemHealth: SystemHealth = {
-      status: 'healthy',
+      status: "healthy",
       services: [
-        { name: 'API Gateway', status: 'online', responseTime: 45, lastCheck: new Date().toISOString() },
-        { name: 'Authentication', status: 'online', responseTime: 32, lastCheck: new Date().toISOString() },
-        { name: 'Tournament Service', status: 'online', responseTime: 78, lastCheck: new Date().toISOString() },
-        { name: 'Notification Service', status: 'degraded', responseTime: 245, lastCheck: new Date().toISOString() },
+        {
+          name: "API Gateway",
+          status: "online",
+          responseTime: 45,
+          lastCheck: new Date().toISOString(),
+        },
+        {
+          name: "Authentication",
+          status: "online",
+          responseTime: 32,
+          lastCheck: new Date().toISOString(),
+        },
+        {
+          name: "Tournament Service",
+          status: "online",
+          responseTime: 78,
+          lastCheck: new Date().toISOString(),
+        },
+        {
+          name: "Notification Service",
+          status: "degraded",
+          responseTime: 245,
+          lastCheck: new Date().toISOString(),
+        },
       ],
       databases: [
-        { name: 'Primary DB', status: 'connected', connections: 45, queries: 1250 },
-        { name: 'Analytics DB', status: 'connected', connections: 12, queries: 340 },
-        { name: 'Cache Redis', status: 'connected', connections: 8, queries: 2150 },
+        {
+          name: "Primary DB",
+          status: "connected",
+          connections: 45,
+          queries: 1250,
+        },
+        {
+          name: "Analytics DB",
+          status: "connected",
+          connections: 12,
+          queries: 340,
+        },
+        {
+          name: "Cache Redis",
+          status: "connected",
+          connections: 8,
+          queries: 2150,
+        },
       ],
       resources: {
         cpu: 45,
@@ -245,9 +281,9 @@ const AdvancedAdminDashboard: React.FC = () => {
   // Auto refresh
   useEffect(() => {
     if (!autoRefresh) return;
-    
+
     const interval = setInterval(() => {
-      console.log('Refreshing admin data...');
+      console.log("Refreshing admin data...");
       // In real app, this would fetch fresh data from API
     }, 30000);
 
@@ -261,33 +297,48 @@ const AdvancedAdminDashboard: React.FC = () => {
   };
 
   const handleAlertResolve = (alertId: string) => {
-    setAlerts(prev => prev.map(alert => 
-      alert.id === alertId ? { ...alert, resolved: true } : alert
-    ));
-    setSnackbarMessage('Alert resolved successfully');
+    setAlerts((prev) =>
+      prev.map((alert) =>
+        alert.id === alertId ? { ...alert, resolved: true } : alert
+      )
+    );
+    setSnackbarMessage("Alert resolved successfully");
     setSnackbarOpen(true);
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'online': case 'connected': case 'success': case 'healthy':
-        return 'success';
-      case 'degraded': case 'slow': case 'warning':
-        return 'warning';
-      case 'offline': case 'disconnected': case 'failed': case 'critical':
-        return 'error';
+      case "online":
+      case "connected":
+      case "success":
+      case "healthy":
+        return "success";
+      case "degraded":
+      case "slow":
+      case "warning":
+        return "warning";
+      case "offline":
+      case "disconnected":
+      case "failed":
+      case "critical":
+        return "error";
       default:
-        return 'default';
+        return "default";
     }
   };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'critical': return 'error';
-      case 'high': return 'warning';
-      case 'medium': return 'info';
-      case 'low': return 'success';
-      default: return 'default';
+      case "critical":
+        return "error";
+      case "high":
+        return "warning";
+      case "medium":
+        return "info";
+      case "low":
+        return "success";
+      default:
+        return "default";
     }
   };
 
@@ -296,19 +347,19 @@ const AdvancedAdminDashboard: React.FC = () => {
       {/* Key Metrics */}
       <Grid item xs={12} sm={6} md={3}>
         <Card
-          sx={{ 
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
-            '&:hover': {
+          sx={{
+            cursor: "pointer",
+            transition: "all 0.2s ease",
+            "&:hover": {
               boxShadow: 4,
-              transform: 'translateY(-2px)',
-            }
+              transform: "translateY(-2px)",
+            },
           }}
-          onClick={() => navigate('/admin/users')}
+          onClick={() => navigate("/admin/users")}
         >
           <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <Avatar sx={{ bgcolor: 'primary.main', mr: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+              <Avatar sx={{ bgcolor: "primary.main", mr: 2 }}>
                 <People />
               </Avatar>
               <Typography variant="h6">Total Users</Typography>
@@ -316,9 +367,23 @@ const AdvancedAdminDashboard: React.FC = () => {
             <Typography variant="h4" sx={{ mb: 1 }}>
               {systemMetrics?.totalUsers.toLocaleString()}
             </Typography>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Chip size="small" label={`${systemMetrics?.activeUsers.toLocaleString()} active`} color="success" />
-              <Button size="small" variant="text" sx={{ minWidth: 'auto', p: 0.5 }}>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <Chip
+                size="small"
+                label={`${systemMetrics?.activeUsers.toLocaleString()} active`}
+                color="success"
+              />
+              <Button
+                size="small"
+                variant="text"
+                sx={{ minWidth: "auto", p: 0.5 }}
+              >
                 Manage →
               </Button>
             </Box>
@@ -329,8 +394,8 @@ const AdvancedAdminDashboard: React.FC = () => {
       <Grid item xs={12} sm={6} md={3}>
         <Card>
           <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <Avatar sx={{ bgcolor: 'secondary.main', mr: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+              <Avatar sx={{ bgcolor: "secondary.main", mr: 2 }}>
                 <EmojiEvents />
               </Avatar>
               <Typography variant="h6">Tournaments</Typography>
@@ -338,7 +403,11 @@ const AdvancedAdminDashboard: React.FC = () => {
             <Typography variant="h4" sx={{ mb: 1 }}>
               {systemMetrics?.totalTournaments.toLocaleString()}
             </Typography>
-            <Chip size="small" label={`${systemMetrics?.activeTournaments} active`} color="info" />
+            <Chip
+              size="small"
+              label={`${systemMetrics?.activeTournaments} active`}
+              color="info"
+            />
           </CardContent>
         </Card>
       </Grid>
@@ -346,8 +415,8 @@ const AdvancedAdminDashboard: React.FC = () => {
       <Grid item xs={12} sm={6} md={3}>
         <Card>
           <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <Avatar sx={{ bgcolor: 'warning.main', mr: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+              <Avatar sx={{ bgcolor: "warning.main", mr: 2 }}>
                 <NotificationImportant />
               </Avatar>
               <Typography variant="h6">Pending Approvals</Typography>
@@ -363,8 +432,8 @@ const AdvancedAdminDashboard: React.FC = () => {
       <Grid item xs={12} sm={6} md={3}>
         <Card>
           <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <Avatar sx={{ bgcolor: 'error.main', mr: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+              <Avatar sx={{ bgcolor: "error.main", mr: 2 }}>
                 <Warning />
               </Avatar>
               <Typography variant="h6">System Alerts</Typography>
@@ -381,12 +450,20 @@ const AdvancedAdminDashboard: React.FC = () => {
       <Grid item xs={12} md={8}>
         <Card>
           <CardContent>
-            <Typography variant="h6" sx={{ mb: 3 }}>System Services Status</Typography>
+            <Typography variant="h6" sx={{ mb: 3 }}>
+              System Services Status
+            </Typography>
             <List>
               {systemHealth?.services.map((service, index) => (
                 <ListItem key={index}>
                   <ListItemIcon>
-                    <Avatar sx={{ bgcolor: `${getStatusColor(service.status)}.main`, width: 32, height: 32 }}>
+                    <Avatar
+                      sx={{
+                        bgcolor: `${getStatusColor(service.status)}.main`,
+                        width: 32,
+                        height: 32,
+                      }}
+                    >
                       <NetworkCheck fontSize="small" />
                     </Avatar>
                   </ListItemIcon>
@@ -394,7 +471,11 @@ const AdvancedAdminDashboard: React.FC = () => {
                     primary={service.name}
                     secondary={`Response: ${service.responseTime}ms • Last check: ${new Date(service.lastCheck).toLocaleTimeString()}`}
                   />
-                  <Chip size="small" label={service.status} color={getStatusColor(service.status) as any} />
+                  <Chip
+                    size="small"
+                    label={service.status}
+                    color={getStatusColor(service.status) as any}
+                  />
                 </ListItem>
               ))}
             </List>
@@ -405,38 +486,71 @@ const AdvancedAdminDashboard: React.FC = () => {
       <Grid item xs={12} md={4}>
         <Card>
           <CardContent>
-            <Typography variant="h6" sx={{ mb: 3 }}>Resource Usage</Typography>
-            
+            <Typography variant="h6" sx={{ mb: 3 }}>
+              Resource Usage
+            </Typography>
+
             <Box sx={{ mb: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+              <Box
+                sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}
+              >
                 <Typography variant="body2">CPU</Typography>
-                <Typography variant="body2">{systemHealth?.resources.cpu}%</Typography>
+                <Typography variant="body2">
+                  {systemHealth?.resources.cpu}%
+                </Typography>
               </Box>
-              <LinearProgress variant="determinate" value={systemHealth?.resources.cpu} />
+              <LinearProgress
+                variant="determinate"
+                value={systemHealth?.resources.cpu}
+              />
             </Box>
 
             <Box sx={{ mb: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+              <Box
+                sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}
+              >
                 <Typography variant="body2">Memory</Typography>
-                <Typography variant="body2">{systemHealth?.resources.memory}%</Typography>
+                <Typography variant="body2">
+                  {systemHealth?.resources.memory}%
+                </Typography>
               </Box>
-              <LinearProgress variant="determinate" value={systemHealth?.resources.memory} color="secondary" />
+              <LinearProgress
+                variant="determinate"
+                value={systemHealth?.resources.memory}
+                color="secondary"
+              />
             </Box>
 
             <Box sx={{ mb: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+              <Box
+                sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}
+              >
                 <Typography variant="body2">Disk</Typography>
-                <Typography variant="body2">{systemHealth?.resources.disk}%</Typography>
+                <Typography variant="body2">
+                  {systemHealth?.resources.disk}%
+                </Typography>
               </Box>
-              <LinearProgress variant="determinate" value={systemHealth?.resources.disk} color="success" />
+              <LinearProgress
+                variant="determinate"
+                value={systemHealth?.resources.disk}
+                color="success"
+              />
             </Box>
 
             <Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+              <Box
+                sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}
+              >
                 <Typography variant="body2">Network</Typography>
-                <Typography variant="body2">{systemHealth?.resources.network}%</Typography>
+                <Typography variant="body2">
+                  {systemHealth?.resources.network}%
+                </Typography>
               </Box>
-              <LinearProgress variant="determinate" value={systemHealth?.resources.network} color="info" />
+              <LinearProgress
+                variant="determinate"
+                value={systemHealth?.resources.network}
+                color="info"
+              />
             </Box>
           </CardContent>
         </Card>
@@ -446,18 +560,28 @@ const AdvancedAdminDashboard: React.FC = () => {
       <Grid item xs={12}>
         <Card>
           <CardContent>
-            <Typography variant="h6" sx={{ mb: 2 }}>Quick Actions</Typography>
-            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+            <Typography variant="h6" sx={{ mb: 2 }}>
+              Quick Actions
+            </Typography>
+            <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
               <Button variant="outlined" startIcon={<Refresh />}>
                 Refresh All Data
               </Button>
               <Button variant="outlined" startIcon={<SystemUpdate />}>
                 System Maintenance
               </Button>
-              <Button variant="outlined" startIcon={<Download />} color="secondary">
+              <Button
+                variant="outlined"
+                startIcon={<Download />}
+                color="secondary"
+              >
                 Export Logs
               </Button>
-              <Button variant="outlined" startIcon={<Security />} color="warning">
+              <Button
+                variant="outlined"
+                startIcon={<Security />}
+                color="warning"
+              >
                 Security Scan
               </Button>
             </Box>
@@ -472,9 +596,16 @@ const AdvancedAdminDashboard: React.FC = () => {
       <Grid item xs={12}>
         <Card>
           <CardContent>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                mb: 3,
+              }}
+            >
               <Typography variant="h6">Active Alerts</Typography>
-              <Box sx={{ display: 'flex', gap: 1 }}>
+              <Box sx={{ display: "flex", gap: 1 }}>
                 <Button size="small" startIcon={<FilterList />}>
                   Filter
                 </Button>
@@ -485,40 +616,52 @@ const AdvancedAdminDashboard: React.FC = () => {
             </Box>
 
             <List>
-              {alerts.filter(alert => !alert.resolved).map((alert) => (
-                <ListItem key={alert.id}>
-                  <ListItemIcon>
-                    <Badge color={getPriorityColor(alert.priority) as any} variant="dot">
-                      {alert.type === 'security' && <Security />}
-                      {alert.type === 'system' && <Warning />}
-                      {alert.type === 'user' && <People />}
-                      {alert.type === 'tournament' && <EmojiEvents />}
-                    </Badge>
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={alert.title}
-                    secondary={
-                      <Box>
-                        <Typography variant="body2" color="text.secondary">
-                          {alert.description}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {new Date(alert.timestamp).toLocaleString()}
-                        </Typography>
-                      </Box>
-                    }
-                  />
-                  <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Chip size="small" label={alert.priority} color={getPriorityColor(alert.priority) as any} />
-                    <Button size="small" onClick={() => handleAlertResolve(alert.id)}>
-                      Resolve
-                    </Button>
-                    <IconButton size="small">
-                      <MoreVert />
-                    </IconButton>
-                  </Box>
-                </ListItem>
-              ))}
+              {alerts
+                .filter((alert) => !alert.resolved)
+                .map((alert) => (
+                  <ListItem key={alert.id}>
+                    <ListItemIcon>
+                      <Badge
+                        color={getPriorityColor(alert.priority) as any}
+                        variant="dot"
+                      >
+                        {alert.type === "security" && <Security />}
+                        {alert.type === "system" && <Warning />}
+                        {alert.type === "user" && <People />}
+                        {alert.type === "tournament" && <EmojiEvents />}
+                      </Badge>
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={alert.title}
+                      secondary={
+                        <Box>
+                          <Typography variant="body2" color="text.secondary">
+                            {alert.description}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {new Date(alert.timestamp).toLocaleString()}
+                          </Typography>
+                        </Box>
+                      }
+                    />
+                    <Box sx={{ display: "flex", gap: 1 }}>
+                      <Chip
+                        size="small"
+                        label={alert.priority}
+                        color={getPriorityColor(alert.priority) as any}
+                      />
+                      <Button
+                        size="small"
+                        onClick={() => handleAlertResolve(alert.id)}
+                      >
+                        Resolve
+                      </Button>
+                      <IconButton size="small">
+                        <MoreVert />
+                      </IconButton>
+                    </Box>
+                  </ListItem>
+                ))}
             </List>
           </CardContent>
         </Card>
@@ -531,10 +674,21 @@ const AdvancedAdminDashboard: React.FC = () => {
       <Grid item xs={12}>
         <Card>
           <CardContent>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                mb: 3,
+              }}
+            >
               <Typography variant="h6">Recent User Activity</Typography>
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                <TextField size="small" placeholder="Search..." InputProps={{ startAdornment: <Search /> }} />
+              <Box sx={{ display: "flex", gap: 1 }}>
+                <TextField
+                  size="small"
+                  placeholder="Search..."
+                  InputProps={{ startAdornment: <Search /> }}
+                />
                 <Button size="small" startIcon={<Download />}>
                   Export
                 </Button>
@@ -558,13 +712,22 @@ const AdvancedAdminDashboard: React.FC = () => {
                     <TableRow key={action.id}>
                       <TableCell>{action.userName}</TableCell>
                       <TableCell>{action.action}</TableCell>
-                      <TableCell>{new Date(action.timestamp).toLocaleString()}</TableCell>
+                      <TableCell>
+                        {new Date(action.timestamp).toLocaleString()}
+                      </TableCell>
                       <TableCell>{action.ipAddress}</TableCell>
                       <TableCell>
-                        <Chip size="small" label={action.status} color={getStatusColor(action.status) as any} />
+                        <Chip
+                          size="small"
+                          label={action.status}
+                          color={getStatusColor(action.status) as any}
+                        />
                       </TableCell>
                       <TableCell>
-                        <IconButton size="small" onClick={() => setSelectedUser(action)}>
+                        <IconButton
+                          size="small"
+                          onClick={() => setSelectedUser(action)}
+                        >
                           <Visibility />
                         </IconButton>
                         <IconButton size="small">
@@ -585,15 +748,31 @@ const AdvancedAdminDashboard: React.FC = () => {
   return (
     <Box sx={{ p: 3 }}>
       {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" component="h1" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
+        <Typography
+          variant="h4"
+          component="h1"
+          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+        >
           <SupervisorAccount color="primary" />
           Advanced Admin Dashboard
         </Typography>
-        
-        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+
+        <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
           <FormControlLabel
-            control={<Switch checked={autoRefresh} onChange={(e) => setAutoRefresh(e.target.checked)} />}
+            control={
+              <Switch
+                checked={autoRefresh}
+                onChange={(e) => setAutoRefresh(e.target.checked)}
+              />
+            }
             label="Auto Refresh"
           />
           <Button variant="outlined" startIcon={<Refresh />}>
@@ -606,10 +785,13 @@ const AdvancedAdminDashboard: React.FC = () => {
       </Box>
 
       {/* System Status Banner */}
-      <Alert severity={systemHealth?.status === 'healthy' ? 'success' : 'warning'} sx={{ mb: 3 }}>
-        System Status: {systemHealth?.status?.toUpperCase()} • 
-        Uptime: {systemMetrics?.serverUptime}% • 
-        Avg Response: {systemMetrics?.avgResponseTime}ms
+      <Alert
+        severity={systemHealth?.status === "healthy" ? "success" : "warning"}
+        sx={{ mb: 3 }}
+      >
+        System Status: {systemHealth?.status?.toUpperCase()} • Uptime:{" "}
+        {systemMetrics?.serverUptime}% • Avg Response:{" "}
+        {systemMetrics?.avgResponseTime}ms
       </Alert>
 
       {/* Tabs */}
@@ -617,7 +799,7 @@ const AdvancedAdminDashboard: React.FC = () => {
         <Tabs
           value={selectedTab}
           onChange={(_, newValue) => setSelectedTab(newValue)}
-          sx={{ borderBottom: 1, borderColor: 'divider' }}
+          sx={{ borderBottom: 1, borderColor: "divider" }}
           variant="scrollable"
           scrollButtons="auto"
         >
@@ -633,11 +815,17 @@ const AdvancedAdminDashboard: React.FC = () => {
       {/* Tab Content */}
       <Box>
         {selectedTab === 0 && renderSystemOverview()}
-        {selectedTab === 1 && <Typography>User Management - Coming Soon</Typography>}
-        {selectedTab === 2 && <Typography>Tournament Oversight - Coming Soon</Typography>}
+        {selectedTab === 1 && (
+          <Typography>User Management - Coming Soon</Typography>
+        )}
+        {selectedTab === 2 && (
+          <Typography>Tournament Oversight - Coming Soon</Typography>
+        )}
         {selectedTab === 3 && renderAlertsAndReports()}
         {selectedTab === 4 && renderActivityLogs()}
-        {selectedTab === 5 && <Typography>System Health - Coming Soon</Typography>}
+        {selectedTab === 5 && (
+          <Typography>System Health - Coming Soon</Typography>
+        )}
       </Box>
 
       {/* Snackbar */}
@@ -649,20 +837,34 @@ const AdvancedAdminDashboard: React.FC = () => {
       />
 
       {/* User Details Dialog */}
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>User Details</DialogTitle>
         <DialogContent>
           {selectedUser && (
             <Box>
-              <Typography variant="body1">User: {selectedUser.userName}</Typography>
-              <Typography variant="body2">Action: {selectedUser.action}</Typography>
-              <Typography variant="body2">IP: {selectedUser.ipAddress}</Typography>
+              <Typography variant="body1">
+                User: {selectedUser.userName}
+              </Typography>
+              <Typography variant="body2">
+                Action: {selectedUser.action}
+              </Typography>
+              <Typography variant="body2">
+                IP: {selectedUser.ipAddress}
+              </Typography>
             </Box>
           )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDialogOpen(false)}>Close</Button>
-          <Button variant="contained" onClick={() => handleUserAction('suspend', selectedUser?.userId)}>
+          <Button
+            variant="contained"
+            onClick={() => handleUserAction("suspend", selectedUser?.userId)}
+          >
             Suspend User
           </Button>
         </DialogActions>

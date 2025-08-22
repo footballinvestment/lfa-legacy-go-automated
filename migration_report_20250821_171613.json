@@ -1,0 +1,118 @@
+{
+  "migration_timestamp": "20250821_171613",
+  "source": "SQLite",
+  "destination": "PostgreSQL",
+  "tables": {
+    "users": {
+      "sqlite_count": 0,
+      "postgres_count": -1,
+      "match": false
+    },
+    "game_definitions": {
+      "sqlite_count": 0,
+      "postgres_count": -1,
+      "match": false
+    },
+    "tournament_achievements": {
+      "sqlite_count": 0,
+      "postgres_count": -1,
+      "match": false
+    },
+    "game_achievements": {
+      "sqlite_count": 0,
+      "postgres_count": -1,
+      "match": false
+    },
+    "coupons": {
+      "sqlite_count": 0,
+      "postgres_count": -1,
+      "match": false
+    },
+    "user_sessions": {
+      "sqlite_count": 0,
+      "postgres_count": -1,
+      "match": false
+    },
+    "locations": {
+      "sqlite_count": 0,
+      "postgres_count": -1,
+      "match": false
+    },
+    "player_statistics": {
+      "sqlite_count": 0,
+      "postgres_count": -1,
+      "match": false
+    },
+    "friend_requests": {
+      "sqlite_count": 0,
+      "postgres_count": -1,
+      "match": false
+    },
+    "friendships": {
+      "sqlite_count": 0,
+      "postgres_count": -1,
+      "match": false
+    },
+    "challenges": {
+      "sqlite_count": 0,
+      "postgres_count": -1,
+      "match": false
+    },
+    "user_blocks": {
+      "sqlite_count": 0,
+      "postgres_count": -1,
+      "match": false
+    },
+    "coupon_usage": {
+      "sqlite_count": 0,
+      "postgres_count": -1,
+      "match": false
+    },
+    "game_sessions": {
+      "sqlite_count": 0,
+      "postgres_count": -1,
+      "match": false
+    },
+    "tournaments": {
+      "sqlite_count": 0,
+      "postgres_count": -1,
+      "match": false
+    },
+    "leaderboards": {
+      "sqlite_count": 0,
+      "postgres_count": -1,
+      "match": false
+    },
+    "tournament_participants": {
+      "sqlite_count": 0,
+      "postgres_count": -1,
+      "match": false
+    },
+    "tournament_matches": {
+      "sqlite_count": 0,
+      "postgres_count": -1,
+      "match": false
+    },
+    "user_tournament_achievements": {
+      "sqlite_count": 0,
+      "postgres_count": -1,
+      "match": false
+    },
+    "game_results": {
+      "sqlite_count": 0,
+      "postgres_count": -1,
+      "match": false
+    },
+    "player_achievements": {
+      "sqlite_count": 0,
+      "postgres_count": -1,
+      "match": false
+    }
+  },
+  "summary": {
+    "total_tables": 21,
+    "successful_tables": 0,
+    "failed_tables": 21,
+    "total_rows_migrated": 0
+  }
+}

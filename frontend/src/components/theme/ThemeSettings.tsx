@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -32,7 +32,7 @@ import {
   ListItemText,
   ListItemSecondaryAction,
   useTheme,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Close,
   Palette,
@@ -55,17 +55,17 @@ import {
   ColorLens,
   ExpandMore,
   ExpandLess,
-} from '@mui/icons-material';
+} from "@mui/icons-material";
 // Using standard TextField for time input instead of MUI X DatePickers to avoid additional dependencies
-import { 
+import {
   useAppTheme,
   ColorScheme,
   ContrastLevel,
   FontSize,
   BorderRadius,
-  ScheduleSettings
-} from '../../contexts/ThemeContext';
-import useMobileViewport from '../../hooks/useMobileViewport';
+  ScheduleSettings,
+} from "../../contexts/ThemeContext";
+import useMobileViewport from "../../hooks/useMobileViewport";
 
 interface ThemeSettingsProps {
   open: boolean;
@@ -89,101 +89,147 @@ const ThemeSettings: React.FC<ThemeSettingsProps> = ({ open, onClose }) => {
     setSystemTheme,
     resetToDefaults,
     exportConfig,
-    importConfig
+    importConfig,
   } = useAppTheme();
 
   const [activeTab, setActiveTab] = useState(0);
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [locationPermission, setLocationPermission] = useState<'granted' | 'denied' | 'prompt'>('prompt');
-  const [exportedConfig, setExportedConfig] = useState('');
-  const [importedConfig, setImportedConfig] = useState('');
-  const [importError, setImportError] = useState('');
+  const [locationPermission, setLocationPermission] = useState<
+    "granted" | "denied" | "prompt"
+  >("prompt");
+  const [exportedConfig, setExportedConfig] = useState("");
+  const [importedConfig, setImportedConfig] = useState("");
+  const [importError, setImportError] = useState("");
 
   // Color scheme options
-  const colorSchemes: Array<{ value: ColorScheme; label: string; primary: string; secondary: string }> = [
-    { value: 'blue', label: 'Ocean Blue', primary: '#1976d2', secondary: '#dc004e' },
-    { value: 'green', label: 'Forest Green', primary: '#2e7d32', secondary: '#ed6c02' },
-    { value: 'purple', label: 'Royal Purple', primary: '#7b1fa2', secondary: '#d32f2f' },
-    { value: 'orange', label: 'Sunset Orange', primary: '#ed6c02', secondary: '#1976d2' },
-    { value: 'red', label: 'Crimson Red', primary: '#d32f2f', secondary: '#2e7d32' },
-    { value: 'teal', label: 'Ocean Teal', primary: '#00695c', secondary: '#7b1fa2' },
-    { value: 'pink', label: 'Rose Pink', primary: '#c2185b', secondary: '#00695c' }
+  const colorSchemes: Array<{
+    value: ColorScheme;
+    label: string;
+    primary: string;
+    secondary: string;
+  }> = [
+    {
+      value: "blue",
+      label: "Ocean Blue",
+      primary: "#1976d2",
+      secondary: "#dc004e",
+    },
+    {
+      value: "green",
+      label: "Forest Green",
+      primary: "#2e7d32",
+      secondary: "#ed6c02",
+    },
+    {
+      value: "purple",
+      label: "Royal Purple",
+      primary: "#7b1fa2",
+      secondary: "#d32f2f",
+    },
+    {
+      value: "orange",
+      label: "Sunset Orange",
+      primary: "#ed6c02",
+      secondary: "#1976d2",
+    },
+    {
+      value: "red",
+      label: "Crimson Red",
+      primary: "#d32f2f",
+      secondary: "#2e7d32",
+    },
+    {
+      value: "teal",
+      label: "Ocean Teal",
+      primary: "#00695c",
+      secondary: "#7b1fa2",
+    },
+    {
+      value: "pink",
+      label: "Rose Pink",
+      primary: "#c2185b",
+      secondary: "#00695c",
+    },
   ];
 
   // Check geolocation permission
   const checkLocationPermission = useCallback(async () => {
     if (!navigator.permissions) {
-      setLocationPermission('denied');
+      setLocationPermission("denied");
       return;
     }
 
     try {
-      const result = await navigator.permissions.query({ name: 'geolocation' });
+      const result = await navigator.permissions.query({ name: "geolocation" });
       setLocationPermission(result.state);
-      
+
       result.onchange = () => {
         setLocationPermission(result.state);
       };
     } catch (error) {
-      setLocationPermission('denied');
+      setLocationPermission("denied");
     }
   }, []);
 
   // Request location permission and get coordinates
   const requestLocation = useCallback(async () => {
     if (!navigator.geolocation) {
-      setLocationPermission('denied');
+      setLocationPermission("denied");
       return;
     }
 
     try {
-      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 300000
-        });
-      });
+      const position = await new Promise<GeolocationPosition>(
+        (resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 300000,
+          });
+        }
+      );
 
-      setLocationPermission('granted');
+      setLocationPermission("granted");
       setScheduleSettings({
         latitude: position.coords.latitude,
         longitude: position.coords.longitude,
-        useLocation: true
+        useLocation: true,
       });
     } catch (error) {
-      setLocationPermission('denied');
-      console.error('Failed to get location:', error);
+      setLocationPermission("denied");
+      console.error("Failed to get location:", error);
     }
   }, [setScheduleSettings]);
 
   // Handle time change
-  const handleTimeChange = (field: 'darkStart' | 'darkEnd') => (event: React.ChangeEvent<HTMLInputElement>) => {
-    const timeString = event.target.value;
-    setScheduleSettings({ [field]: timeString });
-  };
+  const handleTimeChange =
+    (field: "darkStart" | "darkEnd") =>
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const timeString = event.target.value;
+      setScheduleSettings({ [field]: timeString });
+    };
 
   // Handle config export
   const handleExport = () => {
     const config = exportConfig();
     setExportedConfig(config);
-    
+
     // Copy to clipboard
     navigator.clipboard.writeText(config).then(() => {
-      console.log('Config copied to clipboard');
+      console.log("Config copied to clipboard");
     });
   };
 
   // Handle config import
   const handleImport = () => {
-    setImportError('');
+    setImportError("");
     const success = importConfig(importedConfig);
-    
+
     if (success) {
-      setImportedConfig('');
+      setImportedConfig("");
       onClose();
     } else {
-      setImportError('Invalid configuration format');
+      setImportError("Invalid configuration format");
     }
   };
 
@@ -198,11 +244,11 @@ const ThemeSettings: React.FC<ThemeSettingsProps> = ({ open, onClose }) => {
   }, [checkLocationPermission]);
 
   // Tab panels
-  const TabPanel: React.FC<{ value: number; index: number; children: React.ReactNode }> = ({
-    value,
-    index,
-    children
-  }) => (
+  const TabPanel: React.FC<{
+    value: number;
+    index: number;
+    children: React.ReactNode;
+  }> = ({ value, index, children }) => (
     <Box hidden={value !== index} sx={{ py: 3 }}>
       {value === index && children}
     </Box>
@@ -220,23 +266,23 @@ const ThemeSettings: React.FC<ThemeSettingsProps> = ({ open, onClose }) => {
               Theme Mode
             </Typography>
           </Box>
-          
+
           <FormControl component="fieldset" fullWidth>
             <RadioGroup
-              value={config.systemTheme ? 'system' : config.mode}
+              value={config.systemTheme ? "system" : config.mode}
               onChange={(e) => {
                 const value = e.target.value;
-                if (value === 'system') {
+                if (value === "system") {
                   setSystemTheme(true);
                 } else {
                   setSystemTheme(false);
-                  setThemeMode(value as 'light' | 'dark');
+                  setThemeMode(value as "light" | "dark");
                 }
               }}
             >
-              <FormControlLabel 
-                value="system" 
-                control={<Radio />} 
+              <FormControlLabel
+                value="system"
+                control={<Radio />}
                 label={
                   <Box display="flex" alignItems="center" gap={1}>
                     <SettingsBrightness />
@@ -249,9 +295,9 @@ const ThemeSettings: React.FC<ThemeSettingsProps> = ({ open, onClose }) => {
                   </Box>
                 }
               />
-              <FormControlLabel 
-                value="light" 
-                control={<Radio />} 
+              <FormControlLabel
+                value="light"
+                control={<Radio />}
                 label={
                   <Box display="flex" alignItems="center" gap={1}>
                     <LightMode />
@@ -264,9 +310,9 @@ const ThemeSettings: React.FC<ThemeSettingsProps> = ({ open, onClose }) => {
                   </Box>
                 }
               />
-              <FormControlLabel 
-                value="dark" 
-                control={<Radio />} 
+              <FormControlLabel
+                value="dark"
+                control={<Radio />}
                 label={
                   <Box display="flex" alignItems="center" gap={1}>
                     <DarkMode />
@@ -293,22 +339,23 @@ const ThemeSettings: React.FC<ThemeSettingsProps> = ({ open, onClose }) => {
               Color Scheme
             </Typography>
           </Box>
-          
+
           <Grid container spacing={2}>
             {colorSchemes.map((scheme) => (
               <Grid item xs={6} sm={4} key={scheme.value}>
                 <Paper
                   sx={{
                     p: 2,
-                    cursor: 'pointer',
+                    cursor: "pointer",
                     border: config.colorScheme === scheme.value ? 2 : 1,
-                    borderColor: config.colorScheme === scheme.value 
-                      ? 'primary.main' 
-                      : 'divider',
-                    transition: 'all 0.2s ease',
-                    '&:hover': {
-                      boxShadow: 2
-                    }
+                    borderColor:
+                      config.colorScheme === scheme.value
+                        ? "primary.main"
+                        : "divider",
+                    transition: "all 0.2s ease",
+                    "&:hover": {
+                      boxShadow: 2,
+                    },
                   }}
                   onClick={() => setColorScheme(scheme.value)}
                 >
@@ -317,16 +364,16 @@ const ThemeSettings: React.FC<ThemeSettingsProps> = ({ open, onClose }) => {
                       sx={{
                         width: 24,
                         height: 24,
-                        borderRadius: '50%',
-                        backgroundColor: scheme.primary
+                        borderRadius: "50%",
+                        backgroundColor: scheme.primary,
                       }}
                     />
                     <Box
                       sx={{
                         width: 24,
                         height: 24,
-                        borderRadius: '50%',
-                        backgroundColor: scheme.secondary
+                        borderRadius: "50%",
+                        backgroundColor: scheme.secondary,
                       }}
                     />
                   </Box>
@@ -349,9 +396,13 @@ const ThemeSettings: React.FC<ThemeSettingsProps> = ({ open, onClose }) => {
               Preview
             </Typography>
           </Box>
-          
-          <Box sx={{ p: 2, border: 1, borderColor: 'divider', borderRadius: 1 }}>
-            <Typography variant="h6" gutterBottom>Sample Tournament</Typography>
+
+          <Box
+            sx={{ p: 2, border: 1, borderColor: "divider", borderRadius: 1 }}
+          >
+            <Typography variant="h6" gutterBottom>
+              Sample Tournament
+            </Typography>
             <Typography variant="body2" color="text.secondary" gutterBottom>
               Join this exciting football tournament
             </Typography>
@@ -380,7 +431,7 @@ const ThemeSettings: React.FC<ThemeSettingsProps> = ({ open, onClose }) => {
               Auto-Schedule
             </Typography>
           </Box>
-          
+
           <FormControlLabel
             control={
               <Switch
@@ -401,7 +452,8 @@ const ThemeSettings: React.FC<ThemeSettingsProps> = ({ open, onClose }) => {
           <Collapse in={config.autoSchedule}>
             <Box mt={3}>
               <Alert severity="info" sx={{ mb: 3 }}>
-                Theme will automatically switch between light and dark modes based on your schedule
+                Theme will automatically switch between light and dark modes
+                based on your schedule
               </Alert>
 
               {/* Location-based scheduling */}
@@ -409,8 +461,10 @@ const ThemeSettings: React.FC<ThemeSettingsProps> = ({ open, onClose }) => {
                 control={
                   <Switch
                     checked={config.scheduleSettings.useLocation}
-                    onChange={(e) => setScheduleSettings({ useLocation: e.target.checked })}
-                    disabled={locationPermission === 'denied'}
+                    onChange={(e) =>
+                      setScheduleSettings({ useLocation: e.target.checked })
+                    }
+                    disabled={locationPermission === "denied"}
                   />
                 }
                 label={
@@ -426,7 +480,7 @@ const ThemeSettings: React.FC<ThemeSettingsProps> = ({ open, onClose }) => {
 
               {config.scheduleSettings.useLocation && (
                 <Box mb={3}>
-                  {locationPermission === 'prompt' && (
+                  {locationPermission === "prompt" && (
                     <Button
                       variant="outlined"
                       startIcon={<LocationOn />}
@@ -436,28 +490,34 @@ const ThemeSettings: React.FC<ThemeSettingsProps> = ({ open, onClose }) => {
                       Allow Location Access
                     </Button>
                   )}
-                  
-                  {locationPermission === 'denied' && (
+
+                  {locationPermission === "denied" && (
                     <Alert severity="warning" sx={{ mb: 2 }}>
                       Location access is required for sunrise/sunset scheduling
                     </Alert>
                   )}
-                  
-                  {locationPermission === 'granted' && config.scheduleSettings.latitude && (
-                    <Typography variant="body2" color="text.secondary">
-                      Location: {config.scheduleSettings.latitude.toFixed(2)}, {config.scheduleSettings.longitude?.toFixed(2)}
-                    </Typography>
-                  )}
+
+                  {locationPermission === "granted" &&
+                    config.scheduleSettings.latitude && (
+                      <Typography variant="body2" color="text.secondary">
+                        Location: {config.scheduleSettings.latitude.toFixed(2)},{" "}
+                        {config.scheduleSettings.longitude?.toFixed(2)}
+                      </Typography>
+                    )}
                 </Box>
               )}
 
               {/* Manual time scheduling */}
               <Collapse in={!config.scheduleSettings.useLocation}>
                 <Box>
-                  <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>
+                  <Typography
+                    variant="subtitle2"
+                    gutterBottom
+                    sx={{ fontWeight: 600 }}
+                  >
                     Manual Schedule
                   </Typography>
-                  
+
                   <Grid container spacing={2}>
                     <Grid item xs={6}>
                       <TextField
@@ -466,7 +526,7 @@ const ThemeSettings: React.FC<ThemeSettingsProps> = ({ open, onClose }) => {
                         type="time"
                         label="Dark Mode Start"
                         value={config.scheduleSettings.darkStart}
-                        onChange={handleTimeChange('darkStart')}
+                        onChange={handleTimeChange("darkStart")}
                         InputLabelProps={{
                           shrink: true,
                         }}
@@ -479,7 +539,7 @@ const ThemeSettings: React.FC<ThemeSettingsProps> = ({ open, onClose }) => {
                         type="time"
                         label="Dark Mode End"
                         value={config.scheduleSettings.darkEnd}
-                        onChange={handleTimeChange('darkEnd')}
+                        onChange={handleTimeChange("darkEnd")}
                         InputLabelProps={{
                           shrink: true,
                         }}
@@ -507,15 +567,17 @@ const ThemeSettings: React.FC<ThemeSettingsProps> = ({ open, onClose }) => {
               Contrast
             </Typography>
           </Box>
-          
+
           <FormControl component="fieldset" fullWidth>
             <RadioGroup
               value={config.contrastLevel}
-              onChange={(e) => setContrastLevel(e.target.value as ContrastLevel)}
+              onChange={(e) =>
+                setContrastLevel(e.target.value as ContrastLevel)
+              }
             >
-              <FormControlLabel 
-                value="low" 
-                control={<Radio />} 
+              <FormControlLabel
+                value="low"
+                control={<Radio />}
                 label={
                   <Box>
                     <Typography variant="body1">Low Contrast</Typography>
@@ -525,9 +587,9 @@ const ThemeSettings: React.FC<ThemeSettingsProps> = ({ open, onClose }) => {
                   </Box>
                 }
               />
-              <FormControlLabel 
-                value="normal" 
-                control={<Radio />} 
+              <FormControlLabel
+                value="normal"
+                control={<Radio />}
                 label={
                   <Box>
                     <Typography variant="body1">Normal Contrast</Typography>
@@ -537,9 +599,9 @@ const ThemeSettings: React.FC<ThemeSettingsProps> = ({ open, onClose }) => {
                   </Box>
                 }
               />
-              <FormControlLabel 
-                value="high" 
-                control={<Radio />} 
+              <FormControlLabel
+                value="high"
+                control={<Radio />}
                 label={
                   <Box>
                     <Typography variant="body1">High Contrast</Typography>
@@ -563,25 +625,25 @@ const ThemeSettings: React.FC<ThemeSettingsProps> = ({ open, onClose }) => {
               Font Size
             </Typography>
           </Box>
-          
+
           <FormControl component="fieldset" fullWidth>
             <RadioGroup
               value={config.fontSize}
               onChange={(e) => setFontSize(e.target.value as FontSize)}
             >
-              <FormControlLabel 
-                value="small" 
-                control={<Radio />} 
+              <FormControlLabel
+                value="small"
+                control={<Radio />}
                 label="Small - Compact text for more content"
               />
-              <FormControlLabel 
-                value="medium" 
-                control={<Radio />} 
+              <FormControlLabel
+                value="medium"
+                control={<Radio />}
                 label="Medium - Standard readable size"
               />
-              <FormControlLabel 
-                value="large" 
-                control={<Radio />} 
+              <FormControlLabel
+                value="large"
+                control={<Radio />}
                 label="Large - Easier to read for accessibility"
               />
             </RadioGroup>
@@ -598,7 +660,7 @@ const ThemeSettings: React.FC<ThemeSettingsProps> = ({ open, onClose }) => {
               Motion & Animation
             </Typography>
           </Box>
-          
+
           <FormControlLabel
             control={
               <Switch
@@ -632,25 +694,25 @@ const ThemeSettings: React.FC<ThemeSettingsProps> = ({ open, onClose }) => {
               Border Radius
             </Typography>
           </Box>
-          
+
           <FormControl component="fieldset" fullWidth>
             <RadioGroup
               value={config.borderRadius}
               onChange={(e) => setBorderRadius(e.target.value as BorderRadius)}
             >
-              <FormControlLabel 
-                value="sharp" 
-                control={<Radio />} 
+              <FormControlLabel
+                value="sharp"
+                control={<Radio />}
                 label="Sharp - No rounded corners"
               />
-              <FormControlLabel 
-                value="normal" 
-                control={<Radio />} 
+              <FormControlLabel
+                value="normal"
+                control={<Radio />}
                 label="Normal - Subtle rounded corners"
               />
-              <FormControlLabel 
-                value="rounded" 
-                control={<Radio />} 
+              <FormControlLabel
+                value="rounded"
+                control={<Radio />}
                 label="Rounded - More pronounced curves"
               />
             </RadioGroup>
@@ -667,7 +729,7 @@ const ThemeSettings: React.FC<ThemeSettingsProps> = ({ open, onClose }) => {
               Configuration
             </Typography>
           </Box>
-          
+
           <Box display="flex" gap={2} mb={3}>
             <Button
               variant="outlined"
@@ -714,7 +776,7 @@ const ThemeSettings: React.FC<ThemeSettingsProps> = ({ open, onClose }) => {
             helperText={importError}
             sx={{ mb: 2 }}
           />
-          
+
           <Button
             variant="contained"
             startIcon={<Upload />}
@@ -749,33 +811,21 @@ const ThemeSettings: React.FC<ThemeSettingsProps> = ({ open, onClose }) => {
       </DialogTitle>
 
       <DialogContent sx={{ p: 0 }}>
-        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+        <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
           <Tabs
             value={activeTab}
             onChange={(_, newValue) => setActiveTab(newValue)}
-            variant={isMobile ? 'scrollable' : 'fullWidth'}
+            variant={isMobile ? "scrollable" : "fullWidth"}
             scrollButtons="auto"
           >
-            <Tab 
-              icon={<Palette />} 
-              label="Appearance" 
+            <Tab icon={<Palette />} label="Appearance" iconPosition="start" />
+            <Tab icon={<Schedule />} label="Scheduling" iconPosition="start" />
+            <Tab
+              icon={<Accessibility />}
+              label="Accessibility"
               iconPosition="start"
             />
-            <Tab 
-              icon={<Schedule />} 
-              label="Scheduling" 
-              iconPosition="start"
-            />
-            <Tab 
-              icon={<Accessibility />} 
-              label="Accessibility" 
-              iconPosition="start"
-            />
-            <Tab 
-              icon={<Tune />} 
-              label="Advanced" 
-              iconPosition="start"
-            />
+            <Tab icon={<Tune />} label="Advanced" iconPosition="start" />
           </Tabs>
         </Box>
 

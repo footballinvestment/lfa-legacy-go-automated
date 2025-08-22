@@ -1,6 +1,13 @@
-import React from 'react';
-import { Box, Typography, Card, CardContent, Grid, LinearProgress } from '@mui/material';
-import { useSafeAuth } from '../SafeAuthContext';
+import React from "react";
+import {
+  Box,
+  Typography,
+  Card,
+  CardContent,
+  Grid,
+  LinearProgress,
+} from "@mui/material";
+import { useSafeAuth } from "../SafeAuthContext";
 
 const Profile: React.FC = () => {
   const { state } = useSafeAuth();
@@ -9,9 +16,10 @@ const Profile: React.FC = () => {
     return <Typography>Loading...</Typography>;
   }
 
-  const winRate = state.user.games_played > 0 
-    ? (state.user.games_won / state.user.games_played) * 100 
-    : 0;
+  const winRate =
+    state.user.games_played > 0
+      ? (state.user.games_won / state.user.games_played) * 100
+      : 0;
 
   return (
     <Box>
@@ -44,9 +52,7 @@ const Profile: React.FC = () => {
                 <Typography variant="body2" color="text.secondary">
                   Email
                 </Typography>
-                <Typography variant="body1">
-                  {state.user.email}
-                </Typography>
+                <Typography variant="body1">{state.user.email}</Typography>
               </Box>
             </CardContent>
           </Card>
@@ -90,15 +96,13 @@ const Profile: React.FC = () => {
                 <Typography variant="body2" color="text.secondary">
                   Win Rate
                 </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   <LinearProgress
                     variant="determinate"
                     value={winRate}
                     sx={{ flexGrow: 1, height: 8, borderRadius: 4 }}
                   />
-                  <Typography variant="body2">
-                    {winRate.toFixed(1)}%
-                  </Typography>
+                  <Typography variant="body2">{winRate.toFixed(1)}%</Typography>
                 </Box>
               </Box>
             </CardContent>

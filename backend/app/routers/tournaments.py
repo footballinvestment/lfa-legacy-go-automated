@@ -22,11 +22,13 @@ router = APIRouter(tags=["Tournaments"])
 
 # === ENUMS ===
 
+
 class TournamentType(str, Enum):
     KNOCKOUT = "knockout"
     LEAGUE = "league"
     SWISS = "swiss"
     ROUND_ROBIN = "round_robin"
+
 
 class TournamentStatus(str, Enum):
     REGISTRATION = "registration"
@@ -34,11 +36,13 @@ class TournamentStatus(str, Enum):
     COMPLETED = "completed"
     CANCELLED = "cancelled"
 
+
 class TournamentFormat(str, Enum):
     SINGLE_ELIMINATION = "single_elimination"
     DOUBLE_ELIMINATION = "double_elimination"
     ROUND_ROBIN = "round_robin"
     SWISS_SYSTEM = "swiss_system"
+
 
 class ParticipantStatus(str, Enum):
     REGISTERED = "registered"
@@ -46,7 +50,9 @@ class ParticipantStatus(str, Enum):
     ELIMINATED = "eliminated"
     WINNER = "winner"
 
+
 # === PYDANTIC SCHEMAS ===
+
 
 class TournamentCreate(BaseModel):
     name: str = Field(..., min_length=3, max_length=100)
@@ -68,23 +74,26 @@ class TournamentCreate(BaseModel):
     max_level: Optional[int] = Field(None, ge=1, le=100)
     rules: Optional[Dict[str, Any]] = Field(default_factory=dict)
 
-    @validator('end_time')
+    @validator("end_time")
     def end_time_after_start(cls, v, values):
-        if 'start_time' in values and v <= values['start_time']:
-            raise ValueError('End time must be after start time')
+        if "start_time" in values and v <= values["start_time"]:
+            raise ValueError("End time must be after start time")
         return v
 
-    @validator('registration_deadline')
+    @validator("registration_deadline")
     def deadline_before_start(cls, v, values):
-        if 'start_time' in values and v >= values['start_time']:
-            raise ValueError('Registration deadline must be before start time')
+        if "start_time" in values and v >= values["start_time"]:
+            raise ValueError("Registration deadline must be before start time")
         return v
 
-    @validator('max_participants')
+    @validator("max_participants")
     def max_greater_than_min(cls, v, values):
-        if 'min_participants' in values and v < values['min_participants']:
-            raise ValueError('Max participants must be greater than or equal to min participants')
+        if "min_participants" in values and v < values["min_participants"]:
+            raise ValueError(
+                "Max participants must be greater than or equal to min participants"
+            )
         return v
+
 
 class Tournament(BaseModel):
     id: int
@@ -116,6 +125,7 @@ class Tournament(BaseModel):
     can_start: bool
     created_at: datetime
 
+
 class TournamentDetails(BaseModel):
     tournament: Tournament
     participants: List[Dict[str, Any]]
@@ -128,6 +138,7 @@ class TournamentDetails(BaseModel):
     upcoming_matches: List[Dict[str, Any]] = []
     completed_matches: List[Dict[str, Any]] = []
     tournament_rules: Dict[str, Any] = {}
+
 
 class TournamentParticipant(BaseModel):
     id: int
@@ -147,7 +158,9 @@ class TournamentParticipant(BaseModel):
     prize_won: int = 0
     performance_rating: float = 0.0
 
+
 # === HELPER FUNCTIONS ===
+
 
 def generate_tournament_id() -> str:
     """Generate unique tournament ID"""
@@ -155,61 +168,70 @@ def generate_tournament_id() -> str:
     random_part = str(uuid.uuid4())[:8]
     return f"tournament_{timestamp}_{random_part}"
 
+
 def calculate_prize_pool(entry_fee: int, participants_count: int) -> int:
     """Calculate total prize pool"""
     return entry_fee * participants_count
 
+
 def get_tournament_status(tournament_data: Dict) -> TournamentStatus:
     """Determine tournament status based on dates and participants"""
     now = datetime.utcnow()
-    
+
     if tournament_data.get("cancelled", False):
         return TournamentStatus.CANCELLED
-    
+
     if tournament_data.get("winner_id"):
         return TournamentStatus.COMPLETED
-    
+
     if now < tournament_data["registration_deadline"]:
         return TournamentStatus.REGISTRATION
-    
+
     if now >= tournament_data["start_time"]:
         return TournamentStatus.ONGOING
-    
+
     return TournamentStatus.REGISTRATION
+
 
 def can_user_register(tournament_data: Dict, user: User) -> tuple[bool, str]:
     """Check if user can register for tournament"""
     now = datetime.utcnow()
-    
+
     # Check registration deadline
     if now >= tournament_data["registration_deadline"]:
         return False, "Registration deadline has passed"
-    
+
     # Check tournament not started
     if now >= tournament_data["start_time"]:
         return False, "Tournament has already started"
-    
+
     # Check if full
     if tournament_data["current_participants"] >= tournament_data["max_participants"]:
         return False, "Tournament is full"
-    
+
     # Check level requirements
     if user.level < tournament_data["min_level"]:
         return False, f"Minimum level required: {tournament_data['min_level']}"
-    
+
     if tournament_data.get("max_level") and user.level > tournament_data["max_level"]:
         return False, f"Maximum level allowed: {tournament_data['max_level']}"
-    
+
     # Check credits
     if user.credits < tournament_data["entry_fee_credits"]:
-        return False, f"Insufficient credits. Required: {tournament_data['entry_fee_credits']}"
-    
+        return (
+            False,
+            f"Insufficient credits. Required: {tournament_data['entry_fee_credits']}",
+        )
+
     return True, "Can register"
 
-def create_mock_tournament_data(tournament_create: TournamentCreate, organizer: User) -> Dict:
+
+def create_mock_tournament_data(
+    tournament_create: TournamentCreate, organizer: User
+) -> Dict:
     """Create mock tournament data (in real implementation, this would be stored in database)"""
     tournament_id = generate_tournament_id()
-    
+
     return {
         "id": 1,  # Would be auto-generated by database
         "tournament_id": tournament_id,
@@ -240,10 +262,12 @@ def create_mock_tournament_data(tournament_create: TournamentCreate, organizer: 
         "can_start": False,
         "created_at": datetime.utcnow(),
         "participants": [],
-        "rules": tournament_create.rules
+        "rules": tournament_create.rules,
     }
 
+
 # === TOURNAMENT ENDPOINTS ===
+
 
 @router.get("/", response_model=List[Tournament])
 async def get_tournaments(
@@ -252,7 +276,7 @@ async def get_tournaments(
     location_id: Optional[int] = Query(None),
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """🏆 Get all tournaments with optional filtering"""
     try:
@@ -287,45 +311,52 @@ async def get_tournaments(
                 "is_registration_open": True,
                 "is_full": False,
                 "can_start": False,
-                "created_at": datetime.utcnow() - timedelta(days=3)
+                "created_at": datetime.utcnow() - timedelta(days=3),
             }
         ]
-        
+
         # Apply filters
         filtered_tournaments = mock_tournaments
-        
+
         if status:
-            filtered_tournaments = [t for t in filtered_tournaments if t["status"] == status]
-        
+            filtered_tournaments = [
+                t for t in filtered_tournaments if t["status"] == status
+            ]
+
         if game_type:
-            filtered_tournaments = [t for t in filtered_tournaments if t["game_type"] == game_type]
-        
+            filtered_tournaments = [
+                t for t in filtered_tournaments if t["game_type"] == game_type
+            ]
+
         if location_id:
-            filtered_tournaments = [t for t in filtered_tournaments if t["location_id"] == location_id]
-        
+            filtered_tournaments = [
+                t for t in filtered_tournaments if t["location_id"] == location_id
+            ]
+
         # Apply pagination
-        paginated_tournaments = filtered_tournaments[skip:skip + limit]
-        
+        paginated_tournaments = filtered_tournaments[skip : skip + limit]
+
         return [Tournament(**t) for t in paginated_tournaments]
-        
+
     except Exception as e:
         logger.error(f"❌ Get tournaments error: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to retrieve tournaments"
+            detail="Failed to retrieve tournaments",
         )
+
 
 @router.get("/{tournament_id}", response_model=TournamentDetails)
 async def get_tournament_details(
     tournament_id: int,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """🔍 Get detailed tournament information"""
     try:
         # In real implementation, query tournament and related data
         # For now, return mock detailed data
-        
+
         mock_tournament = {
             "id": tournament_id,
             "tournament_id": f"tournament_{tournament_id}_details",
@@ -354,9 +385,9 @@ async def get_tournament_details(
             "is_registration_open": True,
             "is_full": False,
             "can_start": False,
-            "created_at": datetime.utcnow() - timedelta(days=3)
+            "created_at": datetime.utcnow() - timedelta(days=3),
         }
-        
+
         # Mock participants
         participants = [
             {
@@ -364,33 +395,33 @@ async def get_tournament_details(
                 "username": "player1",
                 "full_name": "Player One",
                 "level": 25,
-                "registration_time": datetime.utcnow() - timedelta(hours=24)
+                "registration_time": datetime.utcnow() - timedelta(hours=24),
             },
             {
                 "user_id": 2,
                 "username": "player2",
                 "full_name": "Player Two",
                 "level": 30,
-                "registration_time": datetime.utcnow() - timedelta(hours=12)
-            }
+                "registration_time": datetime.utcnow() - timedelta(hours=12),
+            },
         ]
-        
+
         # Check if current user is registered
         user_participation = None
         is_user_registered = any(p["user_id"] == current_user.id for p in participants)
-        
+
         if is_user_registered:
             user_participation = {
                 "user_id": current_user.id,
                 "username": current_user.username,
                 "registration_time": datetime.utcnow() - timedelta(hours=6),
-                "status": ParticipantStatus.REGISTERED
+                "status": ParticipantStatus.REGISTERED,
             }
-        
+
         # Check if user can register
         can_register, _ = can_user_register(mock_tournament, current_user)
         can_register = can_register and not is_user_registered
-        
+
         return TournamentDetails(
             tournament=Tournament(**mock_tournament),
             participants=participants,
@@ -399,69 +430,77 @@ async def get_tournament_details(
             total_rounds=4,  # For 16 participants single elimination
             user_participation=user_participation,
             can_register=can_register,
-            can_withdraw=is_user_registered and mock_tournament["status"] == TournamentStatus.REGISTRATION,
+            can_withdraw=is_user_registered
+            and mock_tournament["status"] == TournamentStatus.REGISTRATION,
             upcoming_matches=[],
             completed_matches=[],
             tournament_rules={
                 "format": "Single Elimination",
                 "match_duration": "30 minutes",
-                "late_policy": "10 minutes grace period"
-            }
+                "late_policy": "10 minutes grace period",
+            },
         )
-        
+
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"❌ Get tournament details error: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to retrieve tournament details"
+            detail="Failed to retrieve tournament details",
         )
+
 
 @router.post("/", response_model=Tournament)
 async def create_tournament(
     tournament_data: TournamentCreate,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """🏆 Create a new tournament"""
     try:
         # Check if user can create tournaments (admin or premium users)
-        if current_user.user_type not in ["admin", "moderator"] and not current_user.is_premium:
+        if (
+            current_user.user_type not in ["admin", "moderator"]
+            and not current_user.is_premium
+        ):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Tournament creation requires admin privileges or premium membership"
+                detail="Tournament creation requires admin privileges or premium membership",
             )
-        
+
         # Validate tournament timing
         now = datetime.utcnow()
         if tournament_data.start_time <= now + timedelta(hours=24):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Tournament must start at least 24 hours from now"
+                detail="Tournament must start at least 24 hours from now",
             )
-        
+
         # Create tournament (mock implementation)
         tournament_dict = create_mock_tournament_data(tournament_data, current_user)
-        
-        logger.info(f"✅ Tournament created: {tournament_dict['name']} by user {current_user.id}")
-        
+
+        logger.info(
+            f"✅ Tournament created: {tournament_dict['name']} by user {current_user.id}"
+        )
+
         return Tournament(**tournament_dict)
-        
+
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"❌ Create tournament error: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to create tournament"
+            detail="Failed to create tournament",
         )
+
 
 @router.post("/{tournament_id}/register")
 async def register_for_tournament(
     tournament_id: int,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """👥 Register for a tournament"""
     try:
@@ -477,33 +516,32 @@ async def register_for_tournament(
             "min_level": 1,
             "max_level": 50,
             "entry_fee_credits": 10,
-            "status": TournamentStatus.REGISTRATION
+            "status": TournamentStatus.REGISTRATION,
         }
-        
+
         # Check if user can register
         can_register, reason = can_user_register(mock_tournament, current_user)
         if not can_register:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=reason
-            )
-        
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=reason)
+
         # Deduct entry fee
         current_user.credits -= mock_tournament["entry_fee_credits"]
-        
+
         # Register user (in real implementation, add to participants table)
         db.commit()
-        
-        logger.info(f"✅ User {current_user.id} registered for tournament {tournament_id}")
-        
+
+        logger.info(
+            f"✅ User {current_user.id} registered for tournament {tournament_id}"
+        )
+
         return {
             "success": True,
             "message": f"Successfully registered for tournament",
             "tournament_id": tournament_id,
             "entry_fee_charged": mock_tournament["entry_fee_credits"],
-            "remaining_credits": current_user.credits
+            "remaining_credits": current_user.credits,
         }
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -511,19 +549,20 @@ async def register_for_tournament(
         logger.error(f"❌ Tournament registration error: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to register for tournament"
+            detail="Failed to register for tournament",
         )
+
 
 @router.delete("/{tournament_id}/register")
 async def withdraw_from_tournament(
     tournament_id: int,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """🚪 Withdraw from a tournament"""
     try:
         # In real implementation, check if user is registered and tournament allows withdrawal
-        
+
         # Mock tournament data
         mock_tournament = {
             "id": tournament_id,
@@ -531,40 +570,42 @@ async def withdraw_from_tournament(
             "registration_deadline": datetime.utcnow() + timedelta(days=1),
             "start_time": datetime.utcnow() + timedelta(days=2),
             "entry_fee_credits": 10,
-            "status": TournamentStatus.REGISTRATION
+            "status": TournamentStatus.REGISTRATION,
         }
-        
+
         # Check if withdrawal is allowed
         now = datetime.utcnow()
         if now >= mock_tournament["registration_deadline"]:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Cannot withdraw after registration deadline"
+                detail="Cannot withdraw after registration deadline",
             )
-        
+
         if mock_tournament["status"] != TournamentStatus.REGISTRATION:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Cannot withdraw from tournament in current status"
+                detail="Cannot withdraw from tournament in current status",
             )
-        
+
         # Refund entry fee
         refund_amount = mock_tournament["entry_fee_credits"]
         current_user.credits += refund_amount
-        
+
         # Remove user from tournament (in real implementation)
         db.commit()
-        
-        logger.info(f"✅ User {current_user.id} withdrew from tournament {tournament_id}")
-        
+
+        logger.info(
+            f"✅ User {current_user.id} withdrew from tournament {tournament_id}"
+        )
+
         return {
             "success": True,
             "message": "Successfully withdrew from tournament",
             "tournament_id": tournament_id,
             "refund_amount": refund_amount,
-            "new_balance": current_user.credits
+            "new_balance": current_user.credits,
         }
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -572,20 +613,21 @@ async def withdraw_from_tournament(
         logger.error(f"❌ Tournament withdrawal error: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to withdraw from tournament"
+            detail="Failed to withdraw from tournament",
         )
+
 
 @router.get("/my-tournaments")
 async def get_user_tournaments(
     status_filter: Optional[TournamentStatus] = Query(None),
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """📋 Get user's tournament participations"""
     try:
         # In real implementation, query user's tournament participations
         # For now, return mock data
-        
+
         user_tournaments = [
             {
                 "tournament_id": 1,
@@ -599,61 +641,65 @@ async def get_user_tournaments(
                 "matches_played": 0,
                 "matches_won": 0,
                 "placement": None,
-                "prize_won": 0
+                "prize_won": 0,
             }
         ]
-        
+
         # Apply filter
         if status_filter:
-            user_tournaments = [t for t in user_tournaments if t["status"] == status_filter]
-        
-        return {
-            "tournaments": user_tournaments,
-            "total_count": len(user_tournaments)
-        }
-        
+            user_tournaments = [
+                t for t in user_tournaments if t["status"] == status_filter
+            ]
+
+        return {"tournaments": user_tournaments, "total_count": len(user_tournaments)}
+
     except Exception as e:
         logger.error(f"❌ Get user tournaments error: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to retrieve user tournaments"
+            detail="Failed to retrieve user tournaments",
         )
 
+
 # === ADMIN ENDPOINTS ===
+
 
 @router.put("/{tournament_id}/status")
 async def update_tournament_status(
     tournament_id: int,
     new_status: TournamentStatus,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """⚙️ Update tournament status (admin only)"""
     if current_user.user_type not in ["admin", "moderator"]:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin access required"
+            status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required"
         )
-    
+
     try:
         # In real implementation, update tournament status in database
-        logger.info(f"✅ Tournament {tournament_id} status updated to {new_status} by user {current_user.id}")
-        
+        logger.info(
+            f"✅ Tournament {tournament_id} status updated to {new_status} by user {current_user.id}"
+        )
+
         return {
             "success": True,
             "message": f"Tournament status updated to {new_status}",
             "tournament_id": tournament_id,
-            "new_status": new_status
+            "new_status": new_status,
         }
-        
+
     except Exception as e:
         logger.error(f"❌ Update tournament status error: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to update tournament status"
+            detail="Failed to update tournament status",
         )
 
+
 # === HEALTH CHECK ===
+
 
 @router.get("/health")
 async def tournaments_health_check():
@@ -667,9 +713,10 @@ async def tournaments_health_check():
             "bracket_management": "active",
             "match_tracking": "active",
             "prize_distribution": "active",
-            "admin_operations": "active"
-        }
+            "admin_operations": "active",
+        },
     }
+
 
 # Export router
 print("✅ Tournaments router imported successfully")

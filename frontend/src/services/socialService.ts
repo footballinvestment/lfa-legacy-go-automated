@@ -1,4 +1,4 @@
-import { apiService } from './apiService';
+import { apiService } from "./apiService";
 
 export interface User {
   id: number;
@@ -20,7 +20,7 @@ export interface User {
 export interface Friend {
   id: number;
   user: User;
-  status: 'pending' | 'accepted' | 'blocked';
+  status: "pending" | "accepted" | "blocked";
   created_at: string;
 }
 
@@ -28,7 +28,7 @@ export interface FriendRequest {
   id: number;
   sender: User;
   recipient: User;
-  status: 'pending' | 'accepted' | 'declined';
+  status: "pending" | "accepted" | "declined";
   created_at: string;
 }
 
@@ -41,14 +41,14 @@ export interface Challenge {
   location_name?: string;
   scheduled_time?: string;
   message?: string;
-  status: 'pending' | 'accepted' | 'declined' | 'completed' | 'cancelled';
+  status: "pending" | "accepted" | "declined" | "completed" | "cancelled";
   created_at: string;
 }
 
 export const socialService = {
   // Friends management
   async getFriends(): Promise<Friend[]> {
-    const response = await apiService.get('/social/friends/');
+    const response = await apiService.get("/social/friends/");
     return response.data;
   },
 
@@ -57,9 +57,17 @@ export const socialService = {
   },
 
   // User search and discovery
-  async searchUsers(query: string, page = 1): Promise<{ results: User[]; total: number; page: number; totalPages: number }> {
-    const response = await apiService.get('/social/users/search/', {
-      params: { q: query, page }
+  async searchUsers(
+    query: string,
+    page = 1
+  ): Promise<{
+    results: User[];
+    total: number;
+    page: number;
+    totalPages: number;
+  }> {
+    const response = await apiService.get("/social/users/search/", {
+      params: { q: query, page },
     });
     return response.data;
   },
@@ -70,24 +78,32 @@ export const socialService = {
   },
 
   // Friend requests
-  async getFriendRequests(type: 'sent' | 'received' | 'all' = 'all'): Promise<FriendRequest[]> {
-    const response = await apiService.get('/social/friend-requests/', {
-      params: { type }
+  async getFriendRequests(
+    type: "sent" | "received" | "all" = "all"
+  ): Promise<FriendRequest[]> {
+    const response = await apiService.get("/social/friend-requests/", {
+      params: { type },
     });
     return response.data;
   },
 
-  async sendFriendRequest(userId: number, message?: string): Promise<FriendRequest> {
-    const response = await apiService.post('/social/friend-requests/', {
+  async sendFriendRequest(
+    userId: number,
+    message?: string
+  ): Promise<FriendRequest> {
+    const response = await apiService.post("/social/friend-requests/", {
       recipient_id: userId,
-      message
+      message,
     });
     return response.data;
   },
 
-  async respondToFriendRequest(requestId: number, action: 'accept' | 'decline'): Promise<void> {
+  async respondToFriendRequest(
+    requestId: number,
+    action: "accept" | "decline"
+  ): Promise<void> {
     await apiService.patch(`/social/friend-requests/${requestId}/`, {
-      status: action === 'accept' ? 'accepted' : 'declined'
+      status: action === "accept" ? "accepted" : "declined",
     });
   },
 
@@ -96,9 +112,11 @@ export const socialService = {
   },
 
   // Challenges
-  async getChallenges(type: 'sent' | 'received' | 'all' = 'all'): Promise<Challenge[]> {
-    const response = await apiService.get('/social/challenges/', {
-      params: { type }
+  async getChallenges(
+    type: "sent" | "received" | "all" = "all"
+  ): Promise<Challenge[]> {
+    const response = await apiService.get("/social/challenges/", {
+      params: { type },
     });
     return response.data;
   },
@@ -110,13 +128,16 @@ export const socialService = {
     scheduled_time?: string;
     message?: string;
   }): Promise<Challenge> {
-    const response = await apiService.post('/social/challenges/', data);
+    const response = await apiService.post("/social/challenges/", data);
     return response.data;
   },
 
-  async respondToChallenge(challengeId: number, action: 'accept' | 'decline'): Promise<void> {
+  async respondToChallenge(
+    challengeId: number,
+    action: "accept" | "decline"
+  ): Promise<void> {
     await apiService.patch(`/social/challenges/${challengeId}/`, {
-      status: action === 'accept' ? 'accepted' : 'declined'
+      status: action === "accept" ? "accepted" : "declined",
     });
   },
 
@@ -125,8 +146,12 @@ export const socialService = {
   },
 
   // Utility functions
-  async checkFriendshipStatus(userId: number): Promise<'none' | 'pending' | 'friends' | 'blocked'> {
-    const response = await apiService.get(`/social/friendship-status/${userId}/`);
+  async checkFriendshipStatus(
+    userId: number
+  ): Promise<"none" | "pending" | "friends" | "blocked"> {
+    const response = await apiService.get(
+      `/social/friendship-status/${userId}/`
+    );
     return response.data.status;
   },
 
@@ -139,11 +164,11 @@ export const socialService = {
   },
 
   async getOnlineFriends(): Promise<User[]> {
-    const response = await apiService.get('/social/friends/online/');
+    const response = await apiService.get("/social/friends/online/");
     return response.data;
   },
 
   async updateOnlineStatus(isOnline: boolean): Promise<void> {
-    await apiService.patch('/social/status/', { is_online: isOnline });
+    await apiService.patch("/social/status/", { is_online: isOnline });
   },
 };

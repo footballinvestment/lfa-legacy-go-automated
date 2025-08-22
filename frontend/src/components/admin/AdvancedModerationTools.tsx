@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -42,7 +42,7 @@ import {
   ListItemSecondaryAction,
   Switch,
   FormControlLabel,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Security,
   Report,
@@ -72,14 +72,14 @@ import {
   Dashboard,
   Analytics,
   History,
-} from '@mui/icons-material';
-import { useSafeAuth } from '../../SafeAuthContext';
-import { moderationApi } from '../../services/moderationApi';
-import type { 
-  UserReport, 
-  Violation, 
-  ModerationLog
-} from '../../types/moderation';
+} from "@mui/icons-material";
+import { useSafeAuth } from "../../SafeAuthContext";
+import { moderationApi } from "../../services/moderationApi";
+import type {
+  UserReport,
+  Violation,
+  ModerationLog,
+} from "../../types/moderation";
 
 // Response interfaces for API calls
 interface ViolationListResponse {
@@ -114,7 +114,7 @@ interface TabPanelProps {
 
 function TabPanel(props: TabPanelProps) {
   const { children, value, index, ...other } = props;
-  
+
   return (
     <div
       role="tabpanel"
@@ -133,14 +133,18 @@ const AdvancedModerationTools: React.FC = () => {
   const [currentTab, setCurrentTab] = useState(0);
   const [loading, setLoading] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState('');
-  const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error' | 'warning' | 'info'>('info');
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState<
+    "success" | "error" | "warning" | "info"
+  >("info");
 
   // Reports state
   const [reports, setReports] = useState<UserReport[]>([]);
   const [reportsPage, setReportsPage] = useState(0);
   const [reportsRowsPerPage, setReportsRowsPerPage] = useState(25);
-  const [reportsFilter, setReportsFilter] = useState<'all' | 'open' | 'resolved' | 'dismissed'>('open');
+  const [reportsFilter, setReportsFilter] = useState<
+    "all" | "open" | "resolved" | "dismissed"
+  >("open");
 
   // Violations state
   const [recentViolations, setRecentViolations] = useState<Violation[]>([]);
@@ -159,7 +163,7 @@ const AdvancedModerationTools: React.FC = () => {
     resolvedToday: 0,
     activeViolations: 0,
     moderationActions: 0,
-    averageResponseTime: '2.3 hours',
+    averageResponseTime: "2.3 hours",
     resolutionRate: 87.5,
     falsePositiveRate: 12.3,
   });
@@ -171,8 +175,10 @@ const AdvancedModerationTools: React.FC = () => {
 
   const [selectedReport, setSelectedReport] = useState<UserReport | null>(null);
   const [reportActionDialog, setReportActionDialog] = useState(false);
-  const [reportAction, setReportAction] = useState<'dismiss' | 'create_violation' | 'escalate'>('dismiss');
-  const [reportActionNotes, setReportActionNotes] = useState('');
+  const [reportAction, setReportAction] = useState<
+    "dismiss" | "create_violation" | "escalate"
+  >("dismiss");
+  const [reportActionNotes, setReportActionNotes] = useState("");
 
   useEffect(() => {
     loadModerationData();
@@ -199,8 +205,8 @@ const AdvancedModerationTools: React.FC = () => {
           break;
       }
     } catch (error) {
-      console.error('Failed to load moderation data:', error);
-      showSnackbar('Failed to load moderation data', 'error');
+      console.error("Failed to load moderation data:", error);
+      showSnackbar("Failed to load moderation data", "error");
     } finally {
       setLoading(false);
     }
@@ -224,10 +230,12 @@ const AdvancedModerationTools: React.FC = () => {
 
   const loadReports = async () => {
     try {
-      const reportsData = await moderationApi.getReports(reportsFilter !== 'all' ? reportsFilter : undefined);
+      const reportsData = await moderationApi.getReports(
+        reportsFilter !== "all" ? reportsFilter : undefined
+      );
       setReports(reportsData);
     } catch (error) {
-      console.error('Failed to load reports:', error);
+      console.error("Failed to load reports:", error);
       // Fallback to mock data
       setReports([]);
     }
@@ -242,18 +250,28 @@ const AdvancedModerationTools: React.FC = () => {
         mockViolations.push({
           id: i,
           user_id: Math.floor(Math.random() * 100) + 1,
-          type: ['warning', 'suspension', 'inappropriate_conduct', 'cheating', 'harassment'][Math.floor(Math.random() * 5)] as any,
+          type: [
+            "warning",
+            "suspension",
+            "inappropriate_conduct",
+            "cheating",
+            "harassment",
+          ][Math.floor(Math.random() * 5)] as any,
           reason: `Mock violation ${i}`,
           notes: `Additional notes for violation ${i}`,
           created_by: 1,
-          created_at: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
+          created_at: new Date(
+            Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000
+          ).toISOString(),
           updated_at: new Date().toISOString(),
-          status: ['active', 'resolved', 'dismissed'][Math.floor(Math.random() * 3)] as any
+          status: ["active", "resolved", "dismissed"][
+            Math.floor(Math.random() * 3)
+          ] as any,
         });
       }
       setRecentViolations(mockViolations);
     } catch (error) {
-      console.error('Failed to load violations:', error);
+      console.error("Failed to load violations:", error);
     }
   };
 
@@ -261,16 +279,19 @@ const AdvancedModerationTools: React.FC = () => {
     try {
       const logsResponse = await moderationApi.getModerationLogs({
         page: logsPage + 1,
-        limit: logsRowsPerPage
+        limit: logsRowsPerPage,
       });
       setModerationLogs(logsResponse.logs);
     } catch (error) {
-      console.error('Failed to load moderation logs:', error);
+      console.error("Failed to load moderation logs:", error);
       setModerationLogs([]);
     }
   };
 
-  const showSnackbar = (message: string, severity: typeof snackbarSeverity = 'info') => {
+  const showSnackbar = (
+    message: string,
+    severity: typeof snackbarSeverity = "info"
+  ) => {
     setSnackbarMessage(message);
     setSnackbarSeverity(severity);
     setSnackbarOpen(true);
@@ -278,7 +299,7 @@ const AdvancedModerationTools: React.FC = () => {
 
   const handleReportAction = async () => {
     if (!selectedReport) return;
-    
+
     setLoading(true);
     try {
       await moderationApi.updateReport(
@@ -286,156 +307,196 @@ const AdvancedModerationTools: React.FC = () => {
         reportAction,
         reportActionNotes ? { notes: reportActionNotes } : undefined
       );
-      
-      showSnackbar(`Report ${reportAction}ed successfully`, 'success');
+
+      showSnackbar(`Report ${reportAction}ed successfully`, "success");
       setReportActionDialog(false);
       setSelectedReport(null);
-      setReportAction('dismiss');
-      setReportActionNotes('');
+      setReportAction("dismiss");
+      setReportActionNotes("");
       await loadReports(); // Refresh reports list
     } catch (error) {
-      console.error('Failed to update report:', error);
-      showSnackbar('Failed to update report', 'error');
+      console.error("Failed to update report:", error);
+      showSnackbar("Failed to update report", "error");
     } finally {
       setLoading(false);
     }
   };
 
   const getReportSeverityColor = (type: string) => {
-    const severityMap: { [key: string]: 'error' | 'warning' | 'info' } = {
-      'harassment': 'error',
-      'cheating': 'error',
-      'inappropriate_conduct': 'warning',
-      'spam': 'warning',
-      'terms_violation': 'info',
-      'other': 'info'
+    const severityMap: { [key: string]: "error" | "warning" | "info" } = {
+      harassment: "error",
+      cheating: "error",
+      inappropriate_conduct: "warning",
+      spam: "warning",
+      terms_violation: "info",
+      other: "info",
     };
-    return severityMap[type] || 'info';
+    return severityMap[type] || "info";
   };
 
   const getViolationStatusColor = (status: string) => {
-    const colorMap: { [key: string]: 'success' | 'warning' | 'error' | 'info' } = {
-      'active': 'warning',
-      'resolved': 'success',
-      'dismissed': 'info'
+    const colorMap: {
+      [key: string]: "success" | "warning" | "error" | "info";
+    } = {
+      active: "warning",
+      resolved: "success",
+      dismissed: "info",
     };
-    return colorMap[status] || 'info';
+    return colorMap[status] || "info";
   };
 
   const renderDashboard = () => (
     <Grid container spacing={3}>
       {/* Key Metrics */}
       <Grid item xs={12}>
-        <Typography variant="h5" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Typography
+          variant="h5"
+          gutterBottom
+          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+        >
           <Dashboard color="primary" />
           Moderation Overview
         </Typography>
       </Grid>
-      
+
       {/* Stats Cards */}
       <Grid item xs={12} sm={6} md={3}>
         <Card>
           <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               <Report color="primary" />
               <Box>
                 <Typography variant="h4">{analytics.totalReports}</Typography>
-                <Typography variant="body2" color="text.secondary">Total Reports</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Total Reports
+                </Typography>
               </Box>
             </Box>
           </CardContent>
         </Card>
       </Grid>
-      
+
       <Grid item xs={12} sm={6} md={3}>
         <Card>
           <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               <Flag color="warning" />
               <Box>
                 <Typography variant="h4">{analytics.openReports}</Typography>
-                <Typography variant="body2" color="text.secondary">Open Reports</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Open Reports
+                </Typography>
               </Box>
             </Box>
           </CardContent>
         </Card>
       </Grid>
-      
+
       <Grid item xs={12} sm={6} md={3}>
         <Card>
           <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               <Gavel color="error" />
               <Box>
-                <Typography variant="h4">{analytics.activeViolations}</Typography>
-                <Typography variant="body2" color="text.secondary">Active Violations</Typography>
+                <Typography variant="h4">
+                  {analytics.activeViolations}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Active Violations
+                </Typography>
               </Box>
             </Box>
           </CardContent>
         </Card>
       </Grid>
-      
+
       <Grid item xs={12} sm={6} md={3}>
         <Card>
           <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               <CheckCircle color="success" />
               <Box>
                 <Typography variant="h4">{analytics.resolvedToday}</Typography>
-                <Typography variant="body2" color="text.secondary">Resolved Today</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Resolved Today
+                </Typography>
               </Box>
             </Box>
           </CardContent>
         </Card>
       </Grid>
-      
+
       {/* Performance Metrics */}
       <Grid item xs={12} md={6}>
         <Card>
           <CardContent>
-            <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography
+              variant="h6"
+              gutterBottom
+              sx={{ display: "flex", alignItems: "center", gap: 1 }}
+            >
               <Analytics color="primary" />
               Performance Metrics
             </Typography>
             <Grid container spacing={2}>
               <Grid item xs={6}>
-                <Typography variant="body2" color="text.secondary">Avg Response Time</Typography>
-                <Typography variant="h6">{analytics.averageResponseTime}</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Avg Response Time
+                </Typography>
+                <Typography variant="h6">
+                  {analytics.averageResponseTime}
+                </Typography>
               </Grid>
               <Grid item xs={6}>
-                <Typography variant="body2" color="text.secondary">Resolution Rate</Typography>
-                <Typography variant="h6">{analytics.resolutionRate}%</Typography>
-                <LinearProgress 
-                  variant="determinate" 
-                  value={analytics.resolutionRate} 
+                <Typography variant="body2" color="text.secondary">
+                  Resolution Rate
+                </Typography>
+                <Typography variant="h6">
+                  {analytics.resolutionRate}%
+                </Typography>
+                <LinearProgress
+                  variant="determinate"
+                  value={analytics.resolutionRate}
                   sx={{ mt: 1 }}
                 />
               </Grid>
               <Grid item xs={6}>
-                <Typography variant="body2" color="text.secondary">False Positive Rate</Typography>
-                <Typography variant="h6">{analytics.falsePositiveRate}%</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  False Positive Rate
+                </Typography>
+                <Typography variant="h6">
+                  {analytics.falsePositiveRate}%
+                </Typography>
               </Grid>
               <Grid item xs={6}>
-                <Typography variant="body2" color="text.secondary">Actions Today</Typography>
-                <Typography variant="h6">{analytics.moderationActions}</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Actions Today
+                </Typography>
+                <Typography variant="h6">
+                  {analytics.moderationActions}
+                </Typography>
               </Grid>
             </Grid>
           </CardContent>
         </Card>
       </Grid>
-      
+
       {/* Recent Activity */}
       <Grid item xs={12} md={6}>
         <Card>
           <CardContent>
-            <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography
+              variant="h6"
+              gutterBottom
+              sx={{ display: "flex", alignItems: "center", gap: 1 }}
+            >
               <History color="primary" />
               Recent Activity
             </Typography>
             <List dense>
               <ListItem>
                 <ListItemAvatar>
-                  <Avatar sx={{ bgcolor: 'warning.main' }}>
+                  <Avatar sx={{ bgcolor: "warning.main" }}>
                     <Flag />
                   </Avatar>
                 </ListItemAvatar>
@@ -449,7 +510,7 @@ const AdvancedModerationTools: React.FC = () => {
               </ListItem>
               <ListItem>
                 <ListItemAvatar>
-                  <Avatar sx={{ bgcolor: 'success.main' }}>
+                  <Avatar sx={{ bgcolor: "success.main" }}>
                     <Check />
                   </Avatar>
                 </ListItemAvatar>
@@ -460,7 +521,7 @@ const AdvancedModerationTools: React.FC = () => {
               </ListItem>
               <ListItem>
                 <ListItemAvatar>
-                  <Avatar sx={{ bgcolor: 'error.main' }}>
+                  <Avatar sx={{ bgcolor: "error.main" }}>
                     <Gavel />
                   </Avatar>
                 </ListItemAvatar>
@@ -481,12 +542,22 @@ const AdvancedModerationTools: React.FC = () => {
 
   const renderReports = () => (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h5" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
+        <Typography
+          variant="h5"
+          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+        >
           <Report color="primary" />
           User Reports
         </Typography>
-        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+        <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
           <FormControl size="small" sx={{ minWidth: 120 }}>
             <InputLabel>Filter</InputLabel>
             <Select
@@ -505,7 +576,7 @@ const AdvancedModerationTools: React.FC = () => {
           </Button>
         </Box>
       </Box>
-      
+
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
@@ -521,37 +592,50 @@ const AdvancedModerationTools: React.FC = () => {
           </TableHead>
           <TableBody>
             {reports
-              .slice(reportsPage * reportsRowsPerPage, (reportsPage + 1) * reportsRowsPerPage)
+              .slice(
+                reportsPage * reportsRowsPerPage,
+                (reportsPage + 1) * reportsRowsPerPage
+              )
               .map((report) => (
                 <TableRow key={report.id}>
                   <TableCell>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <Avatar sx={{ width: 32, height: 32 }}>
                         {report.reporter_id}
                       </Avatar>
-                      <Typography variant="body2">User {report.reporter_id}</Typography>
+                      <Typography variant="body2">
+                        User {report.reporter_id}
+                      </Typography>
                     </Box>
                   </TableCell>
                   <TableCell>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <Avatar sx={{ width: 32, height: 32 }}>
                         {report.reported_user_id}
                       </Avatar>
-                      <Typography variant="body2">User {report.reported_user_id}</Typography>
+                      <Typography variant="body2">
+                        User {report.reported_user_id}
+                      </Typography>
                     </Box>
                   </TableCell>
                   <TableCell>
-                    <Chip 
-                      label={report.type} 
-                      size="small" 
+                    <Chip
+                      label={report.type}
+                      size="small"
                       color={getReportSeverityColor(report.type)}
                     />
                   </TableCell>
                   <TableCell>
-                    <Chip 
-                      label={report.status} 
-                      size="small" 
-                      color={report.status === 'open' ? 'warning' : report.status === 'resolved' ? 'success' : 'default'}
+                    <Chip
+                      label={report.status}
+                      size="small"
+                      color={
+                        report.status === "open"
+                          ? "warning"
+                          : report.status === "resolved"
+                            ? "success"
+                            : "default"
+                      }
                     />
                   </TableCell>
                   <TableCell>
@@ -561,22 +645,26 @@ const AdvancedModerationTools: React.FC = () => {
                   </TableCell>
                   <TableCell>
                     {report.assigned_to ? (
-                      <Typography variant="body2">Moderator {report.assigned_to}</Typography>
+                      <Typography variant="body2">
+                        Moderator {report.assigned_to}
+                      </Typography>
                     ) : (
-                      <Typography variant="body2" color="text.secondary">Unassigned</Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Unassigned
+                      </Typography>
                     )}
                   </TableCell>
                   <TableCell>
-                    <Box sx={{ display: 'flex', gap: 0.5 }}>
+                    <Box sx={{ display: "flex", gap: 0.5 }}>
                       <Tooltip title="View Details">
                         <IconButton size="small">
                           <Visibility fontSize="small" />
                         </IconButton>
                       </Tooltip>
-                      {report.status === 'open' && (
+                      {report.status === "open" && (
                         <Tooltip title="Take Action">
-                          <IconButton 
-                            size="small" 
+                          <IconButton
+                            size="small"
                             onClick={() => {
                               setSelectedReport(report);
                               setReportActionDialog(true);
@@ -598,7 +686,9 @@ const AdvancedModerationTools: React.FC = () => {
           page={reportsPage}
           onPageChange={(_, newPage) => setReportsPage(newPage)}
           rowsPerPage={reportsRowsPerPage}
-          onRowsPerPageChange={(e) => setReportsRowsPerPage(parseInt(e.target.value, 10))}
+          onRowsPerPageChange={(e) =>
+            setReportsRowsPerPage(parseInt(e.target.value, 10))
+          }
         />
       </TableContainer>
     </Box>
@@ -606,8 +696,18 @@ const AdvancedModerationTools: React.FC = () => {
 
   const renderViolations = () => (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h5" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
+        <Typography
+          variant="h5"
+          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+        >
           <Gavel color="primary" />
           Recent Violations
         </Typography>
@@ -615,7 +715,7 @@ const AdvancedModerationTools: React.FC = () => {
           Refresh
         </Button>
       </Box>
-      
+
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
@@ -631,23 +731,24 @@ const AdvancedModerationTools: React.FC = () => {
           </TableHead>
           <TableBody>
             {recentViolations
-              .slice(violationsPage * violationsRowsPerPage, (violationsPage + 1) * violationsRowsPerPage)
+              .slice(
+                violationsPage * violationsRowsPerPage,
+                (violationsPage + 1) * violationsRowsPerPage
+              )
               .map((violation) => (
                 <TableRow key={violation.id}>
                   <TableCell>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <Avatar sx={{ width: 32, height: 32 }}>
                         {violation.user_id}
                       </Avatar>
-                      <Typography variant="body2">User {violation.user_id}</Typography>
+                      <Typography variant="body2">
+                        User {violation.user_id}
+                      </Typography>
                     </Box>
                   </TableCell>
                   <TableCell>
-                    <Chip 
-                      label={violation.type} 
-                      size="small" 
-                      color="warning"
-                    />
+                    <Chip label={violation.type} size="small" color="warning" />
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2" sx={{ maxWidth: 200 }} noWrap>
@@ -655,12 +756,14 @@ const AdvancedModerationTools: React.FC = () => {
                     </Typography>
                   </TableCell>
                   <TableCell>
-                    <Typography variant="body2">Moderator {violation.created_by}</Typography>
+                    <Typography variant="body2">
+                      Moderator {violation.created_by}
+                    </Typography>
                   </TableCell>
                   <TableCell>
-                    <Chip 
-                      label={violation.status} 
-                      size="small" 
+                    <Chip
+                      label={violation.status}
+                      size="small"
                       color={getViolationStatusColor(violation.status)}
                     />
                   </TableCell>
@@ -670,7 +773,7 @@ const AdvancedModerationTools: React.FC = () => {
                     </Typography>
                   </TableCell>
                   <TableCell>
-                    <Box sx={{ display: 'flex', gap: 0.5 }}>
+                    <Box sx={{ display: "flex", gap: 0.5 }}>
                       <Tooltip title="View Details">
                         <IconButton size="small">
                           <Visibility fontSize="small" />
@@ -693,7 +796,9 @@ const AdvancedModerationTools: React.FC = () => {
           page={violationsPage}
           onPageChange={(_, newPage) => setViolationsPage(newPage)}
           rowsPerPage={violationsRowsPerPage}
-          onRowsPerPageChange={(e) => setViolationsRowsPerPage(parseInt(e.target.value, 10))}
+          onRowsPerPageChange={(e) =>
+            setViolationsRowsPerPage(parseInt(e.target.value, 10))
+          }
         />
       </TableContainer>
     </Box>
@@ -701,8 +806,18 @@ const AdvancedModerationTools: React.FC = () => {
 
   const renderLogs = () => (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h5" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
+        <Typography
+          variant="h5"
+          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+        >
           <Timeline color="primary" />
           Moderation Logs
         </Typography>
@@ -710,7 +825,7 @@ const AdvancedModerationTools: React.FC = () => {
           Refresh
         </Button>
       </Box>
-      
+
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
@@ -725,24 +840,29 @@ const AdvancedModerationTools: React.FC = () => {
           </TableHead>
           <TableBody>
             {moderationLogs
-              .slice(logsPage * logsRowsPerPage, (logsPage + 1) * logsRowsPerPage)
+              .slice(
+                logsPage * logsRowsPerPage,
+                (logsPage + 1) * logsRowsPerPage
+              )
               .map((log) => (
                 <TableRow key={log.id}>
                   <TableCell>
-                    <Typography variant="body2">Moderator {log.actor_id}</Typography>
+                    <Typography variant="body2">
+                      Moderator {log.actor_id}
+                    </Typography>
                   </TableCell>
                   <TableCell>
-                    <Chip 
-                      label={log.action} 
-                      size="small" 
-                      color="info"
-                    />
+                    <Chip label={log.action} size="small" color="info" />
                   </TableCell>
                   <TableCell>
                     {log.target_user_id ? (
-                      <Typography variant="body2">User {log.target_user_id}</Typography>
+                      <Typography variant="body2">
+                        User {log.target_user_id}
+                      </Typography>
                     ) : (
-                      <Typography variant="body2" color="text.secondary">-</Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        -
+                      </Typography>
                     )}
                   </TableCell>
                   <TableCell>
@@ -757,7 +877,7 @@ const AdvancedModerationTools: React.FC = () => {
                   </TableCell>
                   <TableCell>
                     <Typography variant="caption">
-                      {log.ip_address || 'N/A'}
+                      {log.ip_address || "N/A"}
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -770,7 +890,9 @@ const AdvancedModerationTools: React.FC = () => {
           page={logsPage}
           onPageChange={(_, newPage) => setLogsPage(newPage)}
           rowsPerPage={logsRowsPerPage}
-          onRowsPerPageChange={(e) => setLogsRowsPerPage(parseInt(e.target.value, 10))}
+          onRowsPerPageChange={(e) =>
+            setLogsRowsPerPage(parseInt(e.target.value, 10))
+          }
         />
       </TableContainer>
     </Box>
@@ -778,11 +900,15 @@ const AdvancedModerationTools: React.FC = () => {
 
   const renderSettings = () => (
     <Box>
-      <Typography variant="h5" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+      <Typography
+        variant="h5"
+        gutterBottom
+        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+      >
         <Settings color="primary" />
         Moderation Settings
       </Typography>
-      
+
       <Grid container spacing={3}>
         <Grid item xs={12} md={6}>
           <Card>
@@ -832,21 +958,25 @@ const AdvancedModerationTools: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        
+
         <Grid item xs={12} md={6}>
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
                 Quick Actions
               </Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                 <Button variant="outlined" startIcon={<Assessment />}>
                   Generate Weekly Report
                 </Button>
                 <Button variant="outlined" startIcon={<Timeline />}>
                   Export Moderation Logs
                 </Button>
-                <Button variant="outlined" startIcon={<Security />} color="warning">
+                <Button
+                  variant="outlined"
+                  startIcon={<Security />}
+                  color="warning"
+                >
                   Backup User Data
                 </Button>
                 <Button variant="outlined" startIcon={<Refresh />}>
@@ -861,56 +991,70 @@ const AdvancedModerationTools: React.FC = () => {
   );
 
   return (
-    <Box sx={{ width: '100%' }}>
+    <Box sx={{ width: "100%" }}>
       {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" component="h1" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
+        <Typography
+          variant="h4"
+          component="h1"
+          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+        >
           <Security color="primary" />
           Advanced Moderation Tools
         </Typography>
         {user && (
-          <Chip 
-            label={`Moderator: ${user.username}`} 
-            color="primary" 
+          <Chip
+            label={`Moderator: ${user.username}`}
+            color="primary"
             avatar={<Avatar>{user.username?.charAt(0).toUpperCase()}</Avatar>}
           />
         )}
       </Box>
-      
+
       {/* Tabs */}
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-        <Tabs value={currentTab} onChange={(_, newValue) => setCurrentTab(newValue)}>
-          <Tab 
-            label="Dashboard" 
-            icon={<Dashboard />} 
+      <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
+        <Tabs
+          value={currentTab}
+          onChange={(_, newValue) => setCurrentTab(newValue)}
+        >
+          <Tab
+            label="Dashboard"
+            icon={<Dashboard />}
             iconPosition="start"
             id="moderation-tab-0"
             aria-controls="moderation-tabpanel-0"
           />
-          <Tab 
-            label={`Reports (${reports.filter(r => r.status === 'open').length})`}
-            icon={<Report />} 
+          <Tab
+            label={`Reports (${reports.filter((r) => r.status === "open").length})`}
+            icon={<Report />}
             iconPosition="start"
             id="moderation-tab-1"
             aria-controls="moderation-tabpanel-1"
           />
-          <Tab 
-            label="Violations" 
-            icon={<Gavel />} 
+          <Tab
+            label="Violations"
+            icon={<Gavel />}
             iconPosition="start"
             id="moderation-tab-2"
             aria-controls="moderation-tabpanel-2"
           />
-          <Tab 
-            label="Logs" 
-            icon={<Timeline />} 
+          <Tab
+            label="Logs"
+            icon={<Timeline />}
             iconPosition="start"
             id="moderation-tab-3"
             aria-controls="moderation-tabpanel-3"
           />
-          <Tab 
-            label="Settings" 
-            icon={<Settings />} 
+          <Tab
+            label="Settings"
+            icon={<Settings />}
             iconPosition="start"
             id="moderation-tab-4"
             aria-controls="moderation-tabpanel-4"
@@ -939,37 +1083,37 @@ const AdvancedModerationTools: React.FC = () => {
       </TabPanel>
 
       {/* Report Action Dialog */}
-      <Dialog 
-        open={reportActionDialog} 
+      <Dialog
+        open={reportActionDialog}
         onClose={() => setReportActionDialog(false)}
         maxWidth="md"
         fullWidth
       >
-        <DialogTitle>
-          Take Action on Report
-        </DialogTitle>
+        <DialogTitle>Take Action on Report</DialogTitle>
         <DialogContent>
           {selectedReport && (
             <Box>
               <Alert severity="info" sx={{ mb: 2 }}>
                 <Typography variant="body2">
-                  <strong>Report #{selectedReport.id}</strong> - {selectedReport.type}
+                  <strong>Report #{selectedReport.id}</strong> -{" "}
+                  {selectedReport.type}
                 </Typography>
                 <Typography variant="body2">
-                  Reported User: {selectedReport.reported_user_id} | Reporter: {selectedReport.reporter_id}
+                  Reported User: {selectedReport.reported_user_id} | Reporter:{" "}
+                  {selectedReport.reporter_id}
                 </Typography>
               </Alert>
-              
+
               <Typography variant="body1" sx={{ mb: 2 }}>
                 <strong>Description:</strong> {selectedReport.description}
               </Typography>
-              
+
               {selectedReport.evidence && (
                 <Typography variant="body1" sx={{ mb: 2 }}>
                   <strong>Evidence:</strong> {selectedReport.evidence}
                 </Typography>
               )}
-              
+
               <FormControl fullWidth sx={{ mb: 2 }}>
                 <InputLabel>Action</InputLabel>
                 <Select
@@ -982,7 +1126,7 @@ const AdvancedModerationTools: React.FC = () => {
                   <MenuItem value="escalate">Escalate</MenuItem>
                 </Select>
               </FormControl>
-              
+
               <TextField
                 fullWidth
                 multiline
@@ -996,16 +1140,14 @@ const AdvancedModerationTools: React.FC = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setReportActionDialog(false)}>
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleReportAction} 
-            color="primary" 
+          <Button onClick={() => setReportActionDialog(false)}>Cancel</Button>
+          <Button
+            onClick={handleReportAction}
+            color="primary"
             variant="contained"
             disabled={loading}
           >
-            {loading ? 'Processing...' : 'Confirm Action'}
+            {loading ? "Processing..." : "Confirm Action"}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1016,10 +1158,10 @@ const AdvancedModerationTools: React.FC = () => {
         autoHideDuration={6000}
         onClose={() => setSnackbarOpen(false)}
       >
-        <Alert 
-          onClose={() => setSnackbarOpen(false)} 
+        <Alert
+          onClose={() => setSnackbarOpen(false)}
           severity={snackbarSeverity}
-          sx={{ width: '100%' }}
+          sx={{ width: "100%" }}
         >
           {snackbarMessage}
         </Alert>

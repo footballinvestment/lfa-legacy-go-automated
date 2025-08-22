@@ -121,11 +121,16 @@ def quick_create_admin():
     db = SessionLocal()
     
     try:
-        # Default admin credentials
-        username = "admin"
-        email = "admin@lfagolegacy.com"
-        full_name = "System Administrator"
-        password = "admin123"
+        # Admin credentials from environment variables
+        username = os.getenv("ADMIN_USERNAME", "admin")
+        email = os.getenv("ADMIN_EMAIL", "admin@lfagolegacy.com")
+        full_name = os.getenv("ADMIN_FULL_NAME", "System Administrator")
+        password = os.getenv("ADMIN_PASSWORD")
+        
+        if not password:
+            print("❌ ADMIN_PASSWORD environment variable is required!")
+            print("💡 Set it with: export ADMIN_PASSWORD='your_secure_password'")
+            return False
         
         # Check if admin already exists
         existing_admin = db.query(User).filter(User.username == username).first()

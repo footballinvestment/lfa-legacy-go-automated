@@ -1,13 +1,13 @@
 // Search component exports
-export { default as AdvancedSearchComponent } from './AdvancedSearchComponent';
-export { default as SearchResults } from './SearchResults';
-export { default as SearchFilters } from './SearchFilters';
-export { default as SearchSuggestions } from './SearchSuggestions';
-export { default as SavedSearches } from './SavedSearches';
-export { default as SearchHistory } from './SearchHistory';
+export { default as AdvancedSearchComponent } from "./AdvancedSearchComponent";
+export { default as SearchResults } from "./SearchResults";
+export { default as SearchFilters } from "./SearchFilters";
+export { default as SearchSuggestions } from "./SearchSuggestions";
+export { default as SavedSearches } from "./SavedSearches";
+export { default as SearchHistory } from "./SearchHistory";
 
 // Re-export search context and types
-export { SearchProvider, useSearch } from '../../contexts/SearchContext';
+export { SearchProvider, useSearch } from "../../contexts/SearchContext";
 export type {
   SearchCriteria,
   SearchResponse,
@@ -16,5 +16,5 @@ export type {
   SearchFilter,
   SavedSearch,
   SearchHistory as SearchHistoryType,
-  SearchSuggestion
-} from '../../types/search';
+  SearchSuggestion,
+} from "../../types/search";

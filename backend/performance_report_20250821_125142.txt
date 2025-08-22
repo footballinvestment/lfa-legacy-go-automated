@@ -1,0 +1,32 @@
+============================================================
+🚀 LFA Legacy GO - Performance Test Report
+============================================================
+Test Time: 2025-08-21 12:51:12
+Overall Score: 10/100
+
+📊 Endpoint Performance:
+----------------------------------------
+/: ERROR - No successful requests
+/health: ERROR - No successful requests
+/api/health: ERROR - No successful requests
+/api/performance/summary: ERROR - No successful requests
+⚡ Concurrent Performance (Health endpoint):
+----------------------------------------
+ERROR: No successful requests
+
+🧠 Memory Performance:
+----------------------------------------
+Score: 60/100
+Avg Memory: 3572.88 MB
+Peak Memory: 3690.28 MB
+Memory Stable: ❌
+
+🔧 Recommendations:
+----------------------------------------
+❌ Poor performance. Immediate attention required:
+  • Investigate slow response times
+  • Check for memory leaks
+  • Optimize critical code paths
+  • Consider scaling infrastructure
+
+============================================================

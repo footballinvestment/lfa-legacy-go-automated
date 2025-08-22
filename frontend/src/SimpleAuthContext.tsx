@@ -13,7 +13,9 @@ interface SimpleAuthContextType {
   logout: () => void;
 }
 
-const SimpleAuthContext = createContext<SimpleAuthContextType | undefined>(undefined);
+const SimpleAuthContext = createContext<SimpleAuthContextType | undefined>(
+  undefined
+);
 
 export const useSimpleAuth = (): SimpleAuthContextType => {
   const context = useContext(SimpleAuthContext);
@@ -27,25 +29,30 @@ interface SimpleAuthProviderProps {
   children: ReactNode;
 }
 
-export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children }) => {
+export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({
+  children,
+}) => {
   const [state, setState] = useState<SimpleAuthState>({
     isAuthenticated: false,
     user: null,
-    loading: false
+    loading: false,
   });
 
-  const login = async (username: string, password: string): Promise<boolean> => {
-    setState(prev => ({ ...prev, loading: true }));
-    
+  const login = async (
+    username: string,
+    password: string
+  ): Promise<boolean> => {
+    setState((prev) => ({ ...prev, loading: true }));
+
     // Simple validation - accept any username/password for demo
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-    
+    await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API call
+
     setState({
       isAuthenticated: true,
       user: { username },
-      loading: false
+      loading: false,
     });
-    
+
     return true;
   };
 
@@ -53,7 +60,7 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
     setState({
       isAuthenticated: false,
       user: null,
-      loading: false
+      loading: false,
     });
   };
 

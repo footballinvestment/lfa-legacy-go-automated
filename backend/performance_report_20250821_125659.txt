@@ -1,0 +1,57 @@
+============================================================
+🚀 LFA Legacy GO - Performance Test Report
+============================================================
+Test Time: 2025-08-21 12:56:29
+Overall Score: 93/100
+
+📊 Endpoint Performance:
+----------------------------------------
+/:
+  Score: 100/100
+  Avg Response: 2.47ms
+  P95: 2.08ms
+  RPS: 404.59
+  Errors: 0/50
+
+/health:
+  Score: 100/100
+  Avg Response: 2.09ms
+  P95: 1.93ms
+  RPS: 477.44
+  Errors: 0/50
+
+/api/health:
+  Score: 100/100
+  Avg Response: 1.52ms
+  P95: 1.72ms
+  RPS: 656.41
+  Errors: 0/50
+
+/api/performance/summary:
+  Score: 100/100
+  Avg Response: 1.47ms
+  P95: 1.72ms
+  RPS: 679.06
+  Errors: 0/50
+
+⚡ Concurrent Performance (Health endpoint):
+----------------------------------------
+Score: 100/100
+Concurrent Users: 10
+Avg Response: 7.23ms
+P95: 9.63ms
+RPS: 1239.2
+Errors: 0/50
+
+🧠 Memory Performance:
+----------------------------------------
+Score: 60/100
+Avg Memory: 4098.35 MB
+Peak Memory: 4160.95 MB
+Memory Stable: ✅
+
+🔧 Recommendations:
+----------------------------------------
+✅ Excellent performance! System is highly optimized.
+
+============================================================

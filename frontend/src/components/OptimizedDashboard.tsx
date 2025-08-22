@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useMemo,
+} from "react";
 import {
   Box,
   Typography,
@@ -39,16 +45,19 @@ interface DashboardStats {
 // Debounced function hook
 const useDebounce = (callback: Function, delay: number) => {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
-  return useCallback((...args: any[]) => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-    
-    timeoutRef.current = setTimeout(() => {
-      callback(...args);
-    }, delay);
-  }, [callback, delay]);
+
+  return useCallback(
+    (...args: any[]) => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+
+      timeoutRef.current = setTimeout(() => {
+        callback(...args);
+      }, delay);
+    },
+    [callback, delay]
+  );
 };
 
 const OptimizedDashboard: React.FC = () => {
@@ -60,18 +69,18 @@ const OptimizedDashboard: React.FC = () => {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [isStatsLoaded, setIsStatsLoaded] = useState(false);
-  
+
   // Refs to prevent multiple simultaneous API calls
   const loadingStatsRef = useRef(false);
   const refreshingUserRef = useRef(false);
   const mountedRef = useRef(true);
 
-  console.log('📊 OptimizedDashboard rendering');
+  console.log("📊 OptimizedDashboard rendering");
 
   // Debounced API calls to prevent rapid successive calls
   const debouncedLoadStats = useDebounce(async () => {
     if (loadingStatsRef.current || !mountedRef.current) {
-      console.log('🚫 Stats loading skipped - already loading or unmounted');
+      console.log("🚫 Stats loading skipped - already loading or unmounted");
       return;
     }
 
@@ -80,11 +89,11 @@ const OptimizedDashboard: React.FC = () => {
     setError(null);
 
     try {
-      console.log('📊 Loading dashboard stats (debounced)...');
-      
+      console.log("📊 Loading dashboard stats (debounced)...");
+
       // TEMPORARILY DISABLE CORS-problematic tournaments call
       // const tournaments = await tournamentService.getTournaments();
-      
+
       // Use mock data instead to prevent CORS issues
       const mockStats = {
         totalTournaments: 5, // Mock data
@@ -94,16 +103,16 @@ const OptimizedDashboard: React.FC = () => {
           "API calls debounced successfully",
         ],
       };
-      
+
       if (mountedRef.current) {
         setStats(mockStats);
         setIsStatsLoaded(true);
-        console.log('✅ Dashboard stats loaded (mock data to avoid CORS)');
+        console.log("✅ Dashboard stats loaded (mock data to avoid CORS)");
       }
     } catch (err: any) {
-      console.error('❌ Dashboard stats loading error:', err);
+      console.error("❌ Dashboard stats loading error:", err);
       if (mountedRef.current) {
-        setError(`Stats loading failed: ${err.message || 'Unknown error'}`);
+        setError(`Stats loading failed: ${err.message || "Unknown error"}`);
       }
     } finally {
       if (mountedRef.current) {
@@ -115,18 +124,20 @@ const OptimizedDashboard: React.FC = () => {
 
   const debouncedRefreshStats = useDebounce(async () => {
     if (refreshingUserRef.current || !mountedRef.current) {
-      console.log('🚫 User stats refresh skipped - already refreshing or unmounted');
+      console.log(
+        "🚫 User stats refresh skipped - already refreshing or unmounted"
+      );
       return;
     }
 
     refreshingUserRef.current = true;
-    
+
     try {
-      console.log('🔄 Refreshing user stats (debounced)...');
+      console.log("🔄 Refreshing user stats (debounced)...");
       await refreshStats();
-      console.log('✅ User stats refreshed successfully');
+      console.log("✅ User stats refreshed successfully");
     } catch (error) {
-      console.error('❌ User stats refresh failed:', error);
+      console.error("❌ User stats refresh failed:", error);
     } finally {
       refreshingUserRef.current = false;
     }
@@ -135,7 +146,7 @@ const OptimizedDashboard: React.FC = () => {
   // Load initial stats only once
   useEffect(() => {
     if (!isStatsLoaded) {
-      console.log('🚀 Initial dashboard stats load triggered');
+      console.log("🚀 Initial dashboard stats load triggered");
       debouncedLoadStats();
     }
 
@@ -145,24 +156,27 @@ const OptimizedDashboard: React.FC = () => {
   }, [debouncedLoadStats, isStatsLoaded]);
 
   // Optimized coupon success handler with debouncing
-  const handleCouponSuccess = useCallback(async (response: CouponRedemptionResponse) => {
-    console.log('🎉 Coupon success handler triggered');
-    
-    setSuccessMessage(
-      `🎉 ${response.coupon_name} redeemed! +${response.credits_awarded} credits`
-    );
-    setSnackbarOpen(true);
+  const handleCouponSuccess = useCallback(
+    async (response: CouponRedemptionResponse) => {
+      console.log("🎉 Coupon success handler triggered");
 
-    // Use debounced refresh to prevent multiple rapid calls
-    debouncedRefreshStats();
-    
-    // Optionally refresh stats after a delay
-    setTimeout(() => {
-      if (mountedRef.current) {
-        debouncedLoadStats();
-      }
-    }, 2000);
-  }, [debouncedRefreshStats, debouncedLoadStats]);
+      setSuccessMessage(
+        `🎉 ${response.coupon_name} redeemed! +${response.credits_awarded} credits`
+      );
+      setSnackbarOpen(true);
+
+      // Use debounced refresh to prevent multiple rapid calls
+      debouncedRefreshStats();
+
+      // Optionally refresh stats after a delay
+      setTimeout(() => {
+        if (mountedRef.current) {
+          debouncedLoadStats();
+        }
+      }, 2000);
+    },
+    [debouncedRefreshStats, debouncedLoadStats]
+  );
 
   const handleCreditBalanceUpdate = useCallback((newBalance: number) => {
     console.log("Credit balance updated:", newBalance);
@@ -171,7 +185,7 @@ const OptimizedDashboard: React.FC = () => {
   // Memoized user stats to prevent unnecessary recalculations
   const userStats = useMemo(() => {
     if (!state.user) return [];
-    
+
     return [
       {
         title: "Level",
@@ -206,7 +220,7 @@ const OptimizedDashboard: React.FC = () => {
 
   // Manual refresh handler with debouncing
   const handleManualRefresh = useCallback(() => {
-    console.log('🔄 Manual refresh triggered');
+    console.log("🔄 Manual refresh triggered");
     debouncedLoadStats();
     debouncedRefreshStats();
   }, [debouncedLoadStats, debouncedRefreshStats]);
@@ -229,10 +243,7 @@ const OptimizedDashboard: React.FC = () => {
 
         <Box sx={{ display: "flex", gap: 1 }}>
           <Tooltip title="Refresh data (debounced)">
-            <IconButton
-              onClick={handleManualRefresh}
-              disabled={loading}
-            >
+            <IconButton onClick={handleManualRefresh} disabled={loading}>
               <Refresh />
             </IconButton>
           </Tooltip>
@@ -240,20 +251,19 @@ const OptimizedDashboard: React.FC = () => {
       </Box>
 
       {error && (
-        <Alert 
-          severity="warning" 
-          sx={{ mb: 3 }}
-          onClose={() => setError(null)}
-        >
+        <Alert severity="warning" sx={{ mb: 3 }} onClose={() => setError(null)}>
           {error}
           <br />
-          <small>Note: Some API endpoints temporarily disabled to prevent CORS issues</small>
+          <small>
+            Note: Some API endpoints temporarily disabled to prevent CORS issues
+          </small>
         </Alert>
       )}
 
       {/* Performance indicator */}
       <Alert severity="info" sx={{ mb: 3 }}>
-        🔧 <strong>Performance Mode Active:</strong> API calls debounced, CORS issues resolved, re-renders minimized
+        🔧 <strong>Performance Mode Active:</strong> API calls debounced, CORS
+        issues resolved, re-renders minimized
       </Alert>
 
       <Grid container spacing={3}>
@@ -372,8 +382,13 @@ const OptimizedDashboard: React.FC = () => {
               </Card>
             </Grid>
           </Grid>
-          <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
-            * Mock data to prevent API performance issues. Real data will be restored in Step 4.
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ mt: 1, display: "block" }}
+          >
+            * Mock data to prevent API performance issues. Real data will be
+            restored in Step 4.
           </Typography>
         </Box>
       )}

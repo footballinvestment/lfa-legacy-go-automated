@@ -4,6 +4,7 @@
 # Import all routers with error handling
 try:
     from . import auth
+
     print("✅ Auth router imported successfully")
 except ImportError as e:
     print(f"❌ Failed to import auth router: {e}")
@@ -11,6 +12,7 @@ except ImportError as e:
 
 try:
     from . import credits
+
     print("✅ Credits router imported successfully")
 except ImportError as e:
     print(f"❌ Failed to import credits router: {e}")
@@ -18,6 +20,7 @@ except ImportError as e:
 
 try:
     from . import social
+
     print("✅ Social router imported successfully")
 except ImportError as e:
     print(f"❌ Failed to import social router: {e}")
@@ -25,6 +28,7 @@ except ImportError as e:
 
 try:
     from . import locations
+
     print("✅ Locations router imported successfully")
 except ImportError as e:
     print(f"❌ Failed to import locations router: {e}")
@@ -32,6 +36,7 @@ except ImportError as e:
 
 try:
     from . import booking
+
     print("✅ Booking router imported successfully")
 except ImportError as e:
     print(f"❌ Failed to import booking router: {e}")
@@ -39,6 +44,7 @@ except ImportError as e:
 
 try:
     from . import tournaments
+
     print("✅ Tournaments router imported successfully")
 except ImportError as e:
     print(f"❌ Failed to import tournaments router: {e}")
@@ -46,6 +52,7 @@ except ImportError as e:
 
 try:
     from . import weather
+
     print("✅ Weather router imported successfully")
 except ImportError as e:
     print(f"❌ Failed to import weather router: {e}")
@@ -53,6 +60,7 @@ except ImportError as e:
 
 try:
     from . import game_results
+
     print("✅ Game Results router imported successfully")
 except ImportError as e:
     print(f"❌ Failed to import game_results router: {e}")
@@ -60,6 +68,7 @@ except ImportError as e:
 
 try:
     from . import admin
+
     print("✅ Admin router imported successfully")
 except ImportError as e:
     print(f"❌ Failed to import admin router: {e}")
@@ -67,6 +76,7 @@ except ImportError as e:
 
 try:
     from . import health
+
     print("✅ Health router imported successfully")
 except ImportError as e:
     print(f"❌ Failed to import health router: {e}")

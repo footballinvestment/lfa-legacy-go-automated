@@ -1,7 +1,7 @@
-import React from 'react';
-import { Navigate } from 'react-router-dom';
-import { Box, CircularProgress, Alert, AlertTitle } from '@mui/material';
-import { useSafeAuth } from '../../SafeAuthContext';
+import React from "react";
+import { Navigate } from "react-router-dom";
+import { Box, CircularProgress, Alert, AlertTitle } from "@mui/material";
+import { useSafeAuth } from "../../SafeAuthContext";
 
 interface AdminRouteProps {
   children: React.ReactNode;
@@ -15,18 +15,16 @@ const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
     return (
       <Box
         sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '50vh',
-          flexDirection: 'column',
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "50vh",
+          flexDirection: "column",
           gap: 2,
         }}
       >
         <CircularProgress size={60} />
-        <Box sx={{ textAlign: 'center' }}>
-          Verifying admin privileges...
-        </Box>
+        <Box sx={{ textAlign: "center" }}>Verifying admin privileges...</Box>
       </Box>
     );
   }
@@ -39,9 +37,10 @@ const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
   // Check if user has admin privileges
   // Note: This assumes the user object has a 'user_type' or 'role' field
   // Adjust the property name based on your actual user data structure
-  const isAdmin = state.user.user_type === 'admin' || 
-                  state.user.role === 'admin' || 
-                  state.user.is_admin === true;
+  const isAdmin =
+    state.user.user_type === "admin" ||
+    state.user.role === "admin" ||
+    state.user.is_admin === true;
 
   // Show unauthorized message if user is not an admin
   if (!isAdmin) {
@@ -49,8 +48,8 @@ const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
       <Box sx={{ p: 3 }}>
         <Alert severity="error">
           <AlertTitle>Access Denied</AlertTitle>
-          You do not have administrator privileges to access this page. 
-          Please contact your system administrator if you believe this is an error.
+          You do not have administrator privileges to access this page. Please
+          contact your system administrator if you believe this is an error.
         </Alert>
       </Box>
     );

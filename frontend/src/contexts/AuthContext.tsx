@@ -134,8 +134,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           dispatch({ type: "AUTH_START" });
 
           // ✅ CRITICAL FIX: Add timeout to prevent infinite loading
-          const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Auth timeout after 10 seconds')), 10000)
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(
+              () => reject(new Error("Auth timeout after 10 seconds")),
+              10000
+            )
           );
 
           // Race between API call and timeout
@@ -143,17 +146,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           try {
             userData = await Promise.race([
               authService.getCurrentUser(),
-              timeoutPromise
+              timeoutPromise,
             ]);
           } catch (error) {
-            console.error('Auth initialization failed:', error);
+            console.error("Auth initialization failed:", error);
             throw new Error("Authentication timeout or failed");
           }
 
           // CRITICAL FIX: Proper validation to prevent React Error #130
-          if (!userData || typeof userData !== 'object' || userData.constructor === Error || userData.message) {
-            console.error('Invalid user data type:', typeof userData, userData);
-            throw new Error("Invalid user data received - got: " + typeof userData);
+          if (
+            !userData ||
+            typeof userData !== "object" ||
+            userData.constructor === Error ||
+            userData.message
+          ) {
+            console.error("Invalid user data type:", typeof userData, userData);
+            throw new Error(
+              "Invalid user data received - got: " + typeof userData
+            );
           }
 
           const user: User = {
@@ -197,10 +207,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // ✅ CRITICAL FIX: Fallback timeout to force loading state to false
   useEffect(() => {
     const fallbackTimeout = setTimeout(() => {
-      console.warn('⚠️ Auth initialization timeout - forcing loading state to false');
+      console.warn(
+        "⚠️ Auth initialization timeout - forcing loading state to false"
+      );
       dispatch({ type: "AUTH_FAILURE", payload: "Authentication timeout" });
     }, 15000);
-    
+
     return () => clearTimeout(fallbackTimeout);
   }, []);
 

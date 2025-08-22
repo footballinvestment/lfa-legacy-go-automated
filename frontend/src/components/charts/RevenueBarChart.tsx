@@ -1,17 +1,17 @@
-import React from 'react';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import React from "react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   Legend,
   Cell,
-  ResponsiveContainer 
-} from 'recharts';
-import { useTheme, Box, Typography, Chip } from '@mui/material';
-import ChartWrapper, { BaseChartProps, getChartColors } from './ChartWrapper';
+  ResponsiveContainer,
+} from "recharts";
+import { useTheme, Box, Typography, Chip } from "@mui/material";
+import ChartWrapper, { BaseChartProps, getChartColors } from "./ChartWrapper";
 
 export interface RevenueData {
   period: string;
@@ -29,7 +29,7 @@ export interface RevenueBarChartProps extends BaseChartProps {
   showProfit?: boolean;
   showExpenses?: boolean;
   showTarget?: boolean;
-  chartType?: 'grouped' | 'stacked';
+  chartType?: "grouped" | "stacked";
   colorScheme?: string;
   showTrendLine?: boolean;
   currencySymbol?: string;
@@ -44,10 +44,10 @@ const RevenueBarChart: React.FC<RevenueBarChartProps> = ({
   showProfit = true,
   showExpenses = false,
   showTarget = false,
-  chartType = 'grouped',
-  colorScheme = 'default',
+  chartType = "grouped",
+  colorScheme = "default",
   showTrendLine = false,
-  currencySymbol = '$',
+  currencySymbol = "$",
   onDataPointClick,
 }) => {
   const theme = useTheme();
@@ -59,9 +59,15 @@ const RevenueBarChart: React.FC<RevenueBarChartProps> = ({
 
   const calculateTotals = () => {
     const totalRevenue = data.reduce((sum, item) => sum + item.revenue, 0);
-    const totalExpenses = data.reduce((sum, item) => sum + (item.expenses || 0), 0);
-    const totalProfit = data.reduce((sum, item) => sum + (item.profit || item.revenue - (item.expenses || 0)), 0);
-    
+    const totalExpenses = data.reduce(
+      (sum, item) => sum + (item.expenses || 0),
+      0
+    );
+    const totalProfit = data.reduce(
+      (sum, item) => sum + (item.profit || item.revenue - (item.expenses || 0)),
+      0
+    );
+
     return { totalRevenue, totalExpenses, totalProfit };
   };
 
@@ -83,7 +89,7 @@ const RevenueBarChart: React.FC<RevenueBarChartProps> = ({
             borderRadius: 1,
             p: 1.5,
             boxShadow: theme.shadows[3],
-            fontSize: '0.875rem',
+            fontSize: "0.875rem",
           }}
         >
           <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
@@ -93,10 +99,10 @@ const RevenueBarChart: React.FC<RevenueBarChartProps> = ({
             <Typography
               key={index}
               variant="body2"
-              sx={{ 
+              sx={{
                 color: entry.color,
-                display: 'flex',
-                justifyContent: 'space-between',
+                display: "flex",
+                justifyContent: "space-between",
                 minWidth: 120,
               }}
             >
@@ -106,14 +112,14 @@ const RevenueBarChart: React.FC<RevenueBarChartProps> = ({
               </span>
             </Typography>
           ))}
-          
+
           {payload[0]?.payload?.target && showTarget && (
             <Typography
               variant="body2"
-              sx={{ 
+              sx={{
                 color: theme.palette.warning.main,
-                display: 'flex',
-                justifyContent: 'space-between',
+                display: "flex",
+                justifyContent: "space-between",
                 mt: 0.5,
                 borderTop: `1px solid ${theme.palette.divider}`,
                 pt: 0.5,
@@ -132,31 +138,31 @@ const RevenueBarChart: React.FC<RevenueBarChartProps> = ({
   };
 
   const renderChart = () => (
-    <BarChart 
-      data={data} 
+    <BarChart
+      data={data}
       margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
       onClick={handleBarClick}
     >
       {config.showGrid !== false && (
         <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
       )}
-      
-      <XAxis 
-        dataKey="period" 
+
+      <XAxis
+        dataKey="period"
         stroke={theme.palette.text.secondary}
         fontSize={12}
       />
-      
-      <YAxis 
+
+      <YAxis
         stroke={theme.palette.text.secondary}
         fontSize={12}
         tickFormatter={formatCurrency}
       />
-      
+
       <Tooltip content={<CustomTooltip />} />
-      
+
       {config.showLegend !== false && <Legend />}
-      
+
       <Bar
         dataKey="revenue"
         name="Revenue"
@@ -168,7 +174,7 @@ const RevenueBarChart: React.FC<RevenueBarChartProps> = ({
           <Cell key={`revenue-${index}`} fill={colors[0]} />
         ))}
       </Bar>
-      
+
       {showExpenses && (
         <Bar
           dataKey="expenses"
@@ -182,7 +188,7 @@ const RevenueBarChart: React.FC<RevenueBarChartProps> = ({
           ))}
         </Bar>
       )}
-      
+
       {showProfit && (
         <Bar
           dataKey="profit"
@@ -196,7 +202,7 @@ const RevenueBarChart: React.FC<RevenueBarChartProps> = ({
           ))}
         </Bar>
       )}
-      
+
       {/* Revenue breakdown bars */}
       {data[0]?.tournamentFees && (
         <Bar
@@ -207,7 +213,7 @@ const RevenueBarChart: React.FC<RevenueBarChartProps> = ({
           animationDuration={config.animationDuration || 1000}
         />
       )}
-      
+
       {data[0]?.subscriptions && (
         <Bar
           dataKey="subscriptions"
@@ -221,24 +227,24 @@ const RevenueBarChart: React.FC<RevenueBarChartProps> = ({
   );
 
   const renderSummaryCards = () => (
-    <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mb: 3 }}>
+    <Box sx={{ display: "flex", justifyContent: "center", gap: 2, mb: 3 }}>
       <Chip
         label={`Total Revenue: ${formatCurrency(totalRevenue)}`}
         color="primary"
-        sx={{ fontSize: '0.875rem', height: 32 }}
+        sx={{ fontSize: "0.875rem", height: 32 }}
       />
       {showProfit && (
         <Chip
           label={`Total Profit: ${formatCurrency(totalProfit)}`}
           color="success"
-          sx={{ fontSize: '0.875rem', height: 32 }}
+          sx={{ fontSize: "0.875rem", height: 32 }}
         />
       )}
       {showExpenses && (
         <Chip
           label={`Total Expenses: ${formatCurrency(totalExpenses)}`}
           color="warning"
-          sx={{ fontSize: '0.875rem', height: 32 }}
+          sx={{ fontSize: "0.875rem", height: 32 }}
         />
       )}
     </Box>
@@ -264,17 +270,32 @@ const RevenueBarChart: React.FC<RevenueBarChartProps> = ({
 export default RevenueBarChart;
 
 // Sample data generator
-export const generateSampleRevenueData = (months: number = 12): RevenueData[] => {
+export const generateSampleRevenueData = (
+  months: number = 12
+): RevenueData[] => {
   const data: RevenueData[] = [];
-  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  
+  const monthNames = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+
   for (let i = 0; i < months; i++) {
-    const baseRevenue = 15000 + (i * 1000) + Math.floor(Math.random() * 5000);
+    const baseRevenue = 15000 + i * 1000 + Math.floor(Math.random() * 5000);
     const expenses = baseRevenue * 0.6 + Math.floor(Math.random() * 2000);
     const tournamentFees = baseRevenue * 0.7;
     const subscriptions = baseRevenue * 0.2;
     const merchandise = baseRevenue * 0.1;
-    
+
     data.push({
       period: monthNames[i] || `Month ${i + 1}`,
       revenue: baseRevenue,
@@ -286,6 +307,6 @@ export const generateSampleRevenueData = (months: number = 12): RevenueData[] =>
       target: baseRevenue + 2000,
     });
   }
-  
+
   return data;
 };

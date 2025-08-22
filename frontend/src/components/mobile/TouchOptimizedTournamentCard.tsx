@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
   Card,
   CardContent,
@@ -15,7 +15,7 @@ import {
   Slide,
   useTheme,
   alpha,
-} from '@mui/material';
+} from "@mui/material";
 import {
   LocationOn,
   Schedule,
@@ -31,10 +31,12 @@ import {
   CheckCircle,
   Timer,
   SportsSoccer,
-} from '@mui/icons-material';
-import { Tournament, TournamentStatus } from '../../types/tournament';
-import useTouchGestures, { TouchGestureEvent } from '../../hooks/useTouchGestures';
-import useMobileViewport from '../../hooks/useMobileViewport';
+} from "@mui/icons-material";
+import { Tournament, TournamentStatus } from "../../types/tournament";
+import useTouchGestures, {
+  TouchGestureEvent,
+} from "../../hooks/useTouchGestures";
+import useMobileViewport from "../../hooks/useMobileViewport";
 
 interface TouchOptimizedTournamentCardProps {
   tournament: Tournament;
@@ -50,7 +52,9 @@ interface TouchOptimizedTournamentCardProps {
   animationDelay?: number;
 }
 
-const TouchOptimizedTournamentCard: React.FC<TouchOptimizedTournamentCardProps> = ({
+const TouchOptimizedTournamentCard: React.FC<
+  TouchOptimizedTournamentCardProps
+> = ({
   tournament,
   onTap,
   onJoin,
@@ -61,62 +65,77 @@ const TouchOptimizedTournamentCard: React.FC<TouchOptimizedTournamentCardProps> 
   isWatchlisted = false,
   showActions = true,
   compact = false,
-  animationDelay = 0
+  animationDelay = 0,
 }) => {
   const theme = useTheme();
   const { viewport, isSmallScreen, getSpacing } = useMobileViewport();
   const cardRef = useRef<HTMLDivElement>(null);
-  
+
   // Animation states
   const [isPressed, setIsPressed] = useState(false);
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [showQuickActions, setShowQuickActions] = useState(false);
-  const [ripplePosition, setRipplePosition] = useState<{ x: number; y: number } | null>(null);
+  const [ripplePosition, setRipplePosition] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
   const [isVisible, setIsVisible] = useState(false);
 
   // Touch gesture handlers
   const gestureHandlers = {
-    onTap: useCallback((event: TouchGestureEvent) => {
-      // Create ripple effect at touch position
-      if (cardRef.current) {
-        const rect = cardRef.current.getBoundingClientRect();
-        setRipplePosition({
-          x: event.startX - rect.left,
-          y: event.startY - rect.top
-        });
-        
-        // Clear ripple after animation
-        setTimeout(() => setRipplePosition(null), 600);
-      }
-      
-      onTap?.(tournament);
-    }, [onTap, tournament]),
+    onTap: useCallback(
+      (event: TouchGestureEvent) => {
+        // Create ripple effect at touch position
+        if (cardRef.current) {
+          const rect = cardRef.current.getBoundingClientRect();
+          setRipplePosition({
+            x: event.startX - rect.left,
+            y: event.startY - rect.top,
+          });
 
-    onSwipeLeft: useCallback((event: TouchGestureEvent) => {
-      // Show quick actions on swipe left
-      setShowQuickActions(true);
-      setTimeout(() => setShowQuickActions(false), 2000);
-      onSwipeLeft?.(tournament);
-    }, [onSwipeLeft, tournament]),
+          // Clear ripple after animation
+          setTimeout(() => setRipplePosition(null), 600);
+        }
 
-    onSwipeRight: useCallback((event: TouchGestureEvent) => {
-      // Join tournament on swipe right
-      if (tournament.status === 'upcoming' && tournament.currentParticipants < tournament.maxParticipants) {
-        onJoin?.(tournament);
-      } else {
-        onSwipeRight?.(tournament);
-      }
-    }, [onSwipeRight, onJoin, tournament]),
+        onTap?.(tournament);
+      },
+      [onTap, tournament]
+    ),
+
+    onSwipeLeft: useCallback(
+      (event: TouchGestureEvent) => {
+        // Show quick actions on swipe left
+        setShowQuickActions(true);
+        setTimeout(() => setShowQuickActions(false), 2000);
+        onSwipeLeft?.(tournament);
+      },
+      [onSwipeLeft, tournament]
+    ),
+
+    onSwipeRight: useCallback(
+      (event: TouchGestureEvent) => {
+        // Join tournament on swipe right
+        if (
+          tournament.status === "upcoming" &&
+          tournament.currentParticipants < tournament.maxParticipants
+        ) {
+          onJoin?.(tournament);
+        } else {
+          onSwipeRight?.(tournament);
+        }
+      },
+      [onSwipeRight, onJoin, tournament]
+    ),
 
     onLongPress: useCallback(() => {
       // Show context menu or additional options
       setShowQuickActions(true);
-      
+
       // Haptic feedback if available
-      if ('vibrate' in navigator) {
+      if ("vibrate" in navigator) {
         navigator.vibrate(50);
       }
-    }, [])
+    }, []),
   };
 
   // Touch gesture setup
@@ -124,8 +143,8 @@ const TouchOptimizedTournamentCard: React.FC<TouchOptimizedTournamentCardProps> 
     swipeThreshold: 80,
     tapThreshold: 20,
     longPressThreshold: 600,
-    enabledGestures: ['swipe', 'tap', 'longPress'],
-    preventScroll: false
+    enabledGestures: ["swipe", "tap", "longPress"],
+    preventScroll: false,
   });
 
   // Attach touch listeners to card
@@ -148,38 +167,40 @@ const TouchOptimizedTournamentCard: React.FC<TouchOptimizedTournamentCardProps> 
   // Get status color and icon
   const getStatusInfo = (status: TournamentStatus) => {
     switch (status) {
-      case 'upcoming':
+      case "upcoming":
         return {
           color: theme.palette.info.main,
           icon: <Schedule fontSize="small" />,
-          label: 'UPCOMING'
+          label: "UPCOMING",
         };
-      case 'active':
+      case "active":
         return {
           color: theme.palette.success.main,
           icon: <Timer fontSize="small" />,
-          label: 'LIVE'
+          label: "LIVE",
         };
-      case 'completed':
+      case "completed":
         return {
           color: theme.palette.grey[500],
           icon: <CheckCircle fontSize="small" />,
-          label: 'COMPLETED'
+          label: "COMPLETED",
         };
       default:
         return {
           color: theme.palette.text.secondary,
           icon: <SportsSoccer fontSize="small" />,
-          label: status.toUpperCase()
+          label: status.toUpperCase(),
         };
     }
   };
 
   const statusInfo = getStatusInfo(tournament.status);
-  const canJoin = tournament.status === 'upcoming' && 
-                 tournament.currentParticipants < tournament.maxParticipants;
-  
-  const participantsPercentage = (tournament.currentParticipants / tournament.maxParticipants) * 100;
+  const canJoin =
+    tournament.status === "upcoming" &&
+    tournament.currentParticipants < tournament.maxParticipants;
+
+  const participantsPercentage =
+    (tournament.currentParticipants / tournament.maxParticipants) * 100;
 
   return (
     <Slide
@@ -191,21 +212,21 @@ const TouchOptimizedTournamentCard: React.FC<TouchOptimizedTournamentCardProps> 
       <Card
         ref={cardRef}
         sx={{
-          position: 'relative',
+          position: "relative",
           mb: getSpacing(2),
           borderRadius: getSpacing(2),
-          overflow: 'hidden',
-          cursor: 'pointer',
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          overflow: "hidden",
+          cursor: "pointer",
+          transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
           transform: `scale(${isPressed ? 0.98 : 1}) translateX(${swipeOffset}px)`,
           boxShadow: theme.shadows[isPressed ? 8 : 2],
           ...(isSmallScreen && {
             mx: 1,
-            borderRadius: getSpacing(1.5)
+            borderRadius: getSpacing(1.5),
           }),
-          '&:active': {
-            transform: 'scale(0.98)',
-          }
+          "&:active": {
+            transform: "scale(0.98)",
+          },
         }}
         onMouseDown={() => setIsPressed(true)}
         onMouseUp={() => setIsPressed(false)}
@@ -217,68 +238,73 @@ const TouchOptimizedTournamentCard: React.FC<TouchOptimizedTournamentCardProps> 
         {ripplePosition && (
           <Box
             sx={{
-              position: 'absolute',
+              position: "absolute",
               top: ripplePosition.y - 25,
               left: ripplePosition.x - 25,
               width: 50,
               height: 50,
-              borderRadius: '50%',
+              borderRadius: "50%",
               backgroundColor: alpha(theme.palette.primary.main, 0.3),
-              transform: 'scale(0)',
-              animation: 'ripple 0.6s ease-out',
-              pointerEvents: 'none',
+              transform: "scale(0)",
+              animation: "ripple 0.6s ease-out",
+              pointerEvents: "none",
               zIndex: 2,
-              '@keyframes ripple': {
+              "@keyframes ripple": {
                 to: {
-                  transform: 'scale(4)',
-                  opacity: 0
-                }
-              }
+                  transform: "scale(4)",
+                  opacity: 0,
+                },
+              },
             }}
           />
         )}
 
         <CardContent sx={{ pb: compact ? 1 : 2 }}>
           {/* Header with status and actions */}
-          <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="flex-start"
+            mb={1}
+          >
             <Box flex={1} minWidth={0}>
-              <Typography 
+              <Typography
                 variant={compact ? "subtitle1" : "h6"}
-                component="h3" 
-                sx={{ 
+                component="h3"
+                sx={{
                   fontWeight: 600,
                   lineHeight: 1.2,
                   mb: 0.5,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap'
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
                 }}
               >
                 {tournament.name}
               </Typography>
-              
+
               <Chip
                 icon={statusInfo.icon}
                 label={statusInfo.label}
                 size="small"
                 sx={{
                   backgroundColor: statusInfo.color,
-                  color: 'white',
+                  color: "white",
                   fontWeight: 600,
-                  fontSize: '0.7rem',
+                  fontSize: "0.7rem",
                   height: 24,
-                  ...(tournament.status === 'active' && {
-                    animation: 'pulse 2s infinite',
-                    '@keyframes pulse': {
-                      '0%': { opacity: 1 },
-                      '50%': { opacity: 0.7 },
-                      '100%': { opacity: 1 }
-                    }
-                  })
+                  ...(tournament.status === "active" && {
+                    animation: "pulse 2s infinite",
+                    "@keyframes pulse": {
+                      "0%": { opacity: 1 },
+                      "50%": { opacity: 0.7 },
+                      "100%": { opacity: 1 },
+                    },
+                  }),
                 }}
               />
             </Box>
-            
+
             <Box display="flex" alignItems="center" gap={0.5}>
               <IconButton
                 size="small"
@@ -294,7 +320,7 @@ const TouchOptimizedTournamentCard: React.FC<TouchOptimizedTournamentCardProps> 
                   <FavoriteBorder fontSize="small" />
                 )}
               </IconButton>
-              
+
               <IconButton
                 size="small"
                 onClick={(e) => {
@@ -311,21 +337,27 @@ const TouchOptimizedTournamentCard: React.FC<TouchOptimizedTournamentCardProps> 
           {/* Tournament Details */}
           <Box display="flex" flexDirection="column" gap={1} mb={2}>
             <Box display="flex" alignItems="center" gap={1.5} flexWrap="wrap">
-              <Box display="flex" alignItems="center" gap={0.5} minWidth={0} flex={1}>
+              <Box
+                display="flex"
+                alignItems="center"
+                gap={0.5}
+                minWidth={0}
+                flex={1}
+              >
                 <LocationOn fontSize="small" color="action" />
-                <Typography 
-                  variant="body2" 
+                <Typography
+                  variant="body2"
                   color="text.secondary"
-                  sx={{ 
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap'
+                  sx={{
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
                   }}
                 >
                   {tournament.location}
                 </Typography>
               </Box>
-              
+
               <Box display="flex" alignItems="center" gap={0.5}>
                 <Star fontSize="small" color="action" />
                 <Typography variant="body2" color="text.secondary">
@@ -334,15 +366,19 @@ const TouchOptimizedTournamentCard: React.FC<TouchOptimizedTournamentCardProps> 
               </Box>
             </Box>
 
-            <Box display="flex" alignItems="center" justifyContent="space-between">
+            <Box
+              display="flex"
+              alignItems="center"
+              justifyContent="space-between"
+            >
               <Typography variant="body2" color="text.secondary">
-                {new Date(tournament.startDate).toLocaleDateString()} at{' '}
+                {new Date(tournament.startDate).toLocaleDateString()} at{" "}
                 {new Date(tournament.startDate).toLocaleTimeString([], {
-                  hour: '2-digit',
-                  minute: '2-digit'
+                  hour: "2-digit",
+                  minute: "2-digit",
                 })}
               </Typography>
-              
+
               {tournament.prizePool && (
                 <Chip
                   label={`$${tournament.prizePool}`}
@@ -357,18 +393,24 @@ const TouchOptimizedTournamentCard: React.FC<TouchOptimizedTournamentCardProps> 
 
           {/* Participants Progress */}
           <Box mb={compact ? 1 : 2}>
-            <Box display="flex" alignItems="center" justifyContent="space-between" mb={0.5}>
+            <Box
+              display="flex"
+              alignItems="center"
+              justifyContent="space-between"
+              mb={0.5}
+            >
               <Box display="flex" alignItems="center" gap={0.5}>
                 <People fontSize="small" color="action" />
                 <Typography variant="body2" color="text.secondary">
-                  {tournament.currentParticipants}/{tournament.maxParticipants} players
+                  {tournament.currentParticipants}/{tournament.maxParticipants}{" "}
+                  players
                 </Typography>
               </Box>
               <Typography variant="body2" color="text.secondary">
                 {Math.round(participantsPercentage)}%
               </Typography>
             </Box>
-            
+
             <LinearProgress
               variant="determinate"
               value={participantsPercentage}
@@ -376,11 +418,12 @@ const TouchOptimizedTournamentCard: React.FC<TouchOptimizedTournamentCardProps> 
                 height: 4,
                 borderRadius: 2,
                 backgroundColor: alpha(theme.palette.grey[300], 0.3),
-                '& .MuiLinearProgress-bar': {
-                  backgroundColor: participantsPercentage > 80 ? 
-                    theme.palette.warning.main : 
-                    theme.palette.primary.main
-                }
+                "& .MuiLinearProgress-bar": {
+                  backgroundColor:
+                    participantsPercentage > 80
+                      ? theme.palette.warning.main
+                      : theme.palette.primary.main,
+                },
               }}
             />
           </Box>
@@ -397,14 +440,14 @@ const TouchOptimizedTournamentCard: React.FC<TouchOptimizedTournamentCardProps> 
                 e.stopPropagation();
                 onTap?.(tournament);
               }}
-              sx={{ 
+              sx={{
                 borderRadius: getSpacing(1),
-                textTransform: 'none'
+                textTransform: "none",
               }}
             >
               Details
             </Button>
-            
+
             {canJoin && (
               <Button
                 size="small"
@@ -414,11 +457,11 @@ const TouchOptimizedTournamentCard: React.FC<TouchOptimizedTournamentCardProps> 
                   e.stopPropagation();
                   onJoin?.(tournament);
                 }}
-                sx={{ 
+                sx={{
                   borderRadius: getSpacing(1),
-                  textTransform: 'none',
+                  textTransform: "none",
                   fontWeight: 600,
-                  ml: 1
+                  ml: 1,
                 }}
               >
                 Join
@@ -431,17 +474,17 @@ const TouchOptimizedTournamentCard: React.FC<TouchOptimizedTournamentCardProps> 
         <Collapse in={showQuickActions}>
           <Box
             sx={{
-              position: 'absolute',
+              position: "absolute",
               top: 0,
               left: 0,
               right: 0,
               bottom: 0,
               backgroundColor: alpha(theme.palette.background.paper, 0.95),
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
               gap: 2,
-              zIndex: 10
+              zIndex: 10,
             }}
           >
             {canJoin && (
@@ -459,7 +502,7 @@ const TouchOptimizedTournamentCard: React.FC<TouchOptimizedTournamentCardProps> 
                 Join Now
               </Button>
             )}
-            
+
             <Button
               variant="outlined"
               size="large"
@@ -477,21 +520,21 @@ const TouchOptimizedTournamentCard: React.FC<TouchOptimizedTournamentCardProps> 
         </Collapse>
 
         {/* Swipe Indicators */}
-        {tournament.status === 'upcoming' && (
+        {tournament.status === "upcoming" && (
           <>
             {/* Swipe Right Indicator */}
             <Box
               sx={{
-                position: 'absolute',
+                position: "absolute",
                 left: -100,
-                top: '50%',
-                transform: 'translateY(-50%)',
-                display: 'flex',
-                alignItems: 'center',
+                top: "50%",
+                transform: "translateY(-50%)",
+                display: "flex",
+                alignItems: "center",
                 gap: 1,
                 color: theme.palette.success.main,
-                transition: 'left 0.3s ease',
-                ...(swipeOffset > 50 && { left: 16 })
+                transition: "left 0.3s ease",
+                ...(swipeOffset > 50 && { left: 16 }),
               }}
             >
               <Add />
@@ -503,16 +546,16 @@ const TouchOptimizedTournamentCard: React.FC<TouchOptimizedTournamentCardProps> 
             {/* Swipe Left Indicator */}
             <Box
               sx={{
-                position: 'absolute',
+                position: "absolute",
                 right: -100,
-                top: '50%',
-                transform: 'translateY(-50%)',
-                display: 'flex',
-                alignItems: 'center',
+                top: "50%",
+                transform: "translateY(-50%)",
+                display: "flex",
+                alignItems: "center",
                 gap: 1,
                 color: theme.palette.info.main,
-                transition: 'right 0.3s ease',
-                ...(swipeOffset < -50 && { right: 16 })
+                transition: "right 0.3s ease",
+                ...(swipeOffset < -50 && { right: 16 }),
               }}
             >
               <Typography variant="body2" fontWeight={600}>

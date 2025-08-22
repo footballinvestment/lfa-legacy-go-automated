@@ -956,8 +956,8 @@ const MatchControlDashboard: React.FC = () => {
                                   ? selectedMatch.player1_score
                                   : "-"
                                 : selectedMatch.player2_score !== null
-                                ? selectedMatch.player2_score
-                                : "-"}
+                                  ? selectedMatch.player2_score
+                                  : "-"}
                             </Typography>
                           </Box>
                         </Paper>

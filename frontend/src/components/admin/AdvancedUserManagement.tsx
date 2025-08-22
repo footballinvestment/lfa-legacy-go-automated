@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -39,7 +39,7 @@ import {
   Tooltip,
   CircularProgress,
   LinearProgress,
-} from '@mui/material';
+} from "@mui/material";
 import {
   People,
   PersonAdd,
@@ -63,19 +63,22 @@ import {
   ViewList,
   ViewModule,
   Clear,
-} from '@mui/icons-material';
-import { useSafeAuth } from '../../SafeAuthContext';
-import UserDetailModal from './UserDetailModal';
-import { moderationApi } from '../../services/moderationApi';
-import type { BulkUserOperation, BulkOperationResult } from '../../types/moderation';
+} from "@mui/icons-material";
+import { useSafeAuth } from "../../SafeAuthContext";
+import UserDetailModal from "./UserDetailModal";
+import { moderationApi } from "../../services/moderationApi";
+import type {
+  BulkUserOperation,
+  BulkOperationResult,
+} from "../../types/moderation";
 
 interface UserProfile {
   id: string;
   email: string;
   fullName: string;
   avatar?: string;
-  status: 'active' | 'suspended' | 'banned' | 'pending';
-  role: 'user' | 'moderator' | 'admin';
+  status: "active" | "suspended" | "banned" | "pending";
+  role: "user" | "moderator" | "admin";
   level: number;
   credits: number;
   registrationDate: string;
@@ -91,23 +94,35 @@ interface UserProfile {
     rank: number;
   };
   violations: UserViolation[];
-  activityLevel: 'low' | 'medium' | 'high';
+  activityLevel: "low" | "medium" | "high";
   verified: boolean;
   achievements: string[];
 }
 
 interface UserViolation {
   id: string;
-  type: 'cheating' | 'harassment' | 'spam' | 'inappropriate_content' | 'account_sharing';
-  severity: 'minor' | 'major' | 'critical';
+  type:
+    | "cheating"
+    | "harassment"
+    | "spam"
+    | "inappropriate_content"
+    | "account_sharing";
+  severity: "minor" | "major" | "critical";
   description: string;
   date: string;
-  status: 'pending' | 'resolved' | 'dismissed';
+  status: "pending" | "resolved" | "dismissed";
   actionTaken?: string;
 }
 
 interface BulkOperationLocal {
-  type: 'suspend' | 'activate' | 'ban' | 'promote' | 'demote' | 'delete' | 'export';
+  type:
+    | "suspend"
+    | "activate"
+    | "ban"
+    | "promote"
+    | "demote"
+    | "delete"
+    | "export";
   userIds: string[];
   reason?: string;
 }
@@ -133,41 +148,90 @@ const AdvancedUserManagement: React.FC = () => {
   const { user } = useSafeAuth();
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
-  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
+  const [viewMode, setViewMode] = useState<"table" | "cards">("table");
   const [filterOptions, setFilterOptions] = useState<UserFilter>({});
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
-  const [bulkMenuAnchor, setBulkMenuAnchor] = useState<null | HTMLElement>(null);
-  const [filterMenuAnchor, setFilterMenuAnchor] = useState<null | HTMLElement>(null);
+  const [bulkMenuAnchor, setBulkMenuAnchor] = useState<null | HTMLElement>(
+    null
+  );
+  const [filterMenuAnchor, setFilterMenuAnchor] = useState<null | HTMLElement>(
+    null
+  );
   const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarMessage, setSnackbarMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [bulkOperationOpen, setBulkOperationOpen] = useState(false);
-  const [bulkOperationType, setBulkOperationType] = useState<string>('');
-  const [bulkOperationReason, setBulkOperationReason] = useState('');
-  const [bulkOperationProgress, setBulkOperationProgress] = useState<BulkOperationResult | null>(null);
+  const [bulkOperationType, setBulkOperationType] = useState<string>("");
+  const [bulkOperationReason, setBulkOperationReason] = useState("");
+  const [bulkOperationProgress, setBulkOperationProgress] =
+    useState<BulkOperationResult | null>(null);
   const [bulkOperationInProgress, setBulkOperationInProgress] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const [userDetailOpen, setUserDetailOpen] = useState(false);
-  const [sortBy, setSortBy] = useState<keyof UserProfile>('registrationDate');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [sortBy, setSortBy] = useState<keyof UserProfile>("registrationDate");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
   // Mock user data
   useEffect(() => {
     const generateMockUsers = (): UserProfile[] => {
       const mockUsers: UserProfile[] = [];
-      const names = ['John Doe', 'Jane Smith', 'Mike Johnson', 'Sarah Wilson', 'Alex Chen', 'Maria Garcia', 'David Brown', 'Lisa Davis', 'Tom Anderson', 'Emma Taylor'];
-      const locations = ['New York', 'London', 'Tokyo', 'Berlin', 'Sydney', 'Toronto', 'Paris', 'Seoul', 'Mumbai', 'São Paulo'];
-      const roles: UserProfile['role'][] = ['user', 'user', 'user', 'user', 'moderator', 'user', 'user', 'user', 'user', 'admin'];
-      const statuses: UserProfile['status'][] = ['active', 'active', 'active', 'suspended', 'active', 'banned', 'active', 'pending', 'active', 'active'];
+      const names = [
+        "John Doe",
+        "Jane Smith",
+        "Mike Johnson",
+        "Sarah Wilson",
+        "Alex Chen",
+        "Maria Garcia",
+        "David Brown",
+        "Lisa Davis",
+        "Tom Anderson",
+        "Emma Taylor",
+      ];
+      const locations = [
+        "New York",
+        "London",
+        "Tokyo",
+        "Berlin",
+        "Sydney",
+        "Toronto",
+        "Paris",
+        "Seoul",
+        "Mumbai",
+        "São Paulo",
+      ];
+      const roles: UserProfile["role"][] = [
+        "user",
+        "user",
+        "user",
+        "user",
+        "moderator",
+        "user",
+        "user",
+        "user",
+        "user",
+        "admin",
+      ];
+      const statuses: UserProfile["status"][] = [
+        "active",
+        "active",
+        "active",
+        "suspended",
+        "active",
+        "banned",
+        "active",
+        "pending",
+        "active",
+        "active",
+      ];
 
       for (let i = 0; i < 50; i++) {
         const tournamentsPlayed = Math.floor(Math.random() * 100) + 1;
         const wins = Math.floor(Math.random() * tournamentsPlayed);
         const losses = tournamentsPlayed - wins;
         const winRate = Math.round((wins / tournamentsPlayed) * 100);
-        
+
         mockUsers.push({
           id: (i + 1).toString(),
           email: `user${i + 1}@example.com`,
@@ -176,8 +240,12 @@ const AdvancedUserManagement: React.FC = () => {
           role: roles[i % roles.length],
           level: Math.floor(Math.random() * 50) + 1,
           credits: Math.floor(Math.random() * 10000),
-          registrationDate: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000).toISOString(),
-          lastLogin: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
+          registrationDate: new Date(
+            Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000
+          ).toISOString(),
+          lastLogin: new Date(
+            Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000
+          ).toISOString(),
           ipAddress: `192.168.1.${Math.floor(Math.random() * 255)}`,
           location: locations[i % locations.length],
           gameStats: {
@@ -188,80 +256,126 @@ const AdvancedUserManagement: React.FC = () => {
             totalPoints: Math.floor(Math.random() * 50000),
             rank: i + 1,
           },
-          violations: i % 7 === 0 ? [{
-            id: `v${i}`,
-            type: 'spam',
-            severity: 'minor',
-            description: 'Excessive messaging in chat',
-            date: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
-            status: 'pending',
-          }] : [],
-          activityLevel: ['low', 'medium', 'high'][Math.floor(Math.random() * 3)] as any,
+          violations:
+            i % 7 === 0
+              ? [
+                  {
+                    id: `v${i}`,
+                    type: "spam",
+                    severity: "minor",
+                    description: "Excessive messaging in chat",
+                    date: new Date(
+                      Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000
+                    ).toISOString(),
+                    status: "pending",
+                  },
+                ]
+              : [],
+          activityLevel: ["low", "medium", "high"][
+            Math.floor(Math.random() * 3)
+          ] as any,
           verified: Math.random() > 0.3,
-          achievements: ['First Win', 'Tournament Champion'].slice(0, Math.floor(Math.random() * 3)),
+          achievements: ["First Win", "Tournament Champion"].slice(
+            0,
+            Math.floor(Math.random() * 3)
+          ),
         });
       }
-      
+
       return mockUsers;
     };
 
     setUsers(generateMockUsers());
   }, []);
 
-  const filteredUsers = users.filter(user => {
-    if (searchQuery && !user.fullName.toLowerCase().includes(searchQuery.toLowerCase()) && 
-        !user.email.toLowerCase().includes(searchQuery.toLowerCase())) {
-      return false;
-    }
-    
-    if (filterOptions.status && user.status !== filterOptions.status) return false;
-    if (filterOptions.role && user.role !== filterOptions.role) return false;
-    if (filterOptions.activityLevel && user.activityLevel !== filterOptions.activityLevel) return false;
-    if (filterOptions.hasViolations !== undefined && (user.violations.length > 0) !== filterOptions.hasViolations) return false;
-    if (filterOptions.verified !== undefined && user.verified !== filterOptions.verified) return false;
-    if (filterOptions.levelRange && (user.level < filterOptions.levelRange[0] || user.level > filterOptions.levelRange[1])) return false;
-    
-    return true;
-  }).sort((a, b) => {
-    const aVal = a[sortBy];
-    const bVal = b[sortBy];
-    const modifier = sortOrder === 'asc' ? 1 : -1;
-    
-    if (typeof aVal === 'string' && typeof bVal === 'string') {
-      return aVal.localeCompare(bVal) * modifier;
-    }
-    if (typeof aVal === 'number' && typeof bVal === 'number') {
-      return (aVal - bVal) * modifier;
-    }
-    return 0;
-  });
+  const filteredUsers = users
+    .filter((user) => {
+      if (
+        searchQuery &&
+        !user.fullName.toLowerCase().includes(searchQuery.toLowerCase()) &&
+        !user.email.toLowerCase().includes(searchQuery.toLowerCase())
+      ) {
+        return false;
+      }
+
+      if (filterOptions.status && user.status !== filterOptions.status)
+        return false;
+      if (filterOptions.role && user.role !== filterOptions.role) return false;
+      if (
+        filterOptions.activityLevel &&
+        user.activityLevel !== filterOptions.activityLevel
+      )
+        return false;
+      if (
+        filterOptions.hasViolations !== undefined &&
+        user.violations.length > 0 !== filterOptions.hasViolations
+      )
+        return false;
+      if (
+        filterOptions.verified !== undefined &&
+        user.verified !== filterOptions.verified
+      )
+        return false;
+      if (
+        filterOptions.levelRange &&
+        (user.level < filterOptions.levelRange[0] ||
+          user.level > filterOptions.levelRange[1])
+      )
+        return false;
+
+      return true;
+    })
+    .sort((a, b) => {
+      const aVal = a[sortBy];
+      const bVal = b[sortBy];
+      const modifier = sortOrder === "asc" ? 1 : -1;
+
+      if (typeof aVal === "string" && typeof bVal === "string") {
+        return aVal.localeCompare(bVal) * modifier;
+      }
+      if (typeof aVal === "number" && typeof bVal === "number") {
+        return (aVal - bVal) * modifier;
+      }
+      return 0;
+    });
 
   const handleSelectUser = (userId: string) => {
-    setSelectedUsers(prev => 
-      prev.includes(userId) ? prev.filter(id => id !== userId) : [...prev, userId]
+    setSelectedUsers((prev) =>
+      prev.includes(userId)
+        ? prev.filter((id) => id !== userId)
+        : [...prev, userId]
     );
   };
 
   const handleSelectAll = () => {
-    const pageUsers = filteredUsers.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
-    const allSelected = pageUsers.every(user => selectedUsers.includes(user.id));
-    
+    const pageUsers = filteredUsers.slice(
+      page * rowsPerPage,
+      (page + 1) * rowsPerPage
+    );
+    const allSelected = pageUsers.every((user) =>
+      selectedUsers.includes(user.id)
+    );
+
     if (allSelected) {
-      setSelectedUsers(prev => prev.filter(id => !pageUsers.map(u => u.id).includes(id)));
+      setSelectedUsers((prev) =>
+        prev.filter((id) => !pageUsers.map((u) => u.id).includes(id))
+      );
     } else {
-      setSelectedUsers(prev => [...new Set([...prev, ...pageUsers.map(u => u.id)])]);
+      setSelectedUsers((prev) => [
+        ...new Set([...prev, ...pageUsers.map((u) => u.id)]),
+      ]);
     }
   };
 
-  const handleBulkOperationStart = (operation: BulkOperationLocal['type']) => {
+  const handleBulkOperationStart = (operation: BulkOperationLocal["type"]) => {
     if (selectedUsers.length === 0) {
-      setSnackbarMessage('Please select users first');
+      setSnackbarMessage("Please select users first");
       setSnackbarOpen(true);
       return;
     }
 
     setBulkOperationType(operation);
-    setBulkOperationReason('');
+    setBulkOperationReason("");
     setBulkOperationOpen(true);
     setBulkMenuAnchor(null);
   };
@@ -274,15 +388,27 @@ const AdvancedUserManagement: React.FC = () => {
 
     try {
       // Convert string IDs to numbers for API
-      const userIds = selectedUsers.map(id => parseInt(id));
-      
+      const userIds = selectedUsers.map((id) => parseInt(id));
+
       // Handle export operation separately
-      if (bulkOperationType === 'export') {
+      if (bulkOperationType === "export") {
         // Create CSV export of selected users
-        const selectedUserData = users.filter(u => selectedUsers.includes(u.id));
+        const selectedUserData = users.filter((u) =>
+          selectedUsers.includes(u.id)
+        );
         const csvContent = [
-          ['ID', 'Name', 'Email', 'Status', 'Role', 'Level', 'Games', 'Win Rate', 'Last Login'],
-          ...selectedUserData.map(u => [
+          [
+            "ID",
+            "Name",
+            "Email",
+            "Status",
+            "Role",
+            "Level",
+            "Games",
+            "Win Rate",
+            "Last Login",
+          ],
+          ...selectedUserData.map((u) => [
             u.id,
             u.fullName,
             u.email,
@@ -291,37 +417,44 @@ const AdvancedUserManagement: React.FC = () => {
             u.level.toString(),
             u.gameStats.tournamentsPlayed.toString(),
             `${u.gameStats.winRate}%`,
-            new Date(u.lastLogin).toLocaleDateString()
-          ])
-        ].map(row => row.join(',')).join('\\n');
-        
-        const blob = new Blob([csvContent], { type: 'text/csv' });
+            new Date(u.lastLogin).toLocaleDateString(),
+          ]),
+        ]
+          .map((row) => row.join(","))
+          .join("\\n");
+
+        const blob = new Blob([csvContent], { type: "text/csv" });
         const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
+        const a = document.createElement("a");
         a.href = url;
-        a.download = `selected_users_${new Date().toISOString().split('T')[0]}.csv`;
+        a.download = `selected_users_${new Date().toISOString().split("T")[0]}.csv`;
         a.click();
         URL.revokeObjectURL(url);
-        
+
         setBulkOperationProgress({
-          results: Object.fromEntries(selectedUsers.map(id => [id, { status: 'ok', message: 'Exported successfully' }])),
+          results: Object.fromEntries(
+            selectedUsers.map((id) => [
+              id,
+              { status: "ok", message: "Exported successfully" },
+            ])
+          ),
           summary: {
             total: selectedUsers.length,
             success_count: selectedUsers.length,
-            error_count: 0
-          }
+            error_count: 0,
+          },
         });
         return;
       }
 
       // Map operation types to backend format
-      const operationMap: { [key: string]: BulkUserOperation['action'] } = {
-        'activate': 'unsuspend',
-        'suspend': 'suspend',
-        'ban': 'ban',
-        'promote': 'add_role',
-        'demote': 'remove_role',
-        'delete': 'delete'
+      const operationMap: { [key: string]: BulkUserOperation["action"] } = {
+        activate: "unsuspend",
+        suspend: "suspend",
+        ban: "ban",
+        promote: "add_role",
+        demote: "remove_role",
+        delete: "delete",
       };
 
       const mappedAction = operationMap[bulkOperationType];
@@ -334,28 +467,31 @@ const AdvancedUserManagement: React.FC = () => {
         user_ids: userIds,
         params: {
           ...(bulkOperationReason && { reason: bulkOperationReason }),
-          ...(mappedAction === 'add_role' && { role: 'moderator' }),
-          ...(mappedAction === 'remove_role' && { role: 'moderator' })
-        }
+          ...(mappedAction === "add_role" && { role: "moderator" }),
+          ...(mappedAction === "remove_role" && { role: "moderator" }),
+        },
       };
 
       const result = await moderationApi.bulkUserOperation(bulkOperation);
       setBulkOperationProgress(result);
-      
+
       // Show success message
       const successCount = result.summary.success_count;
       const totalCount = result.summary.total;
-      setSnackbarMessage(`Bulk ${bulkOperationType} completed: ${successCount}/${totalCount} users processed successfully`);
+      setSnackbarMessage(
+        `Bulk ${bulkOperationType} completed: ${successCount}/${totalCount} users processed successfully`
+      );
       setSnackbarOpen(true);
-      
+
       // Clear selection after successful operation
       if (successCount > 0) {
         setSelectedUsers([]);
       }
-      
     } catch (error) {
-      console.error('Bulk operation failed:', error);
-      setSnackbarMessage(`Bulk operation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error("Bulk operation failed:", error);
+      setSnackbarMessage(
+        `Bulk operation failed: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
       setSnackbarOpen(true);
       setBulkOperationProgress(null);
     } finally {
@@ -365,8 +501,8 @@ const AdvancedUserManagement: React.FC = () => {
 
   const closeBulkOperationModal = () => {
     setBulkOperationOpen(false);
-    setBulkOperationType('');
-    setBulkOperationReason('');
+    setBulkOperationType("");
+    setBulkOperationReason("");
     setBulkOperationProgress(null);
     setBulkOperationInProgress(false);
   };
@@ -377,22 +513,31 @@ const AdvancedUserManagement: React.FC = () => {
     setSnackbarOpen(true);
   };
 
-  const getStatusColor = (status: UserProfile['status']) => {
+  const getStatusColor = (status: UserProfile["status"]) => {
     switch (status) {
-      case 'active': return 'success';
-      case 'suspended': return 'warning';
-      case 'banned': return 'error';
-      case 'pending': return 'info';
-      default: return 'default';
+      case "active":
+        return "success";
+      case "suspended":
+        return "warning";
+      case "banned":
+        return "error";
+      case "pending":
+        return "info";
+      default:
+        return "default";
     }
   };
 
-  const getRoleColor = (role: UserProfile['role']) => {
+  const getRoleColor = (role: UserProfile["role"]) => {
     switch (role) {
-      case 'admin': return 'error';
-      case 'moderator': return 'warning';
-      case 'user': return 'primary';
-      default: return 'default';
+      case "admin":
+        return "error";
+      case "moderator":
+        return "warning";
+      case "user":
+        return "primary";
+      default:
+        return "default";
     }
   };
 
@@ -403,8 +548,14 @@ const AdvancedUserManagement: React.FC = () => {
           <TableRow>
             <TableCell padding="checkbox">
               <Checkbox
-                indeterminate={selectedUsers.length > 0 && selectedUsers.length < filteredUsers.length}
-                checked={filteredUsers.length > 0 && selectedUsers.length === filteredUsers.length}
+                indeterminate={
+                  selectedUsers.length > 0 &&
+                  selectedUsers.length < filteredUsers.length
+                }
+                checked={
+                  filteredUsers.length > 0 &&
+                  selectedUsers.length === filteredUsers.length
+                }
                 onChange={handleSelectAll}
               />
             </TableCell>
@@ -423,7 +574,10 @@ const AdvancedUserManagement: React.FC = () => {
           {filteredUsers
             .slice(page * rowsPerPage, page + 1 * rowsPerPage)
             .map((user) => (
-              <TableRow key={user.id} selected={selectedUsers.includes(user.id)}>
+              <TableRow
+                key={user.id}
+                selected={selectedUsers.includes(user.id)}
+              >
                 <TableCell padding="checkbox">
                   <Checkbox
                     checked={selectedUsers.includes(user.id)}
@@ -431,10 +585,10 @@ const AdvancedUserManagement: React.FC = () => {
                   />
                 </TableCell>
                 <TableCell>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Badge 
-                      color={user.verified ? 'success' : 'default'} 
-                      variant={user.verified ? 'dot' : undefined}
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                    <Badge
+                      color={user.verified ? "success" : "default"}
+                      variant={user.verified ? "dot" : undefined}
                       invisible={!user.verified}
                     >
                       <Avatar sx={{ width: 32, height: 32 }}>
@@ -452,17 +606,29 @@ const AdvancedUserManagement: React.FC = () => {
                   </Box>
                 </TableCell>
                 <TableCell>
-                  <Chip size="small" label={user.status} color={getStatusColor(user.status) as any} />
+                  <Chip
+                    size="small"
+                    label={user.status}
+                    color={getStatusColor(user.status) as any}
+                  />
                 </TableCell>
                 <TableCell>
-                  <Chip size="small" label={user.role} color={getRoleColor(user.role) as any} />
+                  <Chip
+                    size="small"
+                    label={user.role}
+                    color={getRoleColor(user.role) as any}
+                  />
                 </TableCell>
                 <TableCell>{user.level}</TableCell>
                 <TableCell>{user.gameStats.tournamentsPlayed}</TableCell>
                 <TableCell>{user.gameStats.winRate}%</TableCell>
                 <TableCell>
                   {user.violations.length > 0 ? (
-                    <Chip size="small" label={user.violations.length} color="warning" />
+                    <Chip
+                      size="small"
+                      label={user.violations.length}
+                      color="warning"
+                    />
                   ) : (
                     <Chip size="small" label="Clean" color="success" />
                   )}
@@ -473,12 +639,15 @@ const AdvancedUserManagement: React.FC = () => {
                   </Typography>
                 </TableCell>
                 <TableCell>
-                  <Box sx={{ display: 'flex', gap: 0.5 }}>
+                  <Box sx={{ display: "flex", gap: 0.5 }}>
                     <Tooltip title="View Details">
-                      <IconButton size="small" onClick={() => {
-                        setSelectedUserId(parseInt(user.id));
-                        setUserDetailOpen(true);
-                      }}>
+                      <IconButton
+                        size="small"
+                        onClick={() => {
+                          setSelectedUserId(parseInt(user.id));
+                          setUserDetailOpen(true);
+                        }}
+                      >
                         <Visibility fontSize="small" />
                       </IconButton>
                     </Tooltip>
@@ -487,12 +656,23 @@ const AdvancedUserManagement: React.FC = () => {
                         <Edit fontSize="small" />
                       </IconButton>
                     </Tooltip>
-                    <Tooltip title={user.status === 'active' ? 'Suspend' : 'Activate'}>
-                      <IconButton 
-                        size="small" 
-                        onClick={() => handleUserAction(user.status === 'active' ? 'suspend' : 'activate', user.id)}
+                    <Tooltip
+                      title={user.status === "active" ? "Suspend" : "Activate"}
+                    >
+                      <IconButton
+                        size="small"
+                        onClick={() =>
+                          handleUserAction(
+                            user.status === "active" ? "suspend" : "activate",
+                            user.id
+                          )
+                        }
                       >
-                        {user.status === 'active' ? <Block fontSize="small" /> : <CheckCircle fontSize="small" />}
+                        {user.status === "active" ? (
+                          <Block fontSize="small" />
+                        ) : (
+                          <CheckCircle fontSize="small" />
+                        )}
                       </IconButton>
                     </Tooltip>
                   </Box>
@@ -507,7 +687,9 @@ const AdvancedUserManagement: React.FC = () => {
         page={page}
         onPageChange={(_, newPage) => setPage(newPage)}
         rowsPerPage={rowsPerPage}
-        onRowsPerPageChange={(e) => setRowsPerPage(parseInt(e.target.value, 10))}
+        onRowsPerPageChange={(e) =>
+          setRowsPerPage(parseInt(e.target.value, 10))
+        }
         rowsPerPageOptions={[10, 25, 50, 100]}
       />
     </TableContainer>
@@ -519,18 +701,20 @@ const AdvancedUserManagement: React.FC = () => {
         .slice(page * rowsPerPage, page + 1 * rowsPerPage)
         .map((user) => (
           <Grid item xs={12} sm={6} md={4} lg={3} key={user.id}>
-            <Card 
-              sx={{ 
-                position: 'relative',
-                cursor: 'pointer',
+            <Card
+              sx={{
+                position: "relative",
+                cursor: "pointer",
                 border: selectedUsers.includes(user.id) ? 2 : 1,
-                borderColor: selectedUsers.includes(user.id) ? 'primary.main' : 'divider',
-                '&:hover': { boxShadow: 4 }
+                borderColor: selectedUsers.includes(user.id)
+                  ? "primary.main"
+                  : "divider",
+                "&:hover": { boxShadow: 4 },
               }}
               onClick={() => handleSelectUser(user.id)}
             >
               <CardContent>
-                <Box sx={{ position: 'absolute', top: 8, right: 8 }}>
+                <Box sx={{ position: "absolute", top: 8, right: 8 }}>
                   <Checkbox
                     size="small"
                     checked={selectedUsers.includes(user.id)}
@@ -539,10 +723,12 @@ const AdvancedUserManagement: React.FC = () => {
                   />
                 </Box>
 
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                  <Badge 
-                    color={user.verified ? 'success' : 'default'} 
-                    variant={user.verified ? 'dot' : undefined}
+                <Box
+                  sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}
+                >
+                  <Badge
+                    color={user.verified ? "success" : "default"}
+                    variant={user.verified ? "dot" : undefined}
                   >
                     <Avatar sx={{ width: 48, height: 48 }}>
                       {user.fullName.charAt(0)}
@@ -558,27 +744,58 @@ const AdvancedUserManagement: React.FC = () => {
                   </Box>
                 </Box>
 
-                <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
-                  <Chip size="small" label={user.status} color={getStatusColor(user.status) as any} />
-                  <Chip size="small" label={user.role} color={getRoleColor(user.role) as any} />
+                <Box sx={{ display: "flex", gap: 1, mb: 2, flexWrap: "wrap" }}>
+                  <Chip
+                    size="small"
+                    label={user.status}
+                    color={getStatusColor(user.status) as any}
+                  />
+                  <Chip
+                    size="small"
+                    label={user.role}
+                    color={getRoleColor(user.role) as any}
+                  />
                 </Box>
 
                 <Grid container spacing={1} sx={{ mb: 2 }}>
                   <Grid item xs={6}>
-                    <Typography variant="caption" color="text.secondary">Level</Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 600 }}>{user.level}</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Level
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      {user.level}
+                    </Typography>
                   </Grid>
                   <Grid item xs={6}>
-                    <Typography variant="caption" color="text.secondary">Win Rate</Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 600 }}>{user.gameStats.winRate}%</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Win Rate
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      {user.gameStats.winRate}%
+                    </Typography>
                   </Grid>
                   <Grid item xs={6}>
-                    <Typography variant="caption" color="text.secondary">Games</Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 600 }}>{user.gameStats.tournamentsPlayed}</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Games
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      {user.gameStats.tournamentsPlayed}
+                    </Typography>
                   </Grid>
                   <Grid item xs={6}>
-                    <Typography variant="caption" color="text.secondary">Violations</Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 600, color: user.violations.length > 0 ? 'warning.main' : 'success.main' }}>
+                    <Typography variant="caption" color="text.secondary">
+                      Violations
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontWeight: 600,
+                        color:
+                          user.violations.length > 0
+                            ? "warning.main"
+                            : "success.main",
+                      }}
+                    >
                       {user.violations.length}
                     </Typography>
                   </Grid>
@@ -586,29 +803,48 @@ const AdvancedUserManagement: React.FC = () => {
 
                 <Divider sx={{ mb: 1 }} />
 
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
                   <Typography variant="caption" color="text.secondary">
                     Last: {new Date(user.lastLogin).toLocaleDateString()}
                   </Typography>
-                  <Box sx={{ display: 'flex', gap: 0.5 }}>
-                    <IconButton size="small" onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedUserId(parseInt(user.id));
-                      setUserDetailOpen(true);
-                    }}>
-                      <Visibility fontSize="small" />
-                    </IconButton>
-                    <IconButton size="small" onClick={(e) => e.stopPropagation()}>
-                      <Edit fontSize="small" />
-                    </IconButton>
-                    <IconButton 
-                      size="small" 
+                  <Box sx={{ display: "flex", gap: 0.5 }}>
+                    <IconButton
+                      size="small"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleUserAction(user.status === 'active' ? 'suspend' : 'activate', user.id);
+                        setSelectedUserId(parseInt(user.id));
+                        setUserDetailOpen(true);
                       }}
                     >
-                      {user.status === 'active' ? <Block fontSize="small" /> : <CheckCircle fontSize="small" />}
+                      <Visibility fontSize="small" />
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Edit fontSize="small" />
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleUserAction(
+                          user.status === "active" ? "suspend" : "activate",
+                          user.id
+                        );
+                      }}
+                    >
+                      {user.status === "active" ? (
+                        <Block fontSize="small" />
+                      ) : (
+                        <CheckCircle fontSize="small" />
+                      )}
                     </IconButton>
                   </Box>
                 </Box>
@@ -622,13 +858,24 @@ const AdvancedUserManagement: React.FC = () => {
   return (
     <Box sx={{ p: 3 }}>
       {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" component="h1" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
+        <Typography
+          variant="h4"
+          component="h1"
+          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+        >
           <People color="primary" />
           Advanced User Management
         </Typography>
-        
-        <Box sx={{ display: 'flex', gap: 1 }}>
+
+        <Box sx={{ display: "flex", gap: 1 }}>
           <Button startIcon={<PersonAdd />} variant="contained">
             Add User
           </Button>
@@ -647,23 +894,33 @@ const AdvancedUserManagement: React.FC = () => {
           <Card>
             <CardContent>
               <Typography variant="h4">{users.length}</Typography>
-              <Typography variant="body2" color="text.secondary">Total Users</Typography>
+              <Typography variant="body2" color="text.secondary">
+                Total Users
+              </Typography>
             </CardContent>
           </Card>
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <Card>
             <CardContent>
-              <Typography variant="h4">{users.filter(u => u.status === 'active').length}</Typography>
-              <Typography variant="body2" color="text.secondary">Active Users</Typography>
+              <Typography variant="h4">
+                {users.filter((u) => u.status === "active").length}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Active Users
+              </Typography>
             </CardContent>
           </Card>
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <Card>
             <CardContent>
-              <Typography variant="h4">{users.filter(u => u.violations.length > 0).length}</Typography>
-              <Typography variant="body2" color="text.secondary">With Violations</Typography>
+              <Typography variant="h4">
+                {users.filter((u) => u.violations.length > 0).length}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                With Violations
+              </Typography>
             </CardContent>
           </Card>
         </Grid>
@@ -671,7 +928,9 @@ const AdvancedUserManagement: React.FC = () => {
           <Card>
             <CardContent>
               <Typography variant="h4">{selectedUsers.length}</Typography>
-              <Typography variant="body2" color="text.secondary">Selected</Typography>
+              <Typography variant="body2" color="text.secondary">
+                Selected
+              </Typography>
             </CardContent>
           </Card>
         </Grid>
@@ -679,7 +938,14 @@ const AdvancedUserManagement: React.FC = () => {
 
       {/* Controls */}
       <Paper sx={{ p: 2, mb: 3 }}>
-        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+        <Box
+          sx={{
+            display: "flex",
+            gap: 2,
+            alignItems: "center",
+            flexWrap: "wrap",
+          }}
+        >
           <TextField
             size="small"
             placeholder="Search users..."
@@ -688,8 +954,8 @@ const AdvancedUserManagement: React.FC = () => {
             InputProps={{ startAdornment: <Search sx={{ mr: 1 }} /> }}
             sx={{ minWidth: 250 }}
           />
-          
-          <Button 
+
+          <Button
             startIcon={<FilterList />}
             onClick={(e) => setFilterMenuAnchor(e.currentTarget)}
             variant="outlined"
@@ -698,19 +964,19 @@ const AdvancedUserManagement: React.FC = () => {
             Filter
           </Button>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Typography variant="body2">View:</Typography>
-            <IconButton 
-              size="small" 
-              onClick={() => setViewMode('table')}
-              color={viewMode === 'table' ? 'primary' : 'default'}
+            <IconButton
+              size="small"
+              onClick={() => setViewMode("table")}
+              color={viewMode === "table" ? "primary" : "default"}
             >
               <ViewList />
             </IconButton>
-            <IconButton 
-              size="small" 
-              onClick={() => setViewMode('cards')}
-              color={viewMode === 'cards' ? 'primary' : 'default'}
+            <IconButton
+              size="small"
+              onClick={() => setViewMode("cards")}
+              color={viewMode === "cards" ? "primary" : "default"}
             >
               <ViewModule />
             </IconButton>
@@ -728,13 +994,15 @@ const AdvancedUserManagement: React.FC = () => {
             </Button>
           )}
 
-          <Box sx={{ ml: 'auto' }}>
-            <IconButton onClick={() => {
-              // ✅ FIXED: Refresh data instead of page reload
-              setUsers([]);
-              setLoading(true);
-              loadUsers();
-            }}>
+          <Box sx={{ ml: "auto" }}>
+            <IconButton
+              onClick={() => {
+                // ✅ FIXED: Refresh data instead of page reload
+                setUsers([]);
+                setLoading(true);
+                loadUsers();
+              }}
+            >
               <Refresh />
             </IconButton>
           </Box>
@@ -745,7 +1013,7 @@ const AdvancedUserManagement: React.FC = () => {
       {loading && <LinearProgress sx={{ mb: 2 }} />}
 
       {/* Content */}
-      {viewMode === 'table' ? renderTableView() : renderCardView()}
+      {viewMode === "table" ? renderTableView() : renderCardView()}
 
       {/* Bulk Actions Menu */}
       <Menu
@@ -753,27 +1021,30 @@ const AdvancedUserManagement: React.FC = () => {
         open={Boolean(bulkMenuAnchor)}
         onClose={() => setBulkMenuAnchor(null)}
       >
-        <MenuItem onClick={() => handleBulkOperationStart('activate')}>
+        <MenuItem onClick={() => handleBulkOperationStart("activate")}>
           <CheckCircle sx={{ mr: 1 }} /> Activate Users
         </MenuItem>
-        <MenuItem onClick={() => handleBulkOperationStart('suspend')}>
+        <MenuItem onClick={() => handleBulkOperationStart("suspend")}>
           <Block sx={{ mr: 1 }} /> Suspend Users
         </MenuItem>
-        <MenuItem onClick={() => handleBulkOperationStart('ban')}>
+        <MenuItem onClick={() => handleBulkOperationStart("ban")}>
           <Security sx={{ mr: 1 }} /> Ban Users
         </MenuItem>
         <Divider />
-        <MenuItem onClick={() => handleBulkOperationStart('promote')}>
+        <MenuItem onClick={() => handleBulkOperationStart("promote")}>
           <Star sx={{ mr: 1 }} /> Promote to Moderator
         </MenuItem>
-        <MenuItem onClick={() => handleBulkOperationStart('demote')}>
+        <MenuItem onClick={() => handleBulkOperationStart("demote")}>
           <Star sx={{ mr: 1 }} /> Demote to User
         </MenuItem>
         <Divider />
-        <MenuItem onClick={() => handleBulkOperationStart('export')}>
+        <MenuItem onClick={() => handleBulkOperationStart("export")}>
           <Download sx={{ mr: 1 }} /> Export Selected
         </MenuItem>
-        <MenuItem onClick={() => handleBulkOperationStart('delete')} sx={{ color: 'error.main' }}>
+        <MenuItem
+          onClick={() => handleBulkOperationStart("delete")}
+          sx={{ color: "error.main" }}
+        >
           <Delete sx={{ mr: 1 }} /> Delete Users
         </MenuItem>
       </Menu>
@@ -789,8 +1060,13 @@ const AdvancedUserManagement: React.FC = () => {
           <FormControl fullWidth size="small" sx={{ mb: 2 }}>
             <InputLabel>Status</InputLabel>
             <Select
-              value={filterOptions.status || ''}
-              onChange={(e) => setFilterOptions(prev => ({ ...prev, status: e.target.value || undefined }))}
+              value={filterOptions.status || ""}
+              onChange={(e) =>
+                setFilterOptions((prev) => ({
+                  ...prev,
+                  status: e.target.value || undefined,
+                }))
+              }
             >
               <MenuItem value="">All</MenuItem>
               <MenuItem value="active">Active</MenuItem>
@@ -803,8 +1079,13 @@ const AdvancedUserManagement: React.FC = () => {
           <FormControl fullWidth size="small" sx={{ mb: 2 }}>
             <InputLabel>Role</InputLabel>
             <Select
-              value={filterOptions.role || ''}
-              onChange={(e) => setFilterOptions(prev => ({ ...prev, role: e.target.value || undefined }))}
+              value={filterOptions.role || ""}
+              onChange={(e) =>
+                setFilterOptions((prev) => ({
+                  ...prev,
+                  role: e.target.value || undefined,
+                }))
+              }
             >
               <MenuItem value="">All</MenuItem>
               <MenuItem value="user">User</MenuItem>
@@ -817,13 +1098,18 @@ const AdvancedUserManagement: React.FC = () => {
             control={
               <Checkbox
                 checked={filterOptions.hasViolations || false}
-                onChange={(e) => setFilterOptions(prev => ({ ...prev, hasViolations: e.target.checked }))}
+                onChange={(e) =>
+                  setFilterOptions((prev) => ({
+                    ...prev,
+                    hasViolations: e.target.checked,
+                  }))
+                }
               />
             }
             label="Has Violations"
           />
 
-          <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
+          <Box sx={{ mt: 2, display: "flex", gap: 1 }}>
             <Button size="small" onClick={() => setFilterOptions({})}>
               Clear
             </Button>
@@ -843,7 +1129,7 @@ const AdvancedUserManagement: React.FC = () => {
           setSelectedUserId(null);
         }}
         onUserUpdate={(updatedUser) => {
-          console.log('User updated:', updatedUser);
+          console.log("User updated:", updatedUser);
           // Refresh the user list here in a real implementation
         }}
       />
@@ -856,25 +1142,38 @@ const AdvancedUserManagement: React.FC = () => {
         fullWidth
       >
         <DialogTitle>
-          {bulkOperationProgress ? 'Bulk Operation Results' : `Confirm Bulk ${bulkOperationType}`}
+          {bulkOperationProgress
+            ? "Bulk Operation Results"
+            : `Confirm Bulk ${bulkOperationType}`}
         </DialogTitle>
         <DialogContent>
           {!bulkOperationProgress ? (
             <Box>
               <Alert severity="warning" sx={{ mb: 2 }}>
-                You are about to {bulkOperationType} {selectedUsers.length} selected users. This action cannot be undone.
+                You are about to {bulkOperationType} {selectedUsers.length}{" "}
+                selected users. This action cannot be undone.
               </Alert>
-              
+
               <Typography variant="h6" gutterBottom>
                 Selected Users ({selectedUsers.length}):
               </Typography>
-              
-              <Box sx={{ maxHeight: 200, overflowY: 'auto', mb: 2 }}>
-                {selectedUsers.slice(0, 20).map(userId => {
-                  const user = users.find(u => u.id === userId);
+
+              <Box sx={{ maxHeight: 200, overflowY: "auto", mb: 2 }}>
+                {selectedUsers.slice(0, 20).map((userId) => {
+                  const user = users.find((u) => u.id === userId);
                   return user ? (
-                    <Box key={userId} sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 0.5 }}>
-                      <Avatar sx={{ width: 24, height: 24, fontSize: '0.75rem' }}>
+                    <Box
+                      key={userId}
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        py: 0.5,
+                      }}
+                    >
+                      <Avatar
+                        sx={{ width: 24, height: 24, fontSize: "0.75rem" }}
+                      >
                         {user.fullName.charAt(0)}
                       </Avatar>
                       <Typography variant="body2">
@@ -889,8 +1188,8 @@ const AdvancedUserManagement: React.FC = () => {
                   </Typography>
                 )}
               </Box>
-              
-              {(['suspend', 'ban', 'delete'].includes(bulkOperationType)) && (
+
+              {["suspend", "ban", "delete"].includes(bulkOperationType) && (
                 <TextField
                   fullWidth
                   multiline
@@ -905,20 +1204,26 @@ const AdvancedUserManagement: React.FC = () => {
             </Box>
           ) : (
             <Box>
-              <Alert 
-                severity={bulkOperationProgress.summary.error_count === 0 ? 'success' : 'warning'} 
+              <Alert
+                severity={
+                  bulkOperationProgress.summary.error_count === 0
+                    ? "success"
+                    : "warning"
+                }
                 sx={{ mb: 2 }}
               >
-                Operation completed: {bulkOperationProgress.summary.success_count} successful, {bulkOperationProgress.summary.error_count} failed
+                Operation completed:{" "}
+                {bulkOperationProgress.summary.success_count} successful,{" "}
+                {bulkOperationProgress.summary.error_count} failed
               </Alert>
-              
+
               <Typography variant="h6" gutterBottom>
                 Results Summary:
               </Typography>
-              
+
               <Grid container spacing={2} sx={{ mb: 2 }}>
                 <Grid item xs={4}>
-                  <Paper sx={{ p: 2, textAlign: 'center' }}>
+                  <Paper sx={{ p: 2, textAlign: "center" }}>
                     <Typography variant="h4" color="text.secondary">
                       {bulkOperationProgress.summary.total}
                     </Typography>
@@ -926,7 +1231,7 @@ const AdvancedUserManagement: React.FC = () => {
                   </Paper>
                 </Grid>
                 <Grid item xs={4}>
-                  <Paper sx={{ p: 2, textAlign: 'center' }}>
+                  <Paper sx={{ p: 2, textAlign: "center" }}>
                     <Typography variant="h4" color="success.main">
                       {bulkOperationProgress.summary.success_count}
                     </Typography>
@@ -934,7 +1239,7 @@ const AdvancedUserManagement: React.FC = () => {
                   </Paper>
                 </Grid>
                 <Grid item xs={4}>
-                  <Paper sx={{ p: 2, textAlign: 'center' }}>
+                  <Paper sx={{ p: 2, textAlign: "center" }}>
                     <Typography variant="h4" color="error.main">
                       {bulkOperationProgress.summary.error_count}
                     </Typography>
@@ -942,20 +1247,31 @@ const AdvancedUserManagement: React.FC = () => {
                   </Paper>
                 </Grid>
               </Grid>
-              
+
               {bulkOperationProgress.summary.error_count > 0 && (
                 <Box>
                   <Typography variant="subtitle1" gutterBottom>
                     Failed Operations:
                   </Typography>
-                  <Box sx={{ maxHeight: 200, overflowY: 'auto' }}>
+                  <Box sx={{ maxHeight: 200, overflowY: "auto" }}>
                     {Object.entries(bulkOperationProgress.results)
-                      .filter(([_, result]) => result.status === 'failed')
+                      .filter(([_, result]) => result.status === "failed")
                       .map(([userId, result]) => {
-                        const user = users.find(u => u.id === userId);
+                        const user = users.find((u) => u.id === userId);
                         return (
-                          <Box key={userId} sx={{ mb: 1, p: 1, bgcolor: 'error.light', borderRadius: 1 }}>
-                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                          <Box
+                            key={userId}
+                            sx={{
+                              mb: 1,
+                              p: 1,
+                              bgcolor: "error.light",
+                              borderRadius: 1,
+                            }}
+                          >
+                            <Typography
+                              variant="body2"
+                              sx={{ fontWeight: 600 }}
+                            >
                               {user?.fullName || `User ${userId}`}
                             </Typography>
                             <Typography variant="caption" color="error.dark">
@@ -963,14 +1279,13 @@ const AdvancedUserManagement: React.FC = () => {
                             </Typography>
                           </Box>
                         );
-                      })
-                    }
+                      })}
                   </Box>
                 </Box>
               )}
             </Box>
           )}
-          
+
           {bulkOperationInProgress && (
             <Box sx={{ mt: 2 }}>
               <Typography variant="body2" gutterBottom>
@@ -983,21 +1298,29 @@ const AdvancedUserManagement: React.FC = () => {
         <DialogActions>
           {!bulkOperationProgress ? (
             <>
-              <Button onClick={closeBulkOperationModal}>
-                Cancel
-              </Button>
-              <Button 
-                onClick={executeBulkOperation} 
-                color="primary" 
+              <Button onClick={closeBulkOperationModal}>Cancel</Button>
+              <Button
+                onClick={executeBulkOperation}
+                color="primary"
                 variant="contained"
                 disabled={bulkOperationInProgress}
-                startIcon={bulkOperationInProgress ? <CircularProgress size={20} /> : undefined}
+                startIcon={
+                  bulkOperationInProgress ? (
+                    <CircularProgress size={20} />
+                  ) : undefined
+                }
               >
-                {bulkOperationInProgress ? 'Processing...' : `Confirm ${bulkOperationType}`}
+                {bulkOperationInProgress
+                  ? "Processing..."
+                  : `Confirm ${bulkOperationType}`}
               </Button>
             </>
           ) : (
-            <Button onClick={closeBulkOperationModal} color="primary" variant="contained">
+            <Button
+              onClick={closeBulkOperationModal}
+              color="primary"
+              variant="contained"
+            >
               Close
             </Button>
           )}

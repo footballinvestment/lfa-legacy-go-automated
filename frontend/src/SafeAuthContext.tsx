@@ -142,7 +142,7 @@ export const SafeAuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         clearTimeout(timeoutId);
 
         // CRITICAL FIX: Validate response before using
-        if (!userData || typeof userData !== 'object') {
+        if (!userData || typeof userData !== "object") {
           throw new Error("Invalid user data received");
         }
 
@@ -152,7 +152,11 @@ export const SafeAuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           username: userData.username || "",
           email: userData.email || "",
           full_name: userData.full_name || "",
-          display_name: userData.display_name || userData.full_name || userData.username || "",
+          display_name:
+            userData.display_name ||
+            userData.full_name ||
+            userData.username ||
+            "",
           bio: userData.bio || "",
           games_won: userData.games_won || 0,
           games_lost: userData.games_lost || 0,
@@ -163,7 +167,7 @@ export const SafeAuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           last_activity: userData.last_activity || null,
           credits: userData.credits || 0,
           created_at: userData.created_at || "",
-          updated_at: userData.updated_at || ""
+          updated_at: userData.updated_at || "",
         };
 
         dispatch({ type: "AUTH_SUCCESS", payload: safeUser });
@@ -192,14 +196,14 @@ export const SafeAuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       dispatch({ type: "AUTH_START" });
       console.log("Login attempt for user:", data.username);
-      
+
       const response = await authService.login(data);
-      console.log("Login response received:", { 
-        hasToken: !!response?.access_token, 
+      console.log("Login response received:", {
+        hasToken: !!response?.access_token,
         hasUser: !!response?.user,
-        userId: response?.user?.id 
+        userId: response?.user?.id,
       });
-      
+
       if (!response || !response.access_token || !response.user) {
         throw new Error("Invalid login response");
       }
@@ -211,7 +215,11 @@ export const SafeAuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         username: response.user.username || "",
         email: response.user.email || "",
         full_name: response.user.full_name || "",
-        display_name: response.user.display_name || response.user.full_name || response.user.username || "",
+        display_name:
+          response.user.display_name ||
+          response.user.full_name ||
+          response.user.username ||
+          "",
         bio: response.user.bio || "",
         games_won: response.user.games_won || 0,
         games_lost: response.user.games_lost || 0,
@@ -222,7 +230,7 @@ export const SafeAuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         last_activity: response.user.last_activity || null,
         credits: response.user.credits || 0,
         created_at: response.user.created_at || "",
-        updated_at: response.user.updated_at || ""
+        updated_at: response.user.updated_at || "",
       };
 
       dispatch({ type: "AUTH_SUCCESS", payload: safeUser });
@@ -238,10 +246,11 @@ export const SafeAuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         status: error.response?.status,
         data: error.response?.data,
         message: error.message,
-        stack: error.stack
+        stack: error.stack,
       });
-      
-      const errorMessage = error.response?.data?.detail || error.message || "Login failed";
+
+      const errorMessage =
+        error.response?.data?.detail || error.message || "Login failed";
       dispatch({ type: "AUTH_FAILURE", payload: errorMessage });
       return false;
     }
@@ -256,7 +265,7 @@ export const SafeAuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
 
       const response = await authService.register(data);
-      
+
       if (!response || !response.access_token || !response.user) {
         throw new Error("Invalid registration response");
       }
@@ -268,7 +277,11 @@ export const SafeAuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         username: response.user.username || "",
         email: response.user.email || "",
         full_name: response.user.full_name || "",
-        display_name: response.user.display_name || response.user.full_name || response.user.username || "",
+        display_name:
+          response.user.display_name ||
+          response.user.full_name ||
+          response.user.username ||
+          "",
         bio: response.user.bio || "",
         games_won: response.user.games_won || 0,
         games_lost: response.user.games_lost || 0,
@@ -279,7 +292,7 @@ export const SafeAuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         last_activity: response.user.last_activity || null,
         credits: response.user.credits || 0,
         created_at: response.user.created_at || "",
-        updated_at: response.user.updated_at || ""
+        updated_at: response.user.updated_at || "",
       };
 
       dispatch({ type: "AUTH_SUCCESS", payload: safeUser });
@@ -290,7 +303,8 @@ export const SafeAuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       return true;
     } catch (error: any) {
-      const errorMessage = error.response?.data?.detail || error.message || "Registration failed";
+      const errorMessage =
+        error.response?.data?.detail || error.message || "Registration failed";
       dispatch({ type: "AUTH_FAILURE", payload: errorMessage });
       return false;
     }
@@ -305,14 +319,15 @@ export const SafeAuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Complete cleanup
       localStorage.clear();
       sessionStorage.clear();
-      
+
       // Clear any potential auth-related cookies
       document.cookie.split(";").forEach((c) => {
         const eqPos = c.indexOf("=");
         const name = eqPos > -1 ? c.substring(0, eqPos) : c;
-        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+        document.cookie =
+          name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
       });
-      
+
       dispatch({ type: "AUTH_LOGOUT" });
     }
   };
@@ -331,7 +346,7 @@ export const SafeAuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     try {
       const userData = await authService.getCurrentUser();
-      if (userData && typeof userData === 'object') {
+      if (userData && typeof userData === "object") {
         dispatch({ type: "UPDATE_USER", payload: userData });
       }
     } catch (error) {
@@ -357,18 +372,20 @@ export const SafeAuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 };
 
 // Protected Route Component
-export const ProtectedRoute: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const ProtectedRoute: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
   const { state } = useSafeAuth();
 
   if (state.loading) {
     const loadingStyle = {
-      display: 'flex' as const,
-      justifyContent: 'center' as const,
-      alignItems: 'center' as const,
-      height: '100vh',
-      flexDirection: 'column' as const
+      display: "flex" as const,
+      justifyContent: "center" as const,
+      alignItems: "center" as const,
+      height: "100vh",
+      flexDirection: "column" as const,
     };
-    
+
     return (
       <div style={loadingStyle}>
         <div>Loading...</div>
@@ -384,18 +401,20 @@ export const ProtectedRoute: React.FC<{ children: ReactNode }> = ({ children }) 
 };
 
 // Public Route Component
-export const PublicRoute: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const PublicRoute: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
   const { state } = useSafeAuth();
 
   if (state.loading) {
     const loadingStyle = {
-      display: 'flex' as const,
-      justifyContent: 'center' as const,
-      alignItems: 'center' as const,
-      height: '100vh',
-      flexDirection: 'column' as const
+      display: "flex" as const,
+      justifyContent: "center" as const,
+      alignItems: "center" as const,
+      height: "100vh",
+      flexDirection: "column" as const,
     };
-    
+
     return (
       <div style={loadingStyle}>
         <div>Loading...</div>

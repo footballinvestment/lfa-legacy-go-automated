@@ -1,7 +1,7 @@
 // === frontend/src/services/api.ts ===
 // TELJES JAVÍTOTT API SZOLGÁLTATÁS - 422 HIBA MEGOLDÁS
 
-import config from '../config/environment.js';
+import config from "../config/environment.js";
 
 const API_BASE_URL = config.API_URL;
 
@@ -166,12 +166,14 @@ export class AuthService extends ApiService {
       return await this.get("/api/auth/me");
     } catch (error) {
       // ✅ CRITICAL FIX: Clear invalid token on auth failure
-      if (error instanceof Error && 
-          (error.message.includes('401') || 
-           error.message.includes('403') || 
-           error.message.includes('Unauthorized'))) {
-        console.warn('🔑 Clearing invalid auth token');
-        localStorage.removeItem('auth_token');
+      if (
+        error instanceof Error &&
+        (error.message.includes("401") ||
+          error.message.includes("403") ||
+          error.message.includes("Unauthorized"))
+      ) {
+        console.warn("🔑 Clearing invalid auth token");
+        localStorage.removeItem("auth_token");
       }
       throw error;
     }
@@ -392,14 +394,18 @@ export class CreditService extends ApiService {
     return this.get("/api/credits/coupons/my-usage");
   }
 
-  async validateCoupon(couponCode: string): Promise<{ valid: boolean; message: string; coupon?: Coupon }> {
+  async validateCoupon(
+    couponCode: string
+  ): Promise<{ valid: boolean; message: string; coupon?: Coupon }> {
     try {
-      const response = await this.get(`/api/credits/validate-coupon?code=${encodeURIComponent(couponCode)}`);
+      const response = await this.get(
+        `/api/credits/validate-coupon?code=${encodeURIComponent(couponCode)}`
+      );
       return response;
     } catch (error) {
       return {
         valid: false,
-        message: error instanceof Error ? error.message : "Validation failed"
+        message: error instanceof Error ? error.message : "Validation failed",
       };
     }
   }

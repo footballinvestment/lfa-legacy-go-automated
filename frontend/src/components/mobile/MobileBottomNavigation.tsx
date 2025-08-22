@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   BottomNavigation,
   BottomNavigationAction,
@@ -9,7 +9,7 @@ import {
   Zoom,
   useTheme,
   useMediaQuery,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Home,
   EmojiEvents,
@@ -21,9 +21,9 @@ import {
   Timeline,
   Group,
   Settings,
-} from '@mui/icons-material';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { useSafeAuth } from '../../SafeAuthContext';
+} from "@mui/icons-material";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useSafeAuth } from "../../SafeAuthContext";
 
 interface MobileBottomNavigationProps {
   onAddTournament?: () => void;
@@ -34,15 +34,15 @@ interface MobileBottomNavigationProps {
 const MobileBottomNavigation: React.FC<MobileBottomNavigationProps> = ({
   onAddTournament,
   notificationCount = 0,
-  hideOnScroll = true
+  hideOnScroll = true,
 }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useSafeAuth();
   const isAuthenticated = user !== null;
-  
+
   const [value, setValue] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
@@ -50,66 +50,70 @@ const MobileBottomNavigation: React.FC<MobileBottomNavigationProps> = ({
   // Navigation items for authenticated users
   const authenticatedItems = [
     {
-      label: 'Tournaments',
+      label: "Tournaments",
       icon: <EmojiEvents />,
-      path: '/tournaments',
-      value: 0
+      path: "/tournaments",
+      value: 0,
     },
     {
-      label: 'My Games',
+      label: "My Games",
       icon: <SportsSoccer />,
-      path: '/my-tournaments',
-      value: 1
+      path: "/my-tournaments",
+      value: 1,
     },
     {
-      label: 'Search',
+      label: "Search",
       icon: <Search />,
-      path: '/search',
-      value: 2
+      path: "/search",
+      value: 2,
     },
     {
-      label: 'Activity',
-      icon: notificationCount > 0 ? 
-        <Badge badgeContent={notificationCount} color="error">
+      label: "Activity",
+      icon:
+        notificationCount > 0 ? (
+          <Badge badgeContent={notificationCount} color="error">
+            <Timeline />
+          </Badge>
+        ) : (
           <Timeline />
-        </Badge> : <Timeline />,
-      path: '/activity',
-      value: 3
+        ),
+      path: "/activity",
+      value: 3,
     },
     {
-      label: 'Profile',
+      label: "Profile",
       icon: <Person />,
-      path: '/profile',
-      value: 4
-    }
+      path: "/profile",
+      value: 4,
+    },
   ];
 
   // Navigation items for non-authenticated users
   const guestItems = [
     {
-      label: 'Tournaments',
+      label: "Tournaments",
       icon: <EmojiEvents />,
-      path: '/tournaments',
-      value: 0
+      path: "/tournaments",
+      value: 0,
     },
     {
-      label: 'Search',
+      label: "Search",
       icon: <Search />,
-      path: '/search',
-      value: 1
+      path: "/search",
+      value: 1,
     },
     {
-      label: 'About',
+      label: "About",
       icon: <Group />,
-      path: '/about',
-      value: 2
+      path: "/about",
+      value: 2,
     },
     {
-      label: 'Sign In',
+      label: "Sign In",
       icon: <Person />,
-      path: '/signin',
-      value: 3
-    }
+      path: "/signin",
+      value: 3,
+    },
   ];
 
   const items = isAuthenticated ? authenticatedItems : guestItems;
@@ -120,7 +124,7 @@ const MobileBottomNavigation: React.FC<MobileBottomNavigationProps> = ({
 
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
-      
+
       if (currentScrollY < lastScrollY || currentScrollY < 50) {
         // Scrolling up or near top
         setIsVisible(true);
@@ -128,25 +132,26 @@ const MobileBottomNavigation: React.FC<MobileBottomNavigationProps> = ({
         // Scrolling down and past threshold
         setIsVisible(false);
       }
-      
+
       setLastScrollY(currentScrollY);
     };
 
     const throttledHandleScroll = throttle(handleScroll, 100);
-    window.addEventListener('scroll', throttledHandleScroll);
-    
+    window.addEventListener("scroll", throttledHandleScroll);
+
     return () => {
-      window.removeEventListener('scroll', throttledHandleScroll);
+      window.removeEventListener("scroll", throttledHandleScroll);
     };
   }, [lastScrollY, hideOnScroll]);
 
   // Set active tab based on current route
   useEffect(() => {
-    const currentItem = items.find(item => 
-      location.pathname === item.path || 
-      location.pathname.startsWith(item.path + '/')
+    const currentItem = items.find(
+      (item) =>
+        location.pathname === item.path ||
+        location.pathname.startsWith(item.path + "/")
     );
-    
+
     if (currentItem) {
       setValue(currentItem.value);
     } else {
@@ -175,14 +180,14 @@ const MobileBottomNavigation: React.FC<MobileBottomNavigationProps> = ({
       <Zoom in={isVisible} timeout={200}>
         <Paper
           sx={{
-            position: 'fixed',
+            position: "fixed",
             bottom: 0,
             left: 0,
             right: 0,
             zIndex: 1000,
             borderTopLeftRadius: 16,
             borderTopRightRadius: 16,
-            overflow: 'hidden',
+            overflow: "hidden",
           }}
           elevation={8}
         >
@@ -192,21 +197,21 @@ const MobileBottomNavigation: React.FC<MobileBottomNavigationProps> = ({
             showLabels
             sx={{
               height: 70,
-              '& .MuiBottomNavigationAction-root': {
-                minWidth: 'auto',
-                padding: '8px 4px 12px',
-                '&.Mui-selected': {
+              "& .MuiBottomNavigationAction-root": {
+                minWidth: "auto",
+                padding: "8px 4px 12px",
+                "&.Mui-selected": {
                   color: theme.palette.primary.main,
-                  '& .MuiBottomNavigationAction-label': {
-                    fontSize: '0.75rem',
+                  "& .MuiBottomNavigationAction-label": {
+                    fontSize: "0.75rem",
                     fontWeight: 600,
-                  }
+                  },
                 },
-                '& .MuiBottomNavigationAction-label': {
-                  fontSize: '0.7rem',
+                "& .MuiBottomNavigationAction-label": {
+                  fontSize: "0.7rem",
                   marginTop: 2,
-                }
-              }
+                },
+              },
             }}
           >
             {items.map((item) => (
@@ -228,15 +233,15 @@ const MobileBottomNavigation: React.FC<MobileBottomNavigationProps> = ({
             color="primary"
             onClick={onAddTournament}
             sx={{
-              position: 'fixed',
+              position: "fixed",
               bottom: 85, // Above bottom navigation
               right: 16,
               zIndex: 1001,
               boxShadow: theme.shadows[8],
-              '&:hover': {
-                transform: 'scale(1.1)',
-                transition: 'transform 0.2s ease-in-out',
-              }
+              "&:hover": {
+                transform: "scale(1.1)",
+                transition: "transform 0.2s ease-in-out",
+              },
             }}
           >
             <Add />

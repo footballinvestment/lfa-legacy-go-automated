@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Box,
   Card,
@@ -13,7 +13,7 @@ import {
   InputAdornment,
   Container,
   CircularProgress,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Visibility,
   VisibilityOff,
@@ -21,8 +21,8 @@ import {
   Email,
   Person,
   Lock,
-} from '@mui/icons-material';
-import { useSafeAuth } from '../SafeAuthContext';
+} from "@mui/icons-material";
+import { useSafeAuth } from "../SafeAuthContext";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -43,61 +43,63 @@ const Login: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    full_name: '',
-    password: '',
-    confirmPassword: '',
+    username: "",
+    email: "",
+    full_name: "",
+    password: "",
+    confirmPassword: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
     setFormData({
-      username: '',
-      email: '',
-      full_name: '',
-      password: '',
-      confirmPassword: '',
+      username: "",
+      email: "",
+      full_name: "",
+      password: "",
+      confirmPassword: "",
     });
     setErrors({});
     clearError();
   };
 
-  const handleInputChange = (field: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({ ...prev, [field]: event.target.value }));
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
-    }
-    if (state.error) {
-      clearError();
-    }
-  };
+  const handleInputChange =
+    (field: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
+      setFormData((prev) => ({ ...prev, [field]: event.target.value }));
+      if (errors[field]) {
+        setErrors((prev) => ({ ...prev, [field]: "" }));
+      }
+      if (state.error) {
+        clearError();
+      }
+    };
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
     if (!formData.username.trim()) {
-      newErrors.username = 'Username is required';
+      newErrors.username = "Username is required";
     }
 
     if (!formData.password.trim()) {
-      newErrors.password = 'Password is required';
+      newErrors.password = "Password is required";
     }
 
-    if (activeTab === 1) { // Register
+    if (activeTab === 1) {
+      // Register
       if (!formData.full_name.trim()) {
-        newErrors.full_name = 'Full name is required';
+        newErrors.full_name = "Full name is required";
       }
 
       if (!formData.email.trim()) {
-        newErrors.email = 'Email is required';
+        newErrors.email = "Email is required";
       } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-        newErrors.email = 'Email is invalid';
+        newErrors.email = "Email is invalid";
       }
 
       if (formData.password !== formData.confirmPassword) {
-        newErrors.confirmPassword = 'Passwords do not match';
+        newErrors.confirmPassword = "Passwords do not match";
       }
     }
 
@@ -107,7 +109,7 @@ const Login: React.FC = () => {
 
   const handleLoginSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    console.log('🔐 Login attempt initiated');
+    console.log("🔐 Login attempt initiated");
 
     if (!validateForm()) return;
 
@@ -117,14 +119,14 @@ const Login: React.FC = () => {
     });
 
     if (success) {
-      console.log('🔐 Login successful');
+      console.log("🔐 Login successful");
       // ✅ SUCCESS: AuthContext will handle redirect automatically
     }
   };
 
   const handleRegisterSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    console.log('📝 Register attempt initiated');
+    console.log("📝 Register attempt initiated");
 
     if (!validateForm()) return;
 
@@ -136,7 +138,7 @@ const Login: React.FC = () => {
     });
 
     if (success) {
-      console.log('📝 Registration successful');
+      console.log("📝 Registration successful");
       // ✅ SUCCESS: AuthContext will handle redirect automatically
     }
   };
@@ -144,20 +146,27 @@ const Login: React.FC = () => {
   return (
     <Box
       sx={{
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        minHeight: "100vh",
+        background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
         py: 4,
       }}
     >
       <Container maxWidth="sm">
-        <Card sx={{ maxWidth: 500, mx: 'auto' }}>
+        <Card sx={{ maxWidth: 500, mx: "auto" }}>
           <CardContent sx={{ p: 4 }}>
-            <Box sx={{ textAlign: 'center', mb: 4 }}>
-              <SportsSoccer sx={{ fontSize: 60, color: 'primary.main', mb: 2 }} />
-              <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
+            <Box sx={{ textAlign: "center", mb: 4 }}>
+              <SportsSoccer
+                sx={{ fontSize: 60, color: "primary.main", mb: 2 }}
+              />
+              <Typography
+                variant="h4"
+                component="h1"
+                gutterBottom
+                fontWeight="bold"
+              >
                 LFA Legacy GO
               </Typography>
               <Typography variant="body1" color="text.secondary">
@@ -181,13 +190,19 @@ const Login: React.FC = () => {
               </Alert>
             )}
 
-            <form onSubmit={activeTab === 0 ? handleLoginSubmit : handleRegisterSubmit}>
+            <form
+              onSubmit={
+                activeTab === 0 ? handleLoginSubmit : handleRegisterSubmit
+              }
+            >
               <TabPanel value={activeTab} index={0}>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+                <Box
+                  sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}
+                >
                   <TextField
                     label="Username"
                     value={formData.username}
-                    onChange={handleInputChange('username')}
+                    onChange={handleInputChange("username")}
                     error={Boolean(errors.username)}
                     helperText={errors.username}
                     disabled={state.loading}
@@ -203,9 +218,9 @@ const Login: React.FC = () => {
 
                   <TextField
                     label="Password"
-                    type={showPassword ? 'text' : 'password'}
+                    type={showPassword ? "text" : "password"}
                     value={formData.password}
-                    onChange={handleInputChange('password')}
+                    onChange={handleInputChange("password")}
                     error={Boolean(errors.password)}
                     helperText={errors.password}
                     disabled={state.loading}
@@ -232,11 +247,13 @@ const Login: React.FC = () => {
               </TabPanel>
 
               <TabPanel value={activeTab} index={1}>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+                <Box
+                  sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}
+                >
                   <TextField
                     label="Full Name"
                     value={formData.full_name}
-                    onChange={handleInputChange('full_name')}
+                    onChange={handleInputChange("full_name")}
                     error={Boolean(errors.full_name)}
                     helperText={errors.full_name}
                     disabled={state.loading}
@@ -253,7 +270,7 @@ const Login: React.FC = () => {
                   <TextField
                     label="Username"
                     value={formData.username}
-                    onChange={handleInputChange('username')}
+                    onChange={handleInputChange("username")}
                     error={Boolean(errors.username)}
                     helperText={errors.username}
                     disabled={state.loading}
@@ -271,7 +288,7 @@ const Login: React.FC = () => {
                     label="Email"
                     type="email"
                     value={formData.email}
-                    onChange={handleInputChange('email')}
+                    onChange={handleInputChange("email")}
                     error={Boolean(errors.email)}
                     helperText={errors.email}
                     disabled={state.loading}
@@ -287,9 +304,9 @@ const Login: React.FC = () => {
 
                   <TextField
                     label="Password"
-                    type={showPassword ? 'text' : 'password'}
+                    type={showPassword ? "text" : "password"}
                     value={formData.password}
-                    onChange={handleInputChange('password')}
+                    onChange={handleInputChange("password")}
                     error={Boolean(errors.password)}
                     helperText={errors.password}
                     disabled={state.loading}
@@ -317,7 +334,7 @@ const Login: React.FC = () => {
                     label="Confirm Password"
                     type="password"
                     value={formData.confirmPassword}
-                    onChange={handleInputChange('confirmPassword')}
+                    onChange={handleInputChange("confirmPassword")}
                     error={Boolean(errors.confirmPassword)}
                     helperText={errors.confirmPassword}
                     disabled={state.loading}
@@ -342,18 +359,20 @@ const Login: React.FC = () => {
                 sx={{
                   mt: 3,
                   py: 1.5,
-                  fontSize: '1.1rem',
+                  fontSize: "1.1rem",
                   fontWeight: 600,
-                  background: 'linear-gradient(135deg, #10b981, #059669)',
-                  '&:hover': {
-                    background: 'linear-gradient(135deg, #059669, #047857)',
+                  background: "linear-gradient(135deg, #10b981, #059669)",
+                  "&:hover": {
+                    background: "linear-gradient(135deg, #059669, #047857)",
                   },
                 }}
               >
                 {state.loading ? (
                   <CircularProgress size={24} color="inherit" />
+                ) : activeTab === 0 ? (
+                  "Sign In"
                 ) : (
-                  activeTab === 0 ? 'Sign In' : 'Create Account'
+                  "Create Account"
                 )}
               </Button>
             </form>

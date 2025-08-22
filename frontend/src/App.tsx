@@ -1,9 +1,18 @@
 // LFA Legacy GO - Full Application Rebuild
 import React from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 import { ThemeProvider, CssBaseline } from "@mui/material";
 import { lightAppTheme } from "./styles/theme";
-import { SafeAuthProvider, ProtectedRoute, PublicRoute } from "./SafeAuthContext";
+import {
+  SafeAuthProvider,
+  ProtectedRoute,
+  PublicRoute,
+} from "./SafeAuthContext";
 
 // Import all original pages
 import Login from "./pages/Login";
@@ -25,97 +34,97 @@ function App() {
         <Router>
           <Routes>
             {/* Public Routes */}
-            <Route 
-              path="/login" 
+            <Route
+              path="/login"
               element={
                 <PublicRoute>
                   <Login />
                 </PublicRoute>
-              } 
+              }
             />
-            
+
             {/* Protected Routes with Layout */}
-            <Route 
-              path="/dashboard" 
+            <Route
+              path="/dashboard"
               element={
                 <ProtectedRoute>
                   <Layout>
                     <Dashboard />
                   </Layout>
                 </ProtectedRoute>
-              } 
+              }
             />
-            <Route 
-              path="/tournaments" 
+            <Route
+              path="/tournaments"
               element={
                 <ProtectedRoute>
                   <Layout>
                     <Tournaments />
                   </Layout>
                 </ProtectedRoute>
-              } 
+              }
             />
-            <Route 
-              path="/tournaments/:tournamentId" 
+            <Route
+              path="/tournaments/:tournamentId"
               element={
                 <ProtectedRoute>
                   <Layout>
                     <TournamentDetails />
                   </Layout>
                 </ProtectedRoute>
-              } 
+              }
             />
-            <Route 
-              path="/profile" 
+            <Route
+              path="/profile"
               element={
                 <ProtectedRoute>
                   <Layout>
                     <Profile />
                   </Layout>
                 </ProtectedRoute>
-              } 
+              }
             />
-            <Route 
-              path="/credits" 
+            <Route
+              path="/credits"
               element={
                 <ProtectedRoute>
                   <Layout>
                     <CreditsPage />
                   </Layout>
                 </ProtectedRoute>
-              } 
+              }
             />
-            <Route 
-              path="/social" 
+            <Route
+              path="/social"
               element={
                 <ProtectedRoute>
                   <Layout>
                     <Social />
                   </Layout>
                 </ProtectedRoute>
-              } 
+              }
             />
-            <Route 
-              path="/game-results" 
+            <Route
+              path="/game-results"
               element={
                 <ProtectedRoute>
                   <Layout>
                     <GameResults />
                   </Layout>
                 </ProtectedRoute>
-              } 
+              }
             />
-            <Route 
-              path="/admin" 
+            <Route
+              path="/admin"
               element={
                 <ProtectedRoute>
                   <Layout>
                     <AdminPanel />
                   </Layout>
                 </ProtectedRoute>
-              } 
+              }
             />
-            
+
             {/* Default Routes */}
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="*" element={<Navigate to="/login" replace />} />

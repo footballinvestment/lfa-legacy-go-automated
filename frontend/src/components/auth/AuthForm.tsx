@@ -450,8 +450,8 @@ const AuthForm: React.FC = () => {
                   ? "Signing In..."
                   : "Creating Account..."
                 : activeTab === 0
-                ? "Sign In"
-                : "Create Account"}
+                  ? "Sign In"
+                  : "Create Account"}
             </Button>
           </form>
 

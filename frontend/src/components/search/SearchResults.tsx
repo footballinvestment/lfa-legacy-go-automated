@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Box,
   Card,
@@ -22,7 +22,7 @@ import {
   Fade,
   useTheme,
   alpha,
-} from '@mui/material';
+} from "@mui/material";
 import {
   ViewList,
   ViewModule,
@@ -38,9 +38,13 @@ import {
   EmojiEvents,
   Person,
   SportsSoccer,
-} from '@mui/icons-material';
-import { SearchResponse, SearchResult, SearchCategory } from '../../types/search';
-import useMobileViewport from '../../hooks/useMobileViewport';
+} from "@mui/icons-material";
+import {
+  SearchResponse,
+  SearchResult,
+  SearchCategory,
+} from "../../types/search";
+import useMobileViewport from "../../hooks/useMobileViewport";
 
 interface SearchResultsProps {
   results: SearchResponse | null;
@@ -49,7 +53,7 @@ interface SearchResultsProps {
   onResultSelect?: (result: SearchResult) => void;
   compact?: boolean;
   showPagination?: boolean;
-  viewMode?: 'list' | 'grid';
+  viewMode?: "list" | "grid";
 }
 
 const SearchResults: React.FC<SearchResultsProps> = ({
@@ -59,16 +63,21 @@ const SearchResults: React.FC<SearchResultsProps> = ({
   onResultSelect,
   compact = false,
   showPagination = true,
-  viewMode: initialViewMode = 'list'
+  viewMode: initialViewMode = "list",
 }) => {
   const theme = useTheme();
   const { isMobile } = useMobileViewport();
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>(initialViewMode);
+  const [viewMode, setViewMode] = useState<"list" | "grid">(initialViewMode);
   const [currentPage, setCurrentPage] = useState(1);
-  const [bookmarkedResults, setBookmarkedResults] = useState<Set<string>>(new Set());
+  const [bookmarkedResults, setBookmarkedResults] = useState<Set<string>>(
+    new Set()
+  );
 
   // Handle view mode change
-  const handleViewModeChange = (_: React.MouseEvent<HTMLElement>, newViewMode: 'list' | 'grid' | null) => {
+  const handleViewModeChange = (
+    _: React.MouseEvent<HTMLElement>,
+    newViewMode: "list" | "grid" | null
+  ) => {
     if (newViewMode !== null) {
       setViewMode(newViewMode);
     }
@@ -93,13 +102,13 @@ const SearchResults: React.FC<SearchResultsProps> = ({
   // Get icon for result type
   const getResultIcon = (type: SearchCategory) => {
     switch (type) {
-      case 'tournaments':
+      case "tournaments":
         return <EmojiEvents color="primary" />;
-      case 'users':
+      case "users":
         return <Person color="secondary" />;
-      case 'locations':
+      case "locations":
         return <LocationOn color="success" />;
-      case 'matches':
+      case "matches":
         return <SportsSoccer color="info" />;
       default:
         return <SportsSoccer />;
@@ -109,19 +118,26 @@ const SearchResults: React.FC<SearchResultsProps> = ({
   // Format metadata for display
   const formatMetadata = (result: SearchResult) => {
     switch (result.type) {
-      case 'tournaments':
+      case "tournaments":
         return [
           result.metadata.status && (
             <Chip
               key="status"
               label={result.metadata.status}
               size="small"
-              color={result.metadata.status === 'active' ? 'success' : 'default'}
+              color={
+                result.metadata.status === "active" ? "success" : "default"
+              }
               variant="outlined"
             />
           ),
           result.metadata.entryFee && (
-            <Chip key="fee" label={`$${result.metadata.entryFee}`} size="small" variant="outlined" />
+            <Chip
+              key="fee"
+              label={`$${result.metadata.entryFee}`}
+              size="small"
+              variant="outlined"
+            />
           ),
           result.metadata.participants && result.metadata.maxParticipants && (
             <Chip
@@ -131,16 +147,26 @@ const SearchResults: React.FC<SearchResultsProps> = ({
               variant="outlined"
               icon={<People />}
             />
-          )
+          ),
         ].filter(Boolean);
 
-      case 'users':
+      case "users":
         return [
           result.metadata.level && (
-            <Chip key="level" label={`Level ${result.metadata.level}`} size="small" variant="outlined" />
+            <Chip
+              key="level"
+              label={`Level ${result.metadata.level}`}
+              size="small"
+              variant="outlined"
+            />
           ),
           result.metadata.gamesPlayed && (
-            <Chip key="games" label={`${result.metadata.gamesPlayed} games`} size="small" variant="outlined" />
+            <Chip
+              key="games"
+              label={`${result.metadata.gamesPlayed} games`}
+              size="small"
+              variant="outlined"
+            />
           ),
           result.metadata.winRate && (
             <Chip
@@ -150,13 +176,18 @@ const SearchResults: React.FC<SearchResultsProps> = ({
               variant="outlined"
               color="success"
             />
-          )
+          ),
         ].filter(Boolean);
 
-      case 'locations':
+      case "locations":
         return [
           result.metadata.type && (
-            <Chip key="type" label={result.metadata.type} size="small" variant="outlined" />
+            <Chip
+              key="type"
+              label={result.metadata.type}
+              size="small"
+              variant="outlined"
+            />
           ),
           result.metadata.rating && (
             <Chip
@@ -168,8 +199,13 @@ const SearchResults: React.FC<SearchResultsProps> = ({
             />
           ),
           result.metadata.fields && (
-            <Chip key="fields" label={`${result.metadata.fields} fields`} size="small" variant="outlined" />
-          )
+            <Chip
+              key="fields"
+              label={`${result.metadata.fields} fields`}
+              size="small"
+              variant="outlined"
+            />
+          ),
         ].filter(Boolean);
 
       default:
@@ -182,12 +218,17 @@ const SearchResults: React.FC<SearchResultsProps> = ({
     return (
       <Card>
         <CardContent>
-          <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+          <Box
+            display="flex"
+            alignItems="center"
+            justifyContent="space-between"
+            mb={2}
+          >
             <Skeleton variant="text" width={200} height={32} />
             <Skeleton variant="rectangular" width={120} height={32} />
           </Box>
-          
-          {viewMode === 'list' ? (
+
+          {viewMode === "list" ? (
             <List>
               {[1, 2, 3, 4, 5].map((i) => (
                 <ListItem key={i} divider>
@@ -210,7 +251,11 @@ const SearchResults: React.FC<SearchResultsProps> = ({
                 <Grid item xs={12} sm={6} md={4} key={i}>
                   <Card variant="outlined">
                     <CardContent>
-                      <Skeleton variant="rectangular" height={120} sx={{ mb: 2 }} />
+                      <Skeleton
+                        variant="rectangular"
+                        height={120}
+                        sx={{ mb: 2 }}
+                      />
                       <Skeleton variant="text" width="80%" />
                       <Skeleton variant="text" width="60%" />
                     </CardContent>
@@ -228,7 +273,9 @@ const SearchResults: React.FC<SearchResultsProps> = ({
   if (error) {
     return (
       <Alert severity="error" sx={{ borderRadius: 2 }}>
-        <Typography variant="h6" gutterBottom>Search Error</Typography>
+        <Typography variant="h6" gutterBottom>
+          Search Error
+        </Typography>
         {error}
       </Alert>
     );
@@ -238,8 +285,8 @@ const SearchResults: React.FC<SearchResultsProps> = ({
   if (!results || results.results.length === 0) {
     return (
       <Card>
-        <CardContent sx={{ textAlign: 'center', py: 6 }}>
-          <SportsSoccer sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
+        <CardContent sx={{ textAlign: "center", py: 6 }}>
+          <SportsSoccer sx={{ fontSize: 64, color: "text.disabled", mb: 2 }} />
           <Typography variant="h6" color="text.secondary" gutterBottom>
             No results found
           </Typography>
@@ -255,13 +302,19 @@ const SearchResults: React.FC<SearchResultsProps> = ({
     <Card>
       <CardContent>
         {/* Results Header */}
-        <Box display="flex" alignItems="center" justifyContent="space-between" mb={3}>
+        <Box
+          display="flex"
+          alignItems="center"
+          justifyContent="space-between"
+          mb={3}
+        >
           <Box>
             <Typography variant="h6" sx={{ fontWeight: 600 }}>
               Search Results
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              {results.totalCount.toLocaleString()} results found in {results.executionTime}ms
+              {results.totalCount.toLocaleString()} results found in{" "}
+              {results.executionTime}ms
             </Typography>
           </Box>
 
@@ -283,22 +336,27 @@ const SearchResults: React.FC<SearchResultsProps> = ({
         </Box>
 
         {/* Results List */}
-        {viewMode === 'list' ? (
+        {viewMode === "list" ? (
           <List disablePadding>
             {results.results.map((result, index) => (
-              <Fade in key={result.id} timeout={300} style={{ transitionDelay: `${index * 50}ms` }}>
+              <Fade
+                in
+                key={result.id}
+                timeout={300}
+                style={{ transitionDelay: `${index * 50}ms` }}
+              >
                 <ListItem
                   divider={index < results.results.length - 1}
                   sx={{
                     borderRadius: 2,
                     mb: 1,
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    '&:hover': {
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                    "&:hover": {
                       backgroundColor: alpha(theme.palette.primary.main, 0.04),
-                      transform: 'translateY(-1px)',
-                      boxShadow: 1
-                    }
+                      transform: "translateY(-1px)",
+                      boxShadow: 1,
+                    },
                   }}
                   onClick={() => handleResultClick(result)}
                 >
@@ -307,7 +365,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({
                       src={result.thumbnail}
                       sx={{
                         width: compact ? 40 : 48,
-                        height: compact ? 40 : 48
+                        height: compact ? 40 : 48,
                       }}
                     >
                       {getResultIcon(result.type)}
@@ -327,14 +385,21 @@ const SearchResults: React.FC<SearchResultsProps> = ({
                           label={result.type}
                           size="small"
                           variant="outlined"
-                          sx={{ textTransform: 'capitalize', fontSize: '0.7rem' }}
+                          sx={{
+                            textTransform: "capitalize",
+                            fontSize: "0.7rem",
+                          }}
                         />
                       </Box>
                     }
                     secondary={
                       <Box>
                         {result.subtitle && (
-                          <Typography variant="caption" color="text.secondary" display="block">
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            display="block"
+                          >
                             {result.subtitle}
                           </Typography>
                         )}
@@ -344,10 +409,10 @@ const SearchResults: React.FC<SearchResultsProps> = ({
                             color="text.secondary"
                             sx={{
                               mt: 0.5,
-                              display: '-webkit-box',
+                              display: "-webkit-box",
                               WebkitLineClamp: 2,
-                              WebkitBoxOrient: 'vertical',
-                              overflow: 'hidden'
+                              WebkitBoxOrient: "vertical",
+                              overflow: "hidden",
                             }}
                           >
                             {result.description}
@@ -396,22 +461,31 @@ const SearchResults: React.FC<SearchResultsProps> = ({
           <Grid container spacing={2}>
             {results.results.map((result, index) => (
               <Grid item xs={12} sm={6} md={4} lg={3} key={result.id}>
-                <Fade in timeout={300} style={{ transitionDelay: `${index * 50}ms` }}>
+                <Fade
+                  in
+                  timeout={300}
+                  style={{ transitionDelay: `${index * 50}ms` }}
+                >
                   <Card
                     variant="outlined"
                     sx={{
-                      height: '100%',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      '&:hover': {
+                      height: "100%",
+                      cursor: "pointer",
+                      transition: "all 0.2s ease",
+                      "&:hover": {
                         boxShadow: 4,
-                        transform: 'translateY(-2px)'
-                      }
+                        transform: "translateY(-2px)",
+                      },
                     }}
                     onClick={() => handleResultClick(result)}
                   >
                     <CardContent>
-                      <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+                      <Box
+                        display="flex"
+                        alignItems="center"
+                        justifyContent="space-between"
+                        mb={2}
+                      >
                         <Avatar src={result.thumbnail}>
                           {getResultIcon(result.type)}
                         </Avatar>
@@ -419,16 +493,25 @@ const SearchResults: React.FC<SearchResultsProps> = ({
                           label={result.type}
                           size="small"
                           variant="outlined"
-                          sx={{ textTransform: 'capitalize' }}
+                          sx={{ textTransform: "capitalize" }}
                         />
                       </Box>
 
-                      <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+                      <Typography
+                        variant="h6"
+                        gutterBottom
+                        sx={{ fontWeight: 600 }}
+                      >
                         {result.title}
                       </Typography>
 
                       {result.subtitle && (
-                        <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          display="block"
+                          gutterBottom
+                        >
                           {result.subtitle}
                         </Typography>
                       )}
@@ -438,11 +521,11 @@ const SearchResults: React.FC<SearchResultsProps> = ({
                           variant="body2"
                           color="text.secondary"
                           sx={{
-                            display: '-webkit-box',
+                            display: "-webkit-box",
                             WebkitLineClamp: 3,
-                            WebkitBoxOrient: 'vertical',
-                            overflow: 'hidden',
-                            mb: 2
+                            WebkitBoxOrient: "vertical",
+                            overflow: "hidden",
+                            mb: 2,
                           }}
                         >
                           {result.description}
@@ -455,7 +538,11 @@ const SearchResults: React.FC<SearchResultsProps> = ({
                         </Box>
                       )}
 
-                      <Box display="flex" justifyContent="space-between" alignItems="center">
+                      <Box
+                        display="flex"
+                        justifyContent="space-between"
+                        alignItems="center"
+                      >
                         <Typography variant="caption" color="text.secondary">
                           Relevance: {(result.relevanceScore * 100).toFixed(0)}%
                         </Typography>

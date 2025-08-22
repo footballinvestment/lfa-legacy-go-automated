@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Box,
   Typography,
@@ -8,19 +8,19 @@ import {
   Paper,
   useTheme,
   useMediaQuery,
-} from '@mui/material';
+} from "@mui/material";
 import {
   ArrowBack,
   People,
   PersonAdd,
   EmojiEvents,
   Mail,
-} from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
-import FriendsList from '../components/social/FriendsList';
-import UserSearch from '../components/social/UserSearch';
-import ChallengeSystem from '../components/social/ChallengeSystem';
-import FriendRequests from '../components/social/FriendRequests';
+} from "@mui/icons-material";
+import { useNavigate } from "react-router-dom";
+import FriendsList from "../components/social/FriendsList";
+import UserSearch from "../components/social/UserSearch";
+import ChallengeSystem from "../components/social/ChallengeSystem";
+import FriendRequests from "../components/social/FriendRequests";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -44,7 +44,7 @@ function TabPanel({ children, value, index }: TabPanelProps) {
 const Social: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const [activeTab, setActiveTab] = useState(0);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
@@ -52,18 +52,22 @@ const Social: React.FC = () => {
   };
 
   const tabs = [
-    { label: 'My Friends', icon: <People />, component: <FriendsList /> },
-    { label: 'Find Players', icon: <PersonAdd />, component: <UserSearch /> },
-    { label: 'Challenges', icon: <EmojiEvents />, component: <ChallengeSystem /> },
-    { label: 'Requests', icon: <Mail />, component: <FriendRequests /> },
+    { label: "My Friends", icon: <People />, component: <FriendsList /> },
+    { label: "Find Players", icon: <PersonAdd />, component: <UserSearch /> },
+    {
+      label: "Challenges",
+      icon: <EmojiEvents />,
+      component: <ChallengeSystem />,
+    },
+    { label: "Requests", icon: <Mail />, component: <FriendRequests /> },
   ];
 
   return (
     <Box sx={{ p: { xs: 2, md: 3 } }}>
       {/* Header */}
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
-        <IconButton 
-          onClick={() => navigate('/dashboard')} 
+      <Box sx={{ display: "flex", alignItems: "center", mb: 4 }}>
+        <IconButton
+          onClick={() => navigate("/dashboard")}
           sx={{ mr: 2 }}
           aria-label="Back to dashboard"
         >
@@ -79,13 +83,13 @@ const Social: React.FC = () => {
         <Tabs
           value={activeTab}
           onChange={handleTabChange}
-          variant={isMobile ? 'scrollable' : 'fullWidth'}
-          scrollButtons={isMobile ? 'auto' : false}
+          variant={isMobile ? "scrollable" : "fullWidth"}
+          scrollButtons={isMobile ? "auto" : false}
           sx={{
-            '& .MuiTab-root': {
+            "& .MuiTab-root": {
               minHeight: 64,
-              textTransform: 'none',
-              fontSize: '1rem',
+              textTransform: "none",
+              fontSize: "1rem",
               fontWeight: 600,
             },
           }}
@@ -95,10 +99,10 @@ const Social: React.FC = () => {
               key={index}
               label={isMobile ? undefined : tab.label}
               icon={tab.icon}
-              iconPosition={isMobile ? 'top' : 'start'}
+              iconPosition={isMobile ? "top" : "start"}
               aria-label={tab.label}
               sx={{
-                '& .MuiTab-iconWrapper': {
+                "& .MuiTab-iconWrapper": {
                   mb: isMobile ? 0.5 : 0,
                   mr: isMobile ? 0 : 1,
                 },

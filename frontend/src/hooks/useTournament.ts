@@ -159,9 +159,8 @@ export const useTournamentCreation = () => {
       try {
         setIsCreating(true);
         setError(null);
-        const tournament = await tournamentService.createTournament(
-          tournamentData
-        );
+        const tournament =
+          await tournamentService.createTournament(tournamentData);
         return tournament;
       } catch (err) {
         setError(

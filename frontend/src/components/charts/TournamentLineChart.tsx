@@ -1,7 +1,15 @@
-import React from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
-import { useTheme } from '@mui/material';
-import ChartWrapper, { BaseChartProps, getChartColors } from './ChartWrapper';
+import React from "react";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+} from "recharts";
+import { useTheme } from "@mui/material";
+import ChartWrapper, { BaseChartProps, getChartColors } from "./ChartWrapper";
 
 export interface TournamentTrendData {
   period: string;
@@ -30,7 +38,7 @@ const TournamentLineChart: React.FC<TournamentLineChartProps> = ({
   showParticipants = true,
   showCompletionRate = false,
   showRevenue = false,
-  colorScheme = 'default',
+  colorScheme = "default",
   onDataPointClick,
 }) => {
   const theme = useTheme();
@@ -43,26 +51,20 @@ const TournamentLineChart: React.FC<TournamentLineChartProps> = ({
   };
 
   const renderChart = () => (
-    <LineChart 
-      data={data} 
+    <LineChart
+      data={data}
       margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
       onClick={handleDataPointClick}
     >
       {config.showGrid !== false && (
-        <CartesianGrid 
-          strokeDasharray="3 3" 
-          stroke={theme.palette.divider}
-        />
+        <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
       )}
-      <XAxis 
-        dataKey="period" 
+      <XAxis
+        dataKey="period"
         stroke={theme.palette.text.secondary}
         fontSize={12}
       />
-      <YAxis 
-        stroke={theme.palette.text.secondary}
-        fontSize={12}
-      />
+      <YAxis stroke={theme.palette.text.secondary} fontSize={12} />
       <Tooltip
         contentStyle={{
           backgroundColor: theme.palette.background.paper,
@@ -74,7 +76,7 @@ const TournamentLineChart: React.FC<TournamentLineChartProps> = ({
         labelStyle={{ color: theme.palette.text.primary }}
       />
       {config.showLegend !== false && <Legend />}
-      
+
       {showTournaments && (
         <Line
           type="monotone"
@@ -87,7 +89,7 @@ const TournamentLineChart: React.FC<TournamentLineChartProps> = ({
           animationDuration={config.animationDuration || 1000}
         />
       )}
-      
+
       {showParticipants && (
         <Line
           type="monotone"
@@ -100,7 +102,7 @@ const TournamentLineChart: React.FC<TournamentLineChartProps> = ({
           animationDuration={config.animationDuration || 1000}
         />
       )}
-      
+
       {showCompletionRate && (
         <Line
           type="monotone"
@@ -113,7 +115,7 @@ const TournamentLineChart: React.FC<TournamentLineChartProps> = ({
           animationDuration={config.animationDuration || 1000}
         />
       )}
-      
+
       {showRevenue && (
         <Line
           type="monotone"
@@ -136,7 +138,9 @@ const TournamentLineChart: React.FC<TournamentLineChartProps> = ({
       loading={loading}
       error={error}
       height={height}
-      onExport={(format) => console.log(`Exporting tournament trends as ${format}`)}
+      onExport={(format) =>
+        console.log(`Exporting tournament trends as ${format}`)
+      }
     >
       {renderChart()}
     </ChartWrapper>
@@ -146,20 +150,35 @@ const TournamentLineChart: React.FC<TournamentLineChartProps> = ({
 export default TournamentLineChart;
 
 // Sample data generator for testing
-export const generateSampleTournamentData = (months: number = 12): TournamentTrendData[] => {
+export const generateSampleTournamentData = (
+  months: number = 12
+): TournamentTrendData[] => {
   const data: TournamentTrendData[] = [];
-  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  
+  const monthNames = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+
   for (let i = 0; i < months; i++) {
     const baseValue = 50 + i * 5;
     data.push({
       period: monthNames[i] || `Month ${i + 1}`,
       tournaments: baseValue + Math.floor(Math.random() * 20),
-      participants: (baseValue * 20) + Math.floor(Math.random() * 200),
+      participants: baseValue * 20 + Math.floor(Math.random() * 200),
       completionRate: 75 + Math.floor(Math.random() * 20),
-      revenue: (baseValue * 180) + Math.floor(Math.random() * 5000),
+      revenue: baseValue * 180 + Math.floor(Math.random() * 5000),
     });
   }
-  
+
   return data;
 };

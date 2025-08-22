@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Box,
   Typography,
@@ -12,7 +12,7 @@ import {
   DialogContent,
   DialogActions,
   LinearProgress,
-} from '@mui/material';
+} from "@mui/material";
 import {
   PersonAdd,
   PersonRemove,
@@ -20,10 +20,10 @@ import {
   AccessTime,
   AccountBalanceWallet,
   EmojiEvents,
-} from '@mui/icons-material';
-import { formatDistanceToNow, isBefore } from 'date-fns';
-import { useSafeAuth } from '../../SafeAuthContext';
-import { tournamentService, Tournament } from '../../services/api';
+} from "@mui/icons-material";
+import { formatDistanceToNow, isBefore } from "date-fns";
+import { useSafeAuth } from "../../SafeAuthContext";
+import { tournamentService, Tournament } from "../../services/api";
 
 interface RegistrationPanelProps {
   tournament: Tournament;
@@ -45,7 +45,7 @@ const RegistrationPanel: React.FC<RegistrationPanelProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
-    action: 'register' | 'withdraw' | null;
+    action: "register" | "withdraw" | null;
   }>({
     open: false,
     action: null,
@@ -59,7 +59,7 @@ const RegistrationPanel: React.FC<RegistrationPanelProps> = ({
       setConfirmDialog({ open: false, action: null });
       onRegistrationChange();
     } catch (err: any) {
-      setError(err.message || 'Failed to register for tournament');
+      setError(err.message || "Failed to register for tournament");
     } finally {
       setLoading(false);
     }
@@ -73,78 +73,83 @@ const RegistrationPanel: React.FC<RegistrationPanelProps> = ({
       setConfirmDialog({ open: false, action: null });
       onRegistrationChange();
     } catch (err: any) {
-      setError(err.message || 'Failed to withdraw from tournament');
+      setError(err.message || "Failed to withdraw from tournament");
     } finally {
       setLoading(false);
     }
   };
 
-  const hasEnoughCredits = (state.user?.credits || 0) >= tournament.entry_fee_credits;
+  const hasEnoughCredits =
+    (state.user?.credits || 0) >= tournament.entry_fee_credits;
   const isRegistrationOpen = tournament.is_registration_open;
-  const isDeadlinePassed = isBefore(new Date(tournament.registration_deadline), new Date());
+  const isDeadlinePassed = isBefore(
+    new Date(tournament.registration_deadline),
+    new Date()
+  );
   const isTournamentFull = tournament.is_full;
-  const isLevelEligible = (state.user?.level || 1) >= tournament.min_level && 
+  const isLevelEligible =
+    (state.user?.level || 1) >= tournament.min_level &&
     (!tournament.max_level || (state.user?.level || 1) <= tournament.max_level);
 
   const getRegistrationStatus = () => {
     if (userParticipation) {
       return {
-        status: 'registered',
-        message: 'You are registered for this tournament',
-        color: 'success' as const,
+        status: "registered",
+        message: "You are registered for this tournament",
+        color: "success" as const,
         icon: <EmojiEvents />,
       };
     }
 
     if (!isRegistrationOpen) {
       return {
-        status: 'closed',
-        message: 'Registration is closed',
-        color: 'error' as const,
+        status: "closed",
+        message: "Registration is closed",
+        color: "error" as const,
         icon: <Warning />,
       };
     }
 
     if (isDeadlinePassed) {
       return {
-        status: 'deadline_passed',
-        message: 'Registration deadline has passed',
-        color: 'error' as const,
+        status: "deadline_passed",
+        message: "Registration deadline has passed",
+        color: "error" as const,
         icon: <AccessTime />,
       };
     }
 
     if (isTournamentFull) {
       return {
-        status: 'full',
-        message: 'Tournament is full',
-        color: 'error' as const,
+        status: "full",
+        message: "Tournament is full",
+        color: "error" as const,
         icon: <Warning />,
       };
     }
 
     if (!isLevelEligible) {
       return {
-        status: 'level_ineligible',
-        message: `Level ${tournament.min_level}${tournament.max_level ? `-${tournament.max_level}` : '+'} required`,
-        color: 'warning' as const,
+        status: "level_ineligible",
+        message: `Level ${tournament.min_level}${tournament.max_level ? `-${tournament.max_level}` : "+"} required`,
+        color: "warning" as const,
         icon: <Warning />,
       };
     }
 
     if (!hasEnoughCredits) {
       return {
-        status: 'insufficient_credits',
+        status: "insufficient_credits",
         message: `Need ${tournament.entry_fee_credits} credits (you have ${state.user?.credits || 0})`,
-        color: 'warning' as const,
+        color: "warning" as const,
         icon: <AccountBalanceWallet />,
       };
     }
 
     return {
-      status: 'available',
-      message: 'Registration available',
-      color: 'success' as const,
+      status: "available",
+      message: "Registration available",
+      color: "success" as const,
       icon: <PersonAdd />,
     };
   };
@@ -165,7 +170,7 @@ const RegistrationPanel: React.FC<RegistrationPanelProps> = ({
               label={registrationStatus.message}
               color={registrationStatus.color}
               icon={registrationStatus.icon}
-              sx={{ width: '100%', justifyContent: 'flex-start' }}
+              sx={{ width: "100%", justifyContent: "flex-start" }}
             />
           </Box>
 
@@ -178,10 +183,14 @@ const RegistrationPanel: React.FC<RegistrationPanelProps> = ({
               Your Credits: {state.user?.credits || 0}
             </Typography>
             <Typography variant="body2" color="text.secondary" gutterBottom>
-              Deadline: {formatDistanceToNow(new Date(tournament.registration_deadline), { addSuffix: true })}
+              Deadline:{" "}
+              {formatDistanceToNow(new Date(tournament.registration_deadline), {
+                addSuffix: true,
+              })}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Spots: {tournament.current_participants}/{tournament.max_participants}
+              Spots: {tournament.current_participants}/
+              {tournament.max_participants}
             </Typography>
           </Box>
 
@@ -192,8 +201,12 @@ const RegistrationPanel: React.FC<RegistrationPanelProps> = ({
             </Typography>
             <LinearProgress
               variant="determinate"
-              value={(tournament.current_participants / tournament.max_participants) * 100}
-              color={isTournamentFull ? 'error' : 'primary'}
+              value={
+                (tournament.current_participants /
+                  tournament.max_participants) *
+                100
+              }
+              color={isTournamentFull ? "error" : "primary"}
               sx={{ height: 8, borderRadius: 4 }}
             />
           </Box>
@@ -206,14 +219,16 @@ const RegistrationPanel: React.FC<RegistrationPanelProps> = ({
           )}
 
           {/* Action Buttons */}
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
             {userParticipation ? (
               // User is registered - show withdraw option
               <Button
                 variant="outlined"
                 color="error"
                 startIcon={<PersonRemove />}
-                onClick={() => setConfirmDialog({ open: true, action: 'withdraw' })}
+                onClick={() =>
+                  setConfirmDialog({ open: true, action: "withdraw" })
+                }
                 disabled={loading || !canWithdraw}
                 fullWidth
               >
@@ -224,8 +239,14 @@ const RegistrationPanel: React.FC<RegistrationPanelProps> = ({
               <Button
                 variant="contained"
                 startIcon={<PersonAdd />}
-                onClick={() => setConfirmDialog({ open: true, action: 'register' })}
-                disabled={loading || !canRegister || registrationStatus.status !== 'available'}
+                onClick={() =>
+                  setConfirmDialog({ open: true, action: "register" })
+                }
+                disabled={
+                  loading ||
+                  !canRegister ||
+                  registrationStatus.status !== "available"
+                }
                 fullWidth
               >
                 Register for Tournament
@@ -237,7 +258,7 @@ const RegistrationPanel: React.FC<RegistrationPanelProps> = ({
               <Button
                 variant="outlined"
                 startIcon={<AccountBalanceWallet />}
-                onClick={() => window.open('/credits', '_blank')}
+                onClick={() => window.open("/credits", "_blank")}
                 fullWidth
                 size="small"
               >
@@ -247,32 +268,36 @@ const RegistrationPanel: React.FC<RegistrationPanelProps> = ({
           </Box>
 
           {/* Additional Info */}
-          {tournament.status === 'in_progress' && (
+          {tournament.status === "in_progress" && (
             <Alert severity="info" sx={{ mt: 2 }}>
-              Tournament is currently in progress. Check the bracket for match updates.
+              Tournament is currently in progress. Check the bracket for match
+              updates.
             </Alert>
           )}
         </CardContent>
       </Card>
 
       {/* Confirmation Dialogs */}
-      <Dialog 
-        open={confirmDialog.open} 
+      <Dialog
+        open={confirmDialog.open}
         onClose={() => setConfirmDialog({ open: false, action: null })}
         maxWidth="sm"
         fullWidth
       >
         <DialogTitle>
-          {confirmDialog.action === 'register' ? 'Register for Tournament' : 'Withdraw from Tournament'}
+          {confirmDialog.action === "register"
+            ? "Register for Tournament"
+            : "Withdraw from Tournament"}
         </DialogTitle>
         <DialogContent>
-          {confirmDialog.action === 'register' ? (
+          {confirmDialog.action === "register" ? (
             <Box>
               <Typography paragraph>
                 Are you sure you want to register for "{tournament.name}"?
               </Typography>
               <Typography variant="body2" color="text.secondary" paragraph>
-                • Entry fee: {tournament.entry_fee_credits} credits will be deducted
+                • Entry fee: {tournament.entry_fee_credits} credits will be
+                deducted
               </Typography>
               <Typography variant="body2" color="text.secondary" paragraph>
                 • You will be committed to participate in the tournament
@@ -296,16 +321,26 @@ const RegistrationPanel: React.FC<RegistrationPanelProps> = ({
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setConfirmDialog({ open: false, action: null })}>
+          <Button
+            onClick={() => setConfirmDialog({ open: false, action: null })}
+          >
             Cancel
           </Button>
           <Button
-            onClick={confirmDialog.action === 'register' ? handleRegister : handleWithdraw}
+            onClick={
+              confirmDialog.action === "register"
+                ? handleRegister
+                : handleWithdraw
+            }
             variant="contained"
-            color={confirmDialog.action === 'register' ? 'primary' : 'error'}
+            color={confirmDialog.action === "register" ? "primary" : "error"}
             disabled={loading}
           >
-            {loading ? 'Processing...' : (confirmDialog.action === 'register' ? 'Register' : 'Withdraw')}
+            {loading
+              ? "Processing..."
+              : confirmDialog.action === "register"
+                ? "Register"
+                : "Withdraw"}
           </Button>
         </DialogActions>
       </Dialog>

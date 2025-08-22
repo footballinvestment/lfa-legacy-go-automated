@@ -117,7 +117,9 @@ class AdminUserResponse(BaseModel):
 
 # Bulk operations
 class BulkUserOperation(BaseModel):
-    action: str = Field(..., pattern=r"^(suspend|unsuspend|add_role|remove_role|ban|unban)$")
+    action: str = Field(
+        ..., pattern=r"^(suspend|unsuspend|add_role|remove_role|ban|unban)$"
+    )
     user_ids: List[int] = Field(..., min_items=1, max_items=1000)
     params: Optional[Dict[str, Any]] = None
 

@@ -1,0 +1,884 @@
+{
+  "info": {
+    "name": "LFA Legacy GO API - Complete Collection",
+    "description": "🏆 Comprehensive API collection for Football Training Platform\n\n## Quick Setup\n1. Import this collection\n2. Import the environment file \n3. Run \"User Login\" to get JWT token\n4. Explore all endpoints with authentication\n\n## Features Covered\n- Authentication & Authorization\n- User Management & Profiles\n- Tournament System\n- Location Services\n- Social Features (Friends, Challenges)\n- Credit System & Transactions\n- Game Results & Statistics\n- Admin Functions\n- Health Monitoring\n\n## Environment Variables Used\n- {{base_url}} - API base URL\n- {{jwt_token}} - JWT authentication token\n- {{user_id}} - Current user ID\n- {{tournament_id}} - Example tournament ID\n- {{location_id}} - Example location ID\n\n## Authentication Flow\n1. Register new account OR\n2. Login with existing credentials\n3. JWT token automatically saved for subsequent requests",
+    "version": "3.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "🔐 Authentication",
+      "description": "User registration, login, and profile management endpoints",
+      "item": [
+        {
+          "name": "User Registration",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Registration successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.data.access_token).to.exist;",
+                  "});",
+                  "",
+                  "// Save JWT token for future requests",
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.environment.set('jwt_token', response.data.access_token);",
+                  "    pm.environment.set('user_id', response.data.user.id);",
+                  "    console.log('✅ JWT token saved:', response.data.access_token.substring(0, 20) + '...');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"testuser_{{$randomInt}}\",\n  \"email\": \"test{{$randomInt}}@example.com\",\n  \"password\": \"securePassword123\",\n  \"full_name\": \"Test User {{$randomFirstName}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "register"]
+            },
+            "description": "🆕 Create new user account with immediate JWT authentication\n\n**Auto-generated data**: Uses Postman random variables for unique test users\n\n**Response**: JWT token + complete user profile"
+          }
+        },
+        {
+          "name": "User Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Login successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.data.access_token).to.exist;",
+                  "});",
+                  "",
+                  "// Save JWT token and user details",
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.environment.set('jwt_token', response.data.access_token);",
+                  "    pm.environment.set('user_id', response.data.user.id);",
+                  "    pm.environment.set('username', response.data.user.username);",
+                  "    console.log('✅ Logged in as:', response.data.user.username);",
+                  "    console.log('💰 Credits:', response.data.user.credits);",
+                  "    console.log('📊 Level:', response.data.user.level);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"demo_user\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "🔐 Authenticate with existing credentials\n\n**Test Credentials**:\n- Username: demo_user\n- Password: password123\n\n**Auto-saves**: JWT token for collection-wide authentication"
+          }
+        },
+        {
+          "name": "Get Current User Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Profile retrieved successfully', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.data.username).to.exist;",
+                  "});",
+                  "",
+                  "// Display user info",
+                  "if (pm.response.code === 200) {",
+                  "    const user = pm.response.json().data;",
+                  "    console.log('👤 User Profile:');",
+                  "    console.log('   Username:', user.username);",
+                  "    console.log('   Level:', user.level);",
+                  "    console.log('   Credits:', user.credits);",
+                  "    console.log('   Member since:', user.created_at);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "me"]
+            },
+            "description": "👤 Get current authenticated user's profile information\n\n**Requires**: JWT token authentication\n**Returns**: Complete user profile with stats"
+          }
+        },
+        {
+          "name": "OAuth2 Token (Form Data)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('OAuth2 login successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.environment.set('jwt_token', response.data.access_token);",
+                  "    console.log('✅ OAuth2 token obtained');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "username",
+                  "value": "demo_user",
+                  "type": "text"
+                },
+                {
+                  "key": "password",
+                  "value": "password123",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/token",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "token"]
+            },
+            "description": "🔐 OAuth2-compliant authentication endpoint\n\n**Format**: Form data (application/x-www-form-urlencoded)\n**Compatible**: With OAuth2 standards and tools"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🏆 Tournaments",
+      "description": "Tournament creation, management, and participation",
+      "item": [
+        {
+          "name": "Get All Tournaments",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Tournaments loaded successfully', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "});",
+                  "",
+                  "// Save first tournament ID for other requests",
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data.length > 0) {",
+                  "        pm.environment.set('tournament_id', response.data[0].id);",
+                  "        console.log('🏆 Available tournaments:', response.data.length);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/tournaments?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tournaments"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "🏆 List all available tournaments with pagination\n\n**Query Parameters**:\n- page: Page number (default: 1)\n- limit: Items per page (default: 10)\n- status: Filter by status (optional)\n\n**Auto-saves**: First tournament ID for other requests"
+          }
+        },
+        {
+          "name": "Create Tournament",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Tournament created successfully', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.data.id).to.exist;",
+                  "});",
+                  "",
+                  "// Save new tournament ID",
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.environment.set('tournament_id', response.data.id);",
+                  "    console.log('🏆 Created tournament:', response.data.name);",
+                  "    console.log('🆔 Tournament ID:', response.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Tournament {{$randomInt}}\",\n  \"description\": \"Automated test tournament created via Postman\",\n  \"location_id\": 1,\n  \"start_date\": \"2025-12-01T10:00:00Z\",\n  \"end_date\": \"2025-12-01T18:00:00Z\",\n  \"max_participants\": 16,\n  \"entry_fee\": 10,\n  \"prize_pool\": 100,\n  \"tournament_type\": \"single_elimination\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/tournaments",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tournaments"]
+            },
+            "description": "🏆 Create a new tournament\n\n**Required Fields**:\n- name: Tournament name\n- location_id: Venue location\n- start_date: Start date/time\n- end_date: End date/time\n- max_participants: Player limit\n\n**Optional**: entry_fee, prize_pool, description"
+          }
+        },
+        {
+          "name": "Join Tournament",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Tournament join successful', function () {",
+                  "    const validCodes = [200, 201, 409]; // 409 = already joined",
+                  "    pm.expect(validCodes).to.include(pm.response.code);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "    console.log('🎉 Successfully joined tournament!');",
+                  "} else if (pm.response.code === 409) {",
+                  "    console.log('ℹ️ Already participating in this tournament');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/tournaments/{{tournament_id}}/join",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tournaments", "{{tournament_id}}", "join"]
+            },
+            "description": "🎯 Join a tournament as participant\n\n**Requirements**:\n- Valid JWT token\n- Tournament must be open for registration\n- User must have sufficient credits for entry fee\n- Tournament not at capacity\n\n**Uses**: {{tournament_id}} from previous requests"
+          }
+        }
+      ]
+    },
+    {
+      "name": "📍 Locations",
+      "description": "Training locations and venue management",
+      "item": [
+        {
+          "name": "Get All Locations",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Locations loaded successfully', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "// Save first location ID",
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data.length > 0) {",
+                  "        pm.environment.set('location_id', response.data[0].id);",
+                  "        console.log('📍 Available locations:', response.data.length);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/locations?latitude=40.7831&longitude=-73.9712&radius=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "locations"],
+              "query": [
+                {
+                  "key": "latitude",
+                  "value": "40.7831",
+                  "description": "User latitude (NYC example)"
+                },
+                {
+                  "key": "longitude",
+                  "value": "-73.9712",
+                  "description": "User longitude (NYC example)"
+                },
+                {
+                  "key": "radius",
+                  "value": "10",
+                  "description": "Search radius in kilometers"
+                }
+              ]
+            },
+            "description": "📍 Get training locations near user position\n\n**Query Parameters**:\n- latitude: User's current latitude\n- longitude: User's current longitude\n- radius: Search radius in km (default: 10)\n- location_type: Filter by type (optional)\n\n**Response**: Locations sorted by distance"
+          }
+        },
+        {
+          "name": "Get Location Details",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Location details retrieved', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    const location = pm.response.json().data;",
+                  "    console.log('📍 Location:', location.name);",
+                  "    console.log('💰 Hourly rate:', location.hourly_rate, 'credits');",
+                  "    console.log('👥 Capacity:', location.capacity, 'players');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/locations/{{location_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "locations", "{{location_id}}"]
+            },
+            "description": "📍 Get detailed information about a specific location\n\n**Includes**:\n- Full location details\n- Amenities and features\n- Current availability\n- Pricing information\n- Upcoming bookings"
+          }
+        }
+      ]
+    },
+    {
+      "name": "👥 Social Features",
+      "description": "Friends, challenges, and social interactions",
+      "item": [
+        {
+          "name": "Get Friends List",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Friends list retrieved', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    console.log('👥 Total friends:', response.data.length);",
+                  "    if (response.data.length > 0) {",
+                  "        console.log('🔥 First friend:', response.data[0].display_name);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/social/friends",
+              "host": ["{{base_url}}"],
+              "path": ["api", "social", "friends"]
+            },
+            "description": "👥 Get user's friends list with online status\n\n**Response includes**:\n- Friend profiles\n- Online/offline status\n- Last activity timestamps\n- Friendship duration\n- Current level and stats"
+          }
+        },
+        {
+          "name": "Send Friend Request",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Friend request sent or updated', function () {",
+                  "    const validCodes = [200, 201, 409]; // 409 = already friends/pending",
+                  "    pm.expect(validCodes).to.include(pm.response.code);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "    console.log('📧 Friend request sent successfully!');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"target_user_id\": 2,\n  \"message\": \"Hey! Let's play football together 🏈\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/social/friend-requests",
+              "host": ["{{base_url}}"],
+              "path": ["api", "social", "friend-requests"]
+            },
+            "description": "📧 Send friend request to another user\n\n**Required**:\n- target_user_id: ID of user to befriend\n\n**Optional**:\n- message: Personal message (max 200 chars)\n\n**Note**: Update target_user_id to a valid user ID"
+          }
+        }
+      ]
+    },
+    {
+      "name": "💰 Credits System",
+      "description": "Credit balance, transactions, and purchases",
+      "item": [
+        {
+          "name": "Get Credit Balance",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Credit balance retrieved', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    const data = pm.response.json().data;",
+                  "    console.log('💰 Current balance:', data.balance, 'credits');",
+                  "    console.log('📈 Total earned:', data.total_earned);",
+                  "    console.log('📉 Total spent:', data.total_spent);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/credits/balance",
+              "host": ["{{base_url}}"],
+              "path": ["api", "credits", "balance"]
+            },
+            "description": "💰 Get user's credit balance and transaction summary\n\n**Includes**:\n- Current available balance\n- Total credits earned\n- Total credits spent\n- Recent transaction history\n- Spending categories"
+          }
+        },
+        {
+          "name": "Get Transaction History",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Transaction history retrieved', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    const data = pm.response.json().data;",
+                  "    console.log('📊 Total transactions:', data.length);",
+                  "    if (data.length > 0) {",
+                  "        console.log('💸 Latest transaction:', data[0].description);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/credits/transactions?limit=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "credits", "transactions"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "📊 Get user's credit transaction history\n\n**Query Parameters**:\n- limit: Max transactions to return\n- type: Filter by transaction type (earned/spent)\n- date_from: Start date filter\n- date_to: End date filter"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🎮 Game Results",
+      "description": "Game results, statistics, and performance tracking",
+      "item": [
+        {
+          "name": "Get User Game Stats",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Game stats retrieved', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    const stats = pm.response.json().data;",
+                  "    console.log('🎮 Games played:', stats.total_games || 0);",
+                  "    console.log('🏆 Games won:', stats.games_won || 0);",
+                  "    console.log('📊 Win rate:', ((stats.games_won || 0) / Math.max(stats.total_games || 1, 1) * 100).toFixed(1) + '%');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/game-results/stats/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "game-results", "stats", "{{user_id}}"]
+            },
+            "description": "📊 Get comprehensive game statistics for user\n\n**Includes**:\n- Total games played\n- Win/loss record\n- Performance trends\n- Favorite game modes\n- Achievement progress"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🏥 Health & Monitoring",
+      "description": "System health checks and monitoring endpoints",
+      "item": [
+        {
+          "name": "Basic Health Check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('API is healthy', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    console.log('✅ API Status:', response.status);",
+                  "    console.log('🏥 Service:', response.service);",
+                  "    console.log('📅 Timestamp:', response.timestamp);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            },
+            "description": "🏥 Basic health check - no authentication required\n\n**Use cases**:\n- Uptime monitoring\n- Load balancer health checks\n- Service availability testing\n- Automated monitoring systems"
+          }
+        },
+        {
+          "name": "Detailed System Status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('System status retrieved', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    const data = pm.response.json().data;",
+                  "    console.log('🚀 Service:', data.service);",
+                  "    console.log('📊 Active routers:', data.routers.active + '/' + data.routers.total);",
+                  "    console.log('💾 Database:', data.database.status);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "status"]
+            },
+            "description": "📊 Comprehensive system status information\n\n**Includes**:\n- API version and environment\n- Router status (11/11 active)\n- Database connectivity\n- Performance metrics\n- Middleware status"
+          }
+        },
+        {
+          "name": "Performance Metrics",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Performance metrics available', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    const data = pm.response.json().data;",
+                  "    console.log('⚡ Database performance:', JSON.stringify(data.database, null, 2));",
+                  "    console.log('🔧 API middleware:', data.api.middleware_stack);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/performance",
+              "host": ["{{base_url}}"],
+              "path": ["api", "performance"]
+            },
+            "description": "⚡ Get detailed performance metrics\n\n**Metrics include**:\n- Database performance stats\n- Connection pool status\n- Response time averages\n- System resource usage\n- Middleware performance"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔧 Admin Functions",
+      "description": "Administrative endpoints (requires admin privileges)",
+      "item": [
+        {
+          "name": "Get All Users (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Users list retrieved or unauthorized', function () {",
+                  "    const validCodes = [200, 403]; // 403 if not admin",
+                  "    pm.expect(validCodes).to.include(pm.response.code);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    const users = pm.response.json().data;",
+                  "    console.log('👥 Total users:', users.length);",
+                  "} else if (pm.response.code === 403) {",
+                  "    console.log('🔒 Admin privileges required for this endpoint');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/admin/users?limit=50",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "admin", "users"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "50"
+                }
+              ]
+            },
+            "description": "👥 Get all users in the system (Admin only)\n\n**Requires**: Admin or moderator privileges\n**Returns**: User list with sensitive data removed\n**Use cases**: User management, moderation, analytics"
+          }
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "exec": [
+          "// Global pre-request script",
+          "console.log('🔗 Making request to:', pm.request.url);",
+          "",
+          "// Check if JWT token exists for protected endpoints",
+          "const protectedPaths = ['/auth/me', '/tournaments', '/social', '/credits', '/admin'];",
+          "const needsAuth = protectedPaths.some(path => pm.request.url.path.includes(path));",
+          "",
+          "if (needsAuth && !pm.environment.get('jwt_token')) {",
+          "    console.log('⚠️ Warning: This endpoint requires authentication. Run \"User Login\" first.');",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "exec": [
+          "// Global test script",
+          "const responseTime = pm.response.responseTime;",
+          "console.log('⏱️ Response time:', responseTime + 'ms');",
+          "",
+          "// Log rate limiting headers if present",
+          "const rateLimitRemaining = pm.response.headers.get('X-RateLimit-Remaining');",
+          "if (rateLimitRemaining) {",
+          "    console.log('🚦 Rate limit remaining:', rateLimitRemaining);",
+          "}",
+          "",
+          "// Test basic response structure for successful requests",
+          "if (pm.response.code >= 200 && pm.response.code < 300) {",
+          "    pm.test('Response time is acceptable', function () {",
+          "        pm.expect(pm.response.responseTime).to.be.below(5000);",
+          "    });",
+          "    ",
+          "    try {",
+          "        const response = pm.response.json();",
+          "        if (response.hasOwnProperty('success')) {",
+          "            pm.test('Response follows API standard format', function () {",
+          "                pm.expect(response).to.have.property('success');",
+          "                pm.expect(response).to.have.property('timestamp');",
+          "            });",
+          "        }",
+          "    } catch (e) {",
+          "        // Not JSON response, skip validation",
+          "    }",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://lfa-legacy-go.ew.r.appspot.com",
+      "type": "string"
+    }
+  ]
+}

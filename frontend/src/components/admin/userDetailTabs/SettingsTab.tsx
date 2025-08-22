@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Box,
   Typography,
@@ -24,7 +24,7 @@ import {
   Chip,
   Snackbar,
   CircularProgress,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Block,
   CheckCircle,
@@ -35,9 +35,9 @@ import {
   Warning,
   Shield,
   PersonRemove,
-} from '@mui/icons-material';
-import { AdminUser } from '../../../types/moderation';
-import { moderationApi } from '../../../services/moderationApi';
+} from "@mui/icons-material";
+import { AdminUser } from "../../../types/moderation";
+import { moderationApi } from "../../../services/moderationApi";
 
 interface SettingsTabProps {
   user: AdminUser;
@@ -47,22 +47,25 @@ interface SettingsTabProps {
 const SettingsTab: React.FC<SettingsTabProps> = ({ user, onUserUpdate }) => {
   const [dialogOpen, setDialogOpen] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [reason, setReason] = useState('');
-  const [newStatus, setNewStatus] = useState<AdminUser['status']>('active');
+  const [reason, setReason] = useState("");
+  const [newStatus, setNewStatus] = useState<AdminUser["status"]>("active");
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
-    severity: 'success' | 'error' | 'warning';
+    severity: "success" | "error" | "warning";
   }>({
     open: false,
-    message: '',
-    severity: 'success',
+    message: "",
+    severity: "success",
   });
 
-  const handleStatusChange = async (status: AdminUser['status'], actionReason: string) => {
+  const handleStatusChange = async (
+    status: AdminUser["status"],
+    actionReason: string
+  ) => {
     setLoading(true);
     try {
-      const updatedUser = await moderationApi.updateUser(user.id, { 
+      const updatedUser = await moderationApi.updateUser(user.id, {
         status,
         // Add reason to moderation log
       });
@@ -71,16 +74,19 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ user, onUserUpdate }) => {
       setSnackbar({
         open: true,
         message: `User ${status} successfully`,
-        severity: 'success',
+        severity: "success",
       });
       setDialogOpen(null);
-      setReason('');
+      setReason("");
     } catch (error) {
-      console.error('Error updating user status:', error);
+      console.error("Error updating user status:", error);
       setSnackbar({
         open: true,
-        message: error instanceof Error ? error.message : 'Failed to update user status',
-        severity: 'error',
+        message:
+          error instanceof Error
+            ? error.message
+            : "Failed to update user status",
+        severity: "error",
       });
     } finally {
       setLoading(false);
@@ -91,38 +97,41 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ user, onUserUpdate }) => {
     setLoading(true);
     try {
       // These would be separate API endpoints in a real implementation
-      let message = '';
-      
+      let message = "";
+
       switch (action) {
-        case 'reset_password':
+        case "reset_password":
           // await moderationApi.resetUserPassword(user.id);
-          message = 'Password reset email sent to user';
+          message = "Password reset email sent to user";
           break;
-        case 'force_logout':
+        case "force_logout":
           // await moderationApi.forceLogoutUser(user.id);
-          message = 'User logged out from all devices';
+          message = "User logged out from all devices";
           break;
-        case 'delete_account':
+        case "delete_account":
           // await moderationApi.deleteUser(user.id);
-          message = 'User account deleted';
+          message = "User account deleted";
           break;
         default:
-          throw new Error('Unknown action');
+          throw new Error("Unknown action");
       }
 
       setSnackbar({
         open: true,
         message,
-        severity: action === 'delete_account' ? 'warning' : 'success',
+        severity: action === "delete_account" ? "warning" : "success",
       });
       setDialogOpen(null);
-      setReason('');
+      setReason("");
     } catch (error) {
       console.error(`Error performing ${action}:`, error);
       setSnackbar({
         open: true,
-        message: error instanceof Error ? error.message : `Failed to ${action.replace('_', ' ')}`,
-        severity: 'error',
+        message:
+          error instanceof Error
+            ? error.message
+            : `Failed to ${action.replace("_", " ")}`,
+        severity: "error",
       });
     } finally {
       setLoading(false);
@@ -131,24 +140,59 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ user, onUserUpdate }) => {
 
   const getStatusActions = () => {
     switch (user.status) {
-      case 'active':
+      case "active":
         return [
-          { action: 'suspend', label: 'Suspend User', color: 'warning', icon: <Block /> },
-          { action: 'ban', label: 'Ban User', color: 'error', icon: <Security /> },
+          {
+            action: "suspend",
+            label: "Suspend User",
+            color: "warning",
+            icon: <Block />,
+          },
+          {
+            action: "ban",
+            label: "Ban User",
+            color: "error",
+            icon: <Security />,
+          },
         ];
-      case 'suspended':
+      case "suspended":
         return [
-          { action: 'activate', label: 'Activate User', color: 'success', icon: <CheckCircle /> },
-          { action: 'ban', label: 'Ban User', color: 'error', icon: <Security /> },
+          {
+            action: "activate",
+            label: "Activate User",
+            color: "success",
+            icon: <CheckCircle />,
+          },
+          {
+            action: "ban",
+            label: "Ban User",
+            color: "error",
+            icon: <Security />,
+          },
         ];
-      case 'banned':
+      case "banned":
         return [
-          { action: 'activate', label: 'Activate User', color: 'success', icon: <CheckCircle /> },
+          {
+            action: "activate",
+            label: "Activate User",
+            color: "success",
+            icon: <CheckCircle />,
+          },
         ];
-      case 'pending':
+      case "pending":
         return [
-          { action: 'activate', label: 'Approve User', color: 'success', icon: <CheckCircle /> },
-          { action: 'ban', label: 'Reject User', color: 'error', icon: <Security /> },
+          {
+            action: "activate",
+            label: "Approve User",
+            color: "success",
+            icon: <CheckCircle />,
+          },
+          {
+            action: "ban",
+            label: "Reject User",
+            color: "error",
+            icon: <Security />,
+          },
         ];
       default:
         return [];
@@ -159,25 +203,25 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ user, onUserUpdate }) => {
 
   const dangerousActions = [
     {
-      action: 'reset_password',
-      label: 'Force Password Reset',
-      description: 'Send password reset email to user',
+      action: "reset_password",
+      label: "Force Password Reset",
+      description: "Send password reset email to user",
       icon: <RestartAlt />,
-      color: 'warning',
+      color: "warning",
     },
     {
-      action: 'force_logout',
-      label: 'Force Logout',
-      description: 'Log user out from all devices',
+      action: "force_logout",
+      label: "Force Logout",
+      description: "Log user out from all devices",
       icon: <VpnKey />,
-      color: 'warning',
+      color: "warning",
     },
     {
-      action: 'delete_account',
-      label: 'Delete Account',
-      description: 'Permanently delete user account and all data',
+      action: "delete_account",
+      label: "Delete Account",
+      description: "Permanently delete user account and all data",
       icon: <Delete />,
-      color: 'error',
+      color: "error",
     },
   ];
 
@@ -195,14 +239,20 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ user, onUserUpdate }) => {
               <Typography variant="h6" gutterBottom>
                 Current Status
               </Typography>
-              
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+
+              <Box
+                sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}
+              >
                 <Chip
                   label={user.status.toUpperCase()}
                   color={
-                    user.status === 'active' ? 'success' :
-                    user.status === 'suspended' ? 'warning' :
-                    user.status === 'banned' ? 'error' : 'info'
+                    user.status === "active"
+                      ? "success"
+                      : user.status === "suspended"
+                        ? "warning"
+                        : user.status === "banned"
+                          ? "error"
+                          : "info"
                   }
                   size="medium"
                 />
@@ -214,8 +264,8 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ user, onUserUpdate }) => {
               <Typography variant="subtitle2" gutterBottom>
                 Available Actions:
               </Typography>
-              
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                 {statusActions.map((statusAction) => (
                   <Button
                     key={statusAction.action}
@@ -223,8 +273,8 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ user, onUserUpdate }) => {
                     color={statusAction.color as any}
                     startIcon={statusAction.icon}
                     onClick={() => {
-                      setNewStatus(statusAction.action as AdminUser['status']);
-                      setDialogOpen('status_change');
+                      setNewStatus(statusAction.action as AdminUser["status"]);
+                      setDialogOpen("status_change");
                     }}
                     fullWidth
                   >
@@ -243,7 +293,7 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ user, onUserUpdate }) => {
               <Typography variant="h6" gutterBottom>
                 Account Details
               </Typography>
-              
+
               <List dense>
                 <ListItem>
                   <ListItemIcon>
@@ -251,22 +301,26 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ user, onUserUpdate }) => {
                   </ListItemIcon>
                   <ListItemText
                     primary="Account Type"
-                    secondary={user.roles.join(', ')}
+                    secondary={user.roles.join(", ")}
                   />
                 </ListItem>
-                
+
                 <ListItem>
                   <ListItemIcon>
                     <Security />
                   </ListItemIcon>
                   <ListItemText
                     primary="Security Level"
-                    secondary={user.roles.includes('admin') ? 'High - Admin Access' : 
-                             user.roles.includes('moderator') ? 'Medium - Moderator Access' : 
-                             'Standard - User Access'}
+                    secondary={
+                      user.roles.includes("admin")
+                        ? "High - Admin Access"
+                        : user.roles.includes("moderator")
+                          ? "Medium - Moderator Access"
+                          : "Standard - User Access"
+                    }
                   />
                 </ListItem>
-                
+
                 <ListItem>
                   <ListItemIcon>
                     <Warning />
@@ -285,32 +339,50 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ user, onUserUpdate }) => {
         <Grid item xs={12}>
           <Card>
             <CardContent>
-              <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography
+                variant="h6"
+                gutterBottom
+                sx={{ display: "flex", alignItems: "center", gap: 1 }}
+              >
                 <PersonRemove color="error" />
                 Dangerous Actions
               </Typography>
-              
+
               <Alert severity="warning" sx={{ mb: 3 }}>
-                <strong>Warning:</strong> These actions are irreversible or have significant impact on the user's account. 
-                Use with extreme caution and ensure you have proper authorization.
+                <strong>Warning:</strong> These actions are irreversible or have
+                significant impact on the user's account. Use with extreme
+                caution and ensure you have proper authorization.
               </Alert>
 
               <Grid container spacing={2}>
                 {dangerousActions.map((action) => (
                   <Grid item xs={12} sm={4} key={action.action}>
-                    <Card variant="outlined" sx={{ height: '100%' }}>
+                    <Card variant="outlined" sx={{ height: "100%" }}>
                       <CardContent>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                          {React.cloneElement(action.icon, { color: action.color as any })}
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1,
+                            mb: 1,
+                          }}
+                        >
+                          {React.cloneElement(action.icon, {
+                            color: action.color as any,
+                          })}
                           <Typography variant="subtitle2">
                             {action.label}
                           </Typography>
                         </Box>
-                        
-                        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ mb: 2 }}
+                        >
                           {action.description}
                         </Typography>
-                        
+
                         <Button
                           variant="outlined"
                           color={action.color as any}
@@ -331,19 +403,18 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ user, onUserUpdate }) => {
 
       {/* Status Change Dialog */}
       <Dialog
-        open={dialogOpen === 'status_change'}
+        open={dialogOpen === "status_change"}
         onClose={() => setDialogOpen(null)}
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle>
-          Confirm Status Change
-        </DialogTitle>
+        <DialogTitle>Confirm Status Change</DialogTitle>
         <DialogContent>
           <Typography variant="body1" gutterBottom>
-            Are you sure you want to change the user status from <strong>{user.status}</strong> to <strong>{newStatus}</strong>?
+            Are you sure you want to change the user status from{" "}
+            <strong>{user.status}</strong> to <strong>{newStatus}</strong>?
           </Typography>
-          
+
           <TextField
             fullWidth
             label="Reason for status change"
@@ -356,12 +427,10 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ user, onUserUpdate }) => {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDialogOpen(null)}>
-            Cancel
-          </Button>
+          <Button onClick={() => setDialogOpen(null)}>Cancel</Button>
           <Button
             variant="contained"
-            color={newStatus === 'banned' ? 'error' : 'primary'}
+            color={newStatus === "banned" ? "error" : "primary"}
             onClick={() => handleStatusChange(newStatus, reason)}
             disabled={loading}
             startIcon={loading ? <CircularProgress size={16} /> : null}
@@ -380,22 +449,22 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ user, onUserUpdate }) => {
           maxWidth="sm"
           fullWidth
         >
-          <DialogTitle sx={{ color: 'error.main' }}>
+          <DialogTitle sx={{ color: "error.main" }}>
             Confirm Dangerous Action
           </DialogTitle>
           <DialogContent>
             <Alert severity="error" sx={{ mb: 2 }}>
               <strong>Warning:</strong> This action cannot be undone!
             </Alert>
-            
+
             <Typography variant="body1" gutterBottom>
               You are about to: <strong>{action.label}</strong>
             </Typography>
-            
+
             <Typography variant="body2" color="text.secondary" gutterBottom>
               {action.description}
             </Typography>
-            
+
             <TextField
               fullWidth
               label="Reason for this action"
@@ -409,9 +478,7 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ user, onUserUpdate }) => {
             />
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setDialogOpen(null)}>
-              Cancel
-            </Button>
+            <Button onClick={() => setDialogOpen(null)}>Cancel</Button>
             <Button
               variant="contained"
               color="error"
@@ -430,8 +497,8 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ user, onUserUpdate }) => {
         autoHideDuration={6000}
         onClose={() => setSnackbar({ ...snackbar, open: false })}
       >
-        <Alert 
-          severity={snackbar.severity} 
+        <Alert
+          severity={snackbar.severity}
           onClose={() => setSnackbar({ ...snackbar, open: false })}
         >
           {snackbar.message}

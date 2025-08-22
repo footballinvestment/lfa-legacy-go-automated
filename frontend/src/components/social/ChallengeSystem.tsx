@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -23,7 +23,7 @@ import {
   LinearProgress,
   IconButton,
   Tooltip,
-} from '@mui/material';
+} from "@mui/material";
 import {
   EmojiEvents,
   AccessTime,
@@ -33,9 +33,14 @@ import {
   Close,
   Refresh,
   SportsSoccer,
-} from '@mui/icons-material';
-import { format, formatDistanceToNow } from 'date-fns';
-import { socialService, locationService, Challenge, Location } from '../../services/api';
+} from "@mui/icons-material";
+import { format, formatDistanceToNow } from "date-fns";
+import {
+  socialService,
+  locationService,
+  Challenge,
+  Location,
+} from "../../services/api";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -59,9 +64,9 @@ const ChallengeSystem: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [newChallenge, setNewChallenge] = useState({
-    challenged_user_id: '',
-    game_type: 'football',
-    location_id: '',
+    challenged_user_id: "",
+    game_type: "football",
+    location_id: "",
   });
 
   const loadChallenges = async () => {
@@ -71,7 +76,7 @@ const ChallengeSystem: React.FC = () => {
       const challengeData = await socialService.getChallenges();
       setChallenges(challengeData);
     } catch (err: any) {
-      setError(err.message || 'Failed to load challenges');
+      setError(err.message || "Failed to load challenges");
     } finally {
       setLoading(false);
     }
@@ -82,7 +87,7 @@ const ChallengeSystem: React.FC = () => {
       const locationData = await locationService.getLocations();
       setLocations(locationData);
     } catch (err: any) {
-      console.error('Failed to load locations:', err);
+      console.error("Failed to load locations:", err);
     }
   };
 
@@ -100,7 +105,7 @@ const ChallengeSystem: React.FC = () => {
       await socialService.respondToChallenge(challengeId, true);
       await loadChallenges();
     } catch (err: any) {
-      setError(err.message || 'Failed to accept challenge');
+      setError(err.message || "Failed to accept challenge");
     }
   };
 
@@ -109,7 +114,7 @@ const ChallengeSystem: React.FC = () => {
       await socialService.respondToChallenge(challengeId, false);
       await loadChallenges();
     } catch (err: any) {
-      setError(err.message || 'Failed to decline challenge');
+      setError(err.message || "Failed to decline challenge");
     }
   };
 
@@ -118,48 +123,69 @@ const ChallengeSystem: React.FC = () => {
       await socialService.sendChallenge(
         parseInt(newChallenge.challenged_user_id),
         newChallenge.game_type,
-        newChallenge.location_id ? parseInt(newChallenge.location_id) : undefined
+        newChallenge.location_id
+          ? parseInt(newChallenge.location_id)
+          : undefined
       );
       setCreateDialogOpen(false);
       setNewChallenge({
-        challenged_user_id: '',
-        game_type: 'football',
-        location_id: '',
+        challenged_user_id: "",
+        game_type: "football",
+        location_id: "",
       });
       await loadChallenges();
     } catch (err: any) {
-      setError(err.message || 'Failed to create challenge');
+      setError(err.message || "Failed to create challenge");
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'accepted': return 'success';
-      case 'declined': return 'error';
-      case 'expired': return 'default';
-      default: return 'warning';
+      case "accepted":
+        return "success";
+      case "declined":
+        return "error";
+      case "expired":
+        return "default";
+      default:
+        return "warning";
     }
   };
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'accepted': return 'Accepted';
-      case 'declined': return 'Declined';
-      case 'expired': return 'Expired';
-      default: return 'Pending';
+      case "accepted":
+        return "Accepted";
+      case "declined":
+        return "Declined";
+      case "expired":
+        return "Expired";
+      default:
+        return "Pending";
     }
   };
 
-  const incomingChallenges = challenges.filter(c => c.status === 'pending' && c.challenged_id);
-  const sentChallenges = challenges.filter(c => c.challenger_id);
-  const completedChallenges = challenges.filter(c => ['accepted', 'declined', 'expired'].includes(c.status));
+  const incomingChallenges = challenges.filter(
+    (c) => c.status === "pending" && c.challenged_id
+  );
+  const sentChallenges = challenges.filter((c) => c.challenger_id);
+  const completedChallenges = challenges.filter((c) =>
+    ["accepted", "declined", "expired"].includes(c.status)
+  );
 
   return (
     <Box>
       {/* Header with Create Button */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
         <Typography variant="h6">Game Challenges</Typography>
-        <Box sx={{ display: 'flex', gap: 1 }}>
+        <Box sx={{ display: "flex", gap: 1 }}>
           <Tooltip title="Refresh">
             <IconButton onClick={loadChallenges} disabled={loading}>
               <Refresh />
@@ -184,20 +210,20 @@ const ChallengeSystem: React.FC = () => {
       )}
 
       {/* Challenge Tabs */}
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+      <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}>
         <Tabs value={activeTab} onChange={handleTabChange}>
-          <Tab 
-            label={`Incoming (${incomingChallenges.length})`} 
+          <Tab
+            label={`Incoming (${incomingChallenges.length})`}
             icon={<EmojiEvents />}
             iconPosition="start"
           />
-          <Tab 
-            label={`Sent (${sentChallenges.length})`} 
+          <Tab
+            label={`Sent (${sentChallenges.length})`}
             icon={<SportsSoccer />}
             iconPosition="start"
           />
-          <Tab 
-            label={`History (${completedChallenges.length})`} 
+          <Tab
+            label={`History (${completedChallenges.length})`}
             icon={<AccessTime />}
             iconPosition="start"
           />
@@ -212,8 +238,8 @@ const ChallengeSystem: React.FC = () => {
               <Grid key={challenge.id} size={{ xs: 12, md: 6 }}>
                 <Card>
                   <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      <Avatar sx={{ bgcolor: 'primary.main', mr: 2 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                      <Avatar sx={{ bgcolor: "primary.main", mr: 2 }}>
                         {challenge.challenger.username.charAt(0).toUpperCase()}
                       </Avatar>
                       <Box sx={{ flex: 1 }}>
@@ -221,10 +247,11 @@ const ChallengeSystem: React.FC = () => {
                           {challenge.challenger.full_name}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          @{challenge.challenger.username} • Level {challenge.challenger.level}
+                          @{challenge.challenger.username} • Level{" "}
+                          {challenge.challenger.level}
                         </Typography>
                       </Box>
-                      <Chip 
+                      <Chip
                         label={challenge.game_type}
                         color="primary"
                         size="small"
@@ -232,16 +259,28 @@ const ChallengeSystem: React.FC = () => {
                     </Box>
 
                     <Box sx={{ mb: 2 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                        <AccessTime sx={{ mr: 1, fontSize: 16, color: 'text.secondary' }} />
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", mb: 1 }}
+                      >
+                        <AccessTime
+                          sx={{ mr: 1, fontSize: 16, color: "text.secondary" }}
+                        />
                         <Typography variant="body2" color="text.secondary">
-                          {formatDistanceToNow(new Date(challenge.created_at), { addSuffix: true })}
+                          {formatDistanceToNow(new Date(challenge.created_at), {
+                            addSuffix: true,
+                          })}
                         </Typography>
                       </Box>
-                      
+
                       {challenge.location_id && (
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <LocationOn sx={{ mr: 1, fontSize: 16, color: 'text.secondary' }} />
+                        <Box sx={{ display: "flex", alignItems: "center" }}>
+                          <LocationOn
+                            sx={{
+                              mr: 1,
+                              fontSize: 16,
+                              color: "text.secondary",
+                            }}
+                          />
                           <Typography variant="body2" color="text.secondary">
                             Location specified
                           </Typography>
@@ -249,7 +288,7 @@ const ChallengeSystem: React.FC = () => {
                       )}
                     </Box>
 
-                    <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Box sx={{ display: "flex", gap: 1 }}>
                       <Button
                         variant="contained"
                         color="success"
@@ -275,8 +314,10 @@ const ChallengeSystem: React.FC = () => {
             ))}
           </Grid>
         ) : (
-          <Box sx={{ textAlign: 'center', py: 6 }}>
-            <EmojiEvents sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+          <Box sx={{ textAlign: "center", py: 6 }}>
+            <EmojiEvents
+              sx={{ fontSize: 64, color: "text.secondary", mb: 2 }}
+            />
             <Typography variant="h6" color="text.secondary">
               No incoming challenges
             </Typography>
@@ -295,8 +336,8 @@ const ChallengeSystem: React.FC = () => {
               <Grid key={challenge.id} size={{ xs: 12, md: 6 }}>
                 <Card>
                   <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      <Avatar sx={{ bgcolor: 'secondary.main', mr: 2 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                      <Avatar sx={{ bgcolor: "secondary.main", mr: 2 }}>
                         {challenge.challenged.username.charAt(0).toUpperCase()}
                       </Avatar>
                       <Box sx={{ flex: 1 }}>
@@ -304,10 +345,11 @@ const ChallengeSystem: React.FC = () => {
                           {challenge.challenged.full_name}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          @{challenge.challenged.username} • Level {challenge.challenged.level}
+                          @{challenge.challenged.username} • Level{" "}
+                          {challenge.challenged.level}
                         </Typography>
                       </Box>
-                      <Chip 
+                      <Chip
                         label={getStatusText(challenge.status)}
                         color={getStatusColor(challenge.status)}
                         size="small"
@@ -319,11 +361,18 @@ const ChallengeSystem: React.FC = () => {
                         Game: {challenge.game_type}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        Sent {formatDistanceToNow(new Date(challenge.created_at), { addSuffix: true })}
+                        Sent{" "}
+                        {formatDistanceToNow(new Date(challenge.created_at), {
+                          addSuffix: true,
+                        })}
                       </Typography>
                       {challenge.expires_at && (
                         <Typography variant="body2" color="warning.main">
-                          Expires {format(new Date(challenge.expires_at), 'MMM dd, HH:mm')}
+                          Expires{" "}
+                          {format(
+                            new Date(challenge.expires_at),
+                            "MMM dd, HH:mm"
+                          )}
                         </Typography>
                       )}
                     </Box>
@@ -333,8 +382,10 @@ const ChallengeSystem: React.FC = () => {
             ))}
           </Grid>
         ) : (
-          <Box sx={{ textAlign: 'center', py: 6 }}>
-            <SportsSoccer sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+          <Box sx={{ textAlign: "center", py: 6 }}>
+            <SportsSoccer
+              sx={{ fontSize: 64, color: "text.secondary", mb: 2 }}
+            />
             <Typography variant="h6" color="text.secondary">
               No sent challenges
             </Typography>
@@ -353,19 +404,31 @@ const ChallengeSystem: React.FC = () => {
               <Grid key={challenge.id} size={{ xs: 12, md: 6 }}>
                 <Card>
                   <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      <Avatar sx={{ bgcolor: 'grey.500', mr: 2 }}>
-                        {(challenge.challenger?.username || challenge.challenged?.username || 'U').charAt(0).toUpperCase()}
+                    <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                      <Avatar sx={{ bgcolor: "grey.500", mr: 2 }}>
+                        {(
+                          challenge.challenger?.username ||
+                          challenge.challenged?.username ||
+                          "U"
+                        )
+                          .charAt(0)
+                          .toUpperCase()}
                       </Avatar>
                       <Box sx={{ flex: 1 }}>
                         <Typography variant="subtitle1" fontWeight="bold">
-                          vs {challenge.challenger?.full_name || challenge.challenged?.full_name}
+                          vs{" "}
+                          {challenge.challenger?.full_name ||
+                            challenge.challenged?.full_name}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          {challenge.game_type} • {format(new Date(challenge.created_at), 'MMM dd, yyyy')}
+                          {challenge.game_type} •{" "}
+                          {format(
+                            new Date(challenge.created_at),
+                            "MMM dd, yyyy"
+                          )}
                         </Typography>
                       </Box>
-                      <Chip 
+                      <Chip
                         label={getStatusText(challenge.status)}
                         color={getStatusColor(challenge.status)}
                         size="small"
@@ -377,8 +440,8 @@ const ChallengeSystem: React.FC = () => {
             ))}
           </Grid>
         ) : (
-          <Box sx={{ textAlign: 'center', py: 6 }}>
-            <AccessTime sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+          <Box sx={{ textAlign: "center", py: 6 }}>
+            <AccessTime sx={{ fontSize: 64, color: "text.secondary", mb: 2 }} />
             <Typography variant="h6" color="text.secondary">
               No challenge history
             </Typography>
@@ -390,24 +453,39 @@ const ChallengeSystem: React.FC = () => {
       </TabPanel>
 
       {/* Create Challenge Dialog */}
-      <Dialog open={createDialogOpen} onClose={() => setCreateDialogOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={createDialogOpen}
+        onClose={() => setCreateDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>Create New Challenge</DialogTitle>
         <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
             <TextField
               label="Player ID"
               type="number"
               value={newChallenge.challenged_user_id}
-              onChange={(e) => setNewChallenge(prev => ({ ...prev, challenged_user_id: e.target.value }))}
+              onChange={(e) =>
+                setNewChallenge((prev) => ({
+                  ...prev,
+                  challenged_user_id: e.target.value,
+                }))
+              }
               helperText="Enter the ID of the player you want to challenge"
               fullWidth
             />
-            
+
             <FormControl fullWidth>
               <InputLabel>Game Type</InputLabel>
               <Select
                 value={newChallenge.game_type}
-                onChange={(e) => setNewChallenge(prev => ({ ...prev, game_type: e.target.value }))}
+                onChange={(e) =>
+                  setNewChallenge((prev) => ({
+                    ...prev,
+                    game_type: e.target.value,
+                  }))
+                }
                 label="Game Type"
               >
                 <MenuItem value="football">Football</MenuItem>
@@ -420,7 +498,12 @@ const ChallengeSystem: React.FC = () => {
               <InputLabel>Location (Optional)</InputLabel>
               <Select
                 value={newChallenge.location_id}
-                onChange={(e) => setNewChallenge(prev => ({ ...prev, location_id: e.target.value }))}
+                onChange={(e) =>
+                  setNewChallenge((prev) => ({
+                    ...prev,
+                    location_id: e.target.value,
+                  }))
+                }
                 label="Location (Optional)"
               >
                 <MenuItem value="">No specific location</MenuItem>
@@ -435,8 +518,8 @@ const ChallengeSystem: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setCreateDialogOpen(false)}>Cancel</Button>
-          <Button 
-            onClick={handleCreateChallenge} 
+          <Button
+            onClick={handleCreateChallenge}
             variant="contained"
             disabled={!newChallenge.challenged_user_id}
           >

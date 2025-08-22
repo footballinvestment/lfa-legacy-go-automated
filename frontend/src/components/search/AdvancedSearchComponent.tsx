@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   Box,
   Card,
@@ -20,7 +20,7 @@ import {
   Fade,
   useTheme,
   alpha,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Search,
   FilterList,
@@ -36,15 +36,15 @@ import {
   Share,
   Refresh,
   Close,
-} from '@mui/icons-material';
-import { useSearch } from '../../contexts/SearchContext';
-import { SearchCategory } from '../../types/search';
-import SearchResults from './SearchResults';
-import SearchFilters from './SearchFilters';
-import SearchSuggestions from './SearchSuggestions';
-import SavedSearches from './SavedSearches';
-import SearchHistory from './SearchHistory';
-import useMobileViewport from '../../hooks/useMobileViewport';
+} from "@mui/icons-material";
+import { useSearch } from "../../contexts/SearchContext";
+import { SearchCategory } from "../../types/search";
+import SearchResults from "./SearchResults";
+import SearchFilters from "./SearchFilters";
+import SearchSuggestions from "./SearchSuggestions";
+import SavedSearches from "./SavedSearches";
+import SearchHistory from "./SearchHistory";
+import useMobileViewport from "../../hooks/useMobileViewport";
 
 interface AdvancedSearchComponentProps {
   defaultCategory?: SearchCategory;
@@ -58,14 +58,14 @@ interface AdvancedSearchComponentProps {
 }
 
 const AdvancedSearchComponent: React.FC<AdvancedSearchComponentProps> = ({
-  defaultCategory = 'all',
-  placeholder = 'Search tournaments, users, locations...',
+  defaultCategory = "all",
+  placeholder = "Search tournaments, users, locations...",
   showCategories = true,
   showFilters = true,
   showSavedSearches = true,
   showHistory = true,
   compact = false,
-  onResultSelect
+  onResultSelect,
 }) => {
   const theme = useTheme();
   const { isMobile } = useMobileViewport();
@@ -81,13 +81,15 @@ const AdvancedSearchComponent: React.FC<AdvancedSearchComponentProps> = ({
     savedSearches,
     searchHistory,
     suggestions,
-    getSuggestions
+    getSuggestions,
   } = useSearch();
 
   // Component state
   const [activeTab, setActiveTab] = useState(0);
   const [filtersExpanded, setFiltersExpanded] = useState(!compact);
-  const [sortMenuAnchor, setSortMenuAnchor] = useState<null | HTMLElement>(null);
+  const [sortMenuAnchor, setSortMenuAnchor] = useState<null | HTMLElement>(
+    null
+  );
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
   const [localQuery, setLocalQuery] = useState(criteria.query);
@@ -97,21 +99,22 @@ const AdvancedSearchComponent: React.FC<AdvancedSearchComponentProps> = ({
   const searchDebounceRef = useRef<NodeJS.Timeout>();
 
   // Search categories
-  const categories: { value: SearchCategory; label: string; count?: number }[] = [
-    { value: 'all', label: 'All', count: results?.totalCount },
-    { value: 'tournaments', label: 'Tournaments', count: 12 },
-    { value: 'users', label: 'Users', count: 8 },
-    { value: 'locations', label: 'Locations', count: 5 },
-    { value: 'matches', label: 'Matches', count: 3 }
-  ];
+  const categories: { value: SearchCategory; label: string; count?: number }[] =
+    [
+      { value: "all", label: "All", count: results?.totalCount },
+      { value: "tournaments", label: "Tournaments", count: 12 },
+      { value: "users", label: "Users", count: 8 },
+      { value: "locations", label: "Locations", count: 5 },
+      { value: "matches", label: "Matches", count: 3 },
+    ];
 
   // Sort options
   const sortOptions = [
-    { value: 'relevance', label: 'Relevance' },
-    { value: 'date_created', label: 'Date Created' },
-    { value: 'name', label: 'Name' },
-    { value: 'popularity', label: 'Popularity' },
-    { value: 'rating', label: 'Rating' }
+    { value: "relevance", label: "Relevance" },
+    { value: "date_created", label: "Date Created" },
+    { value: "name", label: "Name" },
+    { value: "popularity", label: "Popularity" },
+    { value: "rating", label: "Rating" },
   ];
 
   // Initialize with default category
@@ -122,26 +125,29 @@ const AdvancedSearchComponent: React.FC<AdvancedSearchComponentProps> = ({
   }, [defaultCategory, criteria.category, updateCategory]);
 
   // Debounced search execution
-  const debouncedSearch = useCallback((query: string) => {
-    if (searchDebounceRef.current) {
-      clearTimeout(searchDebounceRef.current);
-    }
-
-    searchDebounceRef.current = setTimeout(() => {
-      updateQuery(query);
-      if (query.trim()) {
-        executeSearch();
-        getSuggestions(query);
+  const debouncedSearch = useCallback(
+    (query: string) => {
+      if (searchDebounceRef.current) {
+        clearTimeout(searchDebounceRef.current);
       }
-    }, 300);
-  }, [updateQuery, executeSearch, getSuggestions]);
+
+      searchDebounceRef.current = setTimeout(() => {
+        updateQuery(query);
+        if (query.trim()) {
+          executeSearch();
+          getSuggestions(query);
+        }
+      }, 300);
+    },
+    [updateQuery, executeSearch, getSuggestions]
+  );
 
   // Handle search input change
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newQuery = event.target.value;
     setLocalQuery(newQuery);
     debouncedSearch(newQuery);
-    
+
     if (newQuery.length >= 2) {
       setShowSuggestions(true);
       getSuggestions(newQuery);
@@ -170,7 +176,7 @@ const AdvancedSearchComponent: React.FC<AdvancedSearchComponentProps> = ({
 
   // Handle clear search
   const handleClearSearch = () => {
-    setLocalQuery('');
+    setLocalQuery("");
     clearSearch();
     setShowSuggestions(false);
     searchInputRef.current?.focus();
@@ -208,12 +214,19 @@ const AdvancedSearchComponent: React.FC<AdvancedSearchComponentProps> = ({
   }, []);
 
   return (
-    <Box sx={{ width: '100%', maxWidth: '100%' }}>
+    <Box sx={{ width: "100%", maxWidth: "100%" }}>
       {/* Search Header */}
       <Card sx={{ mb: 2, borderRadius: compact ? 1 : 2 }}>
-        <CardContent sx={{ p: compact ? 2 : 3, '&:last-child': { pb: compact ? 2 : 3 } }}>
+        <CardContent
+          sx={{ p: compact ? 2 : 3, "&:last-child": { pb: compact ? 2 : 3 } }}
+        >
           {/* Search Input */}
-          <Box sx={{ position: 'relative', mb: showCategories && !compact ? 2 : 0 }}>
+          <Box
+            sx={{
+              position: "relative",
+              mb: showCategories && !compact ? 2 : 0,
+            }}
+          >
             <form onSubmit={handleSearchSubmit}>
               <TextField
                 ref={searchInputRef}
@@ -264,19 +277,19 @@ const AdvancedSearchComponent: React.FC<AdvancedSearchComponentProps> = ({
                     </InputAdornment>
                   ),
                   sx: {
-                    backgroundColor: searchFocused 
+                    backgroundColor: searchFocused
                       ? alpha(theme.palette.primary.main, 0.02)
-                      : 'background.paper',
-                    transition: 'all 0.2s ease',
-                    '&:hover': {
-                      backgroundColor: alpha(theme.palette.primary.main, 0.04)
-                    }
-                  }
+                      : "background.paper",
+                    transition: "all 0.2s ease",
+                    "&:hover": {
+                      backgroundColor: alpha(theme.palette.primary.main, 0.04),
+                    },
+                  },
                 }}
                 sx={{
-                  '& .MuiOutlinedInput-root': {
+                  "& .MuiOutlinedInput-root": {
                     borderRadius: compact ? 1 : 2,
-                  }
+                  },
                 }}
               />
             </form>
@@ -299,11 +312,11 @@ const AdvancedSearchComponent: React.FC<AdvancedSearchComponentProps> = ({
                 variant={isMobile ? "scrollable" : "fullWidth"}
                 scrollButtons="auto"
                 sx={{
-                  '& .MuiTab-root': {
+                  "& .MuiTab-root": {
                     minHeight: 40,
-                    textTransform: 'none',
-                    fontWeight: 500
-                  }
+                    textTransform: "none",
+                    fontWeight: 500,
+                  },
                 }}
               >
                 {categories.map((category, index) => (
@@ -317,7 +330,7 @@ const AdvancedSearchComponent: React.FC<AdvancedSearchComponentProps> = ({
                             label={category.count}
                             size="small"
                             variant="outlined"
-                            sx={{ height: 20, fontSize: '0.75rem' }}
+                            sx={{ height: 20, fontSize: "0.75rem" }}
                           />
                         )}
                       </Box>
@@ -329,7 +342,13 @@ const AdvancedSearchComponent: React.FC<AdvancedSearchComponentProps> = ({
           )}
 
           {/* Action Bar */}
-          <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={1}>
+          <Box
+            display="flex"
+            alignItems="center"
+            justifyContent="space-between"
+            flexWrap="wrap"
+            gap={1}
+          >
             {/* Left Actions */}
             <Box display="flex" alignItems="center" gap={1}>
               {showFilters && (
@@ -384,7 +403,11 @@ const AdvancedSearchComponent: React.FC<AdvancedSearchComponentProps> = ({
               </IconButton>
 
               {criteria.query && (
-                <IconButton size="small" onClick={executeSearch} title="Refresh">
+                <IconButton
+                  size="small"
+                  onClick={executeSearch}
+                  title="Refresh"
+                >
                   <Refresh />
                 </IconButton>
               )}
@@ -394,7 +417,11 @@ const AdvancedSearchComponent: React.FC<AdvancedSearchComponentProps> = ({
           {/* Active Filters */}
           {criteria.filters.length > 0 && (
             <Box mt={2}>
-              <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ mb: 1, display: "block" }}
+              >
                 Active Filters:
               </Typography>
               <Box display="flex" flexWrap="wrap" gap={1}>
@@ -443,7 +470,7 @@ const AdvancedSearchComponent: React.FC<AdvancedSearchComponentProps> = ({
         open={Boolean(sortMenuAnchor)}
         onClose={handleSortClose}
         PaperProps={{
-          sx: { minWidth: 200, borderRadius: 2 }
+          sx: { minWidth: 200, borderRadius: 2 },
         }}
       >
         {sortOptions.map((option) => (

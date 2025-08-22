@@ -4,7 +4,7 @@ export interface SearchCriteria {
   category: SearchCategory;
   filters: SearchFilter[];
   sortBy: SortOption;
-  sortOrder: 'asc' | 'desc';
+  sortOrder: "asc" | "desc";
   dateRange?: DateRange;
   location?: LocationFilter;
   priceRange?: PriceRange;
@@ -12,14 +12,14 @@ export interface SearchCriteria {
   tags?: string[];
 }
 
-export type SearchCategory = 
-  | 'all'
-  | 'tournaments' 
-  | 'users' 
-  | 'locations' 
-  | 'matches'
-  | 'admin_users'
-  | 'admin_reports';
+export type SearchCategory =
+  | "all"
+  | "tournaments"
+  | "users"
+  | "locations"
+  | "matches"
+  | "admin_users"
+  | "admin_reports";
 
 export interface SearchFilter {
   id: string;
@@ -30,33 +30,33 @@ export interface SearchFilter {
   label: string;
 }
 
-export type FilterType = 
-  | 'text'
-  | 'number' 
-  | 'date'
-  | 'select'
-  | 'multiselect'
-  | 'range'
-  | 'boolean'
-  | 'location'
-  | 'tags';
+export type FilterType =
+  | "text"
+  | "number"
+  | "date"
+  | "select"
+  | "multiselect"
+  | "range"
+  | "boolean"
+  | "location"
+  | "tags";
 
-export type FilterOperator = 
-  | 'equals'
-  | 'not_equals'
-  | 'contains'
-  | 'not_contains'
-  | 'starts_with'
-  | 'ends_with'
-  | 'greater_than'
-  | 'less_than'
-  | 'greater_equal'
-  | 'less_equal'
-  | 'between'
-  | 'in'
-  | 'not_in'
-  | 'is_null'
-  | 'not_null';
+export type FilterOperator =
+  | "equals"
+  | "not_equals"
+  | "contains"
+  | "not_contains"
+  | "starts_with"
+  | "ends_with"
+  | "greater_than"
+  | "less_than"
+  | "greater_equal"
+  | "less_equal"
+  | "between"
+  | "in"
+  | "not_in"
+  | "is_null"
+  | "not_null";
 
 export interface DateRange {
   start: Date | null;
@@ -77,18 +77,22 @@ export interface PriceRange {
   max: number;
 }
 
-export type SkillLevel = 'beginner' | 'intermediate' | 'advanced' | 'professional';
+export type SkillLevel =
+  | "beginner"
+  | "intermediate"
+  | "advanced"
+  | "professional";
 
-export type SortOption = 
-  | 'relevance'
-  | 'date_created'
-  | 'date_updated'
-  | 'name'
-  | 'price'
-  | 'participants'
-  | 'start_date'
-  | 'popularity'
-  | 'rating';
+export type SortOption =
+  | "relevance"
+  | "date_created"
+  | "date_updated"
+  | "name"
+  | "price"
+  | "participants"
+  | "start_date"
+  | "popularity"
+  | "rating";
 
 export interface SearchResult<T = any> {
   id: string | number;
@@ -149,7 +153,7 @@ export interface SearchHistory {
 
 export interface SearchSuggestion {
   text: string;
-  type: 'query' | 'filter' | 'category';
+  type: "query" | "filter" | "category";
   category?: SearchCategory;
   popularity: number;
   metadata?: any;
@@ -177,7 +181,7 @@ export interface FilterBuilderRule {
 
 export interface FilterBuilderGroup {
   id: string;
-  operator: 'AND' | 'OR';
+  operator: "AND" | "OR";
   rules: (FilterBuilderRule | FilterBuilderGroup)[];
 }
 

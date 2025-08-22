@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -13,7 +13,7 @@ import {
   Tabs,
   Tab,
   Skeleton,
-} from '@mui/material';
+} from "@mui/material";
 import {
   ArrowBack,
   Refresh,
@@ -22,13 +22,13 @@ import {
   Schedule,
   LocationOn,
   AccountTree,
-} from '@mui/icons-material';
-import { useNavigate, useParams } from 'react-router-dom';
-import { format } from 'date-fns';
-import { tournamentService, Tournament } from '../services/api';
-import RegistrationPanel from '../components/tournaments/RegistrationPanel';
-import ParticipantsList from '../components/tournaments/ParticipantsList';
-import TournamentBracket from '../components/tournaments/TournamentBracket';
+} from "@mui/icons-material";
+import { useNavigate, useParams } from "react-router-dom";
+import { format } from "date-fns";
+import { tournamentService, Tournament } from "../services/api";
+import RegistrationPanel from "../components/tournaments/RegistrationPanel";
+import ParticipantsList from "../components/tournaments/ParticipantsList";
+import TournamentBracket from "../components/tournaments/TournamentBracket";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -61,21 +61,24 @@ interface TournamentDetailsData {
 const TournamentDetails: React.FC = () => {
   const navigate = useNavigate();
   const { tournamentId } = useParams<{ tournamentId: string }>();
-  const [tournamentDetails, setTournamentDetails] = useState<TournamentDetailsData | null>(null);
+  const [tournamentDetails, setTournamentDetails] =
+    useState<TournamentDetailsData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState(0);
 
   const loadTournamentDetails = async () => {
     if (!tournamentId) return;
-    
+
     setLoading(true);
     setError(null);
     try {
-      const details = await tournamentService.getTournament(parseInt(tournamentId));
+      const details = await tournamentService.getTournament(
+        parseInt(tournamentId)
+      );
       setTournamentDetails(details);
     } catch (err: any) {
-      setError(err.message || 'Failed to load tournament details');
+      setError(err.message || "Failed to load tournament details");
     } finally {
       setLoading(false);
     }
@@ -91,21 +94,31 @@ const TournamentDetails: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'registration': return 'success';
-      case 'in_progress': return 'warning';
-      case 'completed': return 'primary';
-      case 'cancelled': return 'error';
-      default: return 'default';
+      case "registration":
+        return "success";
+      case "in_progress":
+        return "warning";
+      case "completed":
+        return "primary";
+      case "cancelled":
+        return "error";
+      default:
+        return "default";
     }
   };
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'registration': return 'Registration Open';
-      case 'in_progress': return 'In Progress';
-      case 'completed': return 'Completed';
-      case 'cancelled': return 'Cancelled';
-      default: return status;
+      case "registration":
+        return "Registration Open";
+      case "in_progress":
+        return "In Progress";
+      case "completed":
+        return "Completed";
+      case "cancelled":
+        return "Cancelled";
+      default:
+        return status;
     }
   };
 
@@ -113,8 +126,8 @@ const TournamentDetails: React.FC = () => {
     return (
       <Box sx={{ p: { xs: 2, md: 3 } }}>
         {/* Header Skeleton */}
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
-          <IconButton onClick={() => navigate('/tournaments')} sx={{ mr: 2 }}>
+        <Box sx={{ display: "flex", alignItems: "center", mb: 4 }}>
+          <IconButton onClick={() => navigate("/tournaments")} sx={{ mr: 2 }}>
             <ArrowBack />
           </IconButton>
           <Skeleton variant="text" width={300} height={48} />
@@ -137,19 +150,22 @@ const TournamentDetails: React.FC = () => {
   if (error) {
     return (
       <Box sx={{ p: { xs: 2, md: 3 } }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
-          <IconButton onClick={() => navigate('/tournaments')} sx={{ mr: 2 }}>
+        <Box sx={{ display: "flex", alignItems: "center", mb: 4 }}>
+          <IconButton onClick={() => navigate("/tournaments")} sx={{ mr: 2 }}>
             <ArrowBack />
           </IconButton>
           <Typography variant="h4" component="h1" fontWeight="bold">
             Tournament Details
           </Typography>
         </Box>
-        <Alert severity="error" action={
-          <IconButton onClick={loadTournamentDetails}>
-            <Refresh />
-          </IconButton>
-        }>
+        <Alert
+          severity="error"
+          action={
+            <IconButton onClick={loadTournamentDetails}>
+              <Refresh />
+            </IconButton>
+          }
+        >
           {error}
         </Alert>
       </Box>
@@ -159,17 +175,15 @@ const TournamentDetails: React.FC = () => {
   if (!tournamentDetails) {
     return (
       <Box sx={{ p: { xs: 2, md: 3 } }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
-          <IconButton onClick={() => navigate('/tournaments')} sx={{ mr: 2 }}>
+        <Box sx={{ display: "flex", alignItems: "center", mb: 4 }}>
+          <IconButton onClick={() => navigate("/tournaments")} sx={{ mr: 2 }}>
             <ArrowBack />
           </IconButton>
           <Typography variant="h4" component="h1" fontWeight="bold">
             Tournament Not Found
           </Typography>
         </Box>
-        <Alert severity="info">
-          Tournament details could not be loaded.
-        </Alert>
+        <Alert severity="info">Tournament details could not be loaded.</Alert>
       </Box>
     );
   }
@@ -179,15 +193,20 @@ const TournamentDetails: React.FC = () => {
   return (
     <Box sx={{ p: { xs: 2, md: 3 } }}>
       {/* Header */}
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
-        <IconButton onClick={() => navigate('/tournaments')} sx={{ mr: 2 }}>
+      <Box sx={{ display: "flex", alignItems: "center", mb: 4 }}>
+        <IconButton onClick={() => navigate("/tournaments")} sx={{ mr: 2 }}>
           <ArrowBack />
         </IconButton>
         <Box sx={{ flex: 1 }}>
-          <Typography variant="h4" component="h1" fontWeight="bold" gutterBottom>
+          <Typography
+            variant="h4"
+            component="h1"
+            fontWeight="bold"
+            gutterBottom
+          >
             {tournament.name}
           </Typography>
-          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+          <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
             <Chip
               label={getStatusText(tournament.status)}
               color={getStatusColor(tournament.status)}
@@ -195,7 +214,7 @@ const TournamentDetails: React.FC = () => {
             />
             <Chip
               label={`${tournament.current_participants}/${tournament.max_participants} players`}
-              color={tournament.is_full ? 'error' : 'primary'}
+              color={tournament.is_full ? "error" : "primary"}
               variant="outlined"
               icon={<People />}
             />
@@ -221,31 +240,39 @@ const TournamentDetails: React.FC = () => {
               <Typography variant="body1" paragraph>
                 {tournament.description}
               </Typography>
-              
+
               <Grid container spacing={2}>
                 <Grid size={{ xs: 12, sm: 6 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                    <Schedule sx={{ mr: 1, color: 'text.secondary' }} />
+                  <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                    <Schedule sx={{ mr: 1, color: "text.secondary" }} />
                     <Typography variant="body2" color="text.secondary">
-                      Start: {format(new Date(tournament.start_time), 'MMM dd, yyyy HH:mm')}
+                      Start:{" "}
+                      {format(
+                        new Date(tournament.start_time),
+                        "MMM dd, yyyy HH:mm"
+                      )}
                     </Typography>
                   </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                    <Schedule sx={{ mr: 1, color: 'text.secondary' }} />
+                  <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                    <Schedule sx={{ mr: 1, color: "text.secondary" }} />
                     <Typography variant="body2" color="text.secondary">
-                      End: {format(new Date(tournament.end_time), 'MMM dd, yyyy HH:mm')}
+                      End:{" "}
+                      {format(
+                        new Date(tournament.end_time),
+                        "MMM dd, yyyy HH:mm"
+                      )}
                     </Typography>
                   </Box>
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                    <LocationOn sx={{ mr: 1, color: 'text.secondary' }} />
+                  <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                    <LocationOn sx={{ mr: 1, color: "text.secondary" }} />
                     <Typography variant="body2" color="text.secondary">
                       {tournament.location_name}
                     </Typography>
                   </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                    <EmojiEvents sx={{ mr: 1, color: 'text.secondary' }} />
+                  <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                    <EmojiEvents sx={{ mr: 1, color: "text.secondary" }} />
                     <Typography variant="body2" color="text.secondary">
                       Entry: {tournament.entry_fee_credits} credits
                     </Typography>
@@ -253,9 +280,9 @@ const TournamentDetails: React.FC = () => {
                 </Grid>
               </Grid>
             </Grid>
-            
+
             <Grid size={{ xs: 12, md: 4 }}>
-              <RegistrationPanel 
+              <RegistrationPanel
                 tournament={tournament}
                 canRegister={tournamentDetails.can_register}
                 canWithdraw={tournamentDetails.can_withdraw}
@@ -268,21 +295,17 @@ const TournamentDetails: React.FC = () => {
       </Card>
 
       {/* Tabs */}
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+      <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
         <Tabs value={activeTab} onChange={handleTabChange}>
-          <Tab 
+          <Tab
             label={`Participants (${tournament.current_participants})`}
             icon={<People />}
             iconPosition="start"
           />
-          {tournament.status === 'in_progress' && (
-            <Tab 
-              label="Bracket"
-              icon={<AccountTree />}
-              iconPosition="start"
-            />
+          {tournament.status === "in_progress" && (
+            <Tab label="Bracket" icon={<AccountTree />} iconPosition="start" />
           )}
-          <Tab 
+          <Tab
             label="Rules & Format"
             icon={<Schedule />}
             iconPosition="start"
@@ -292,24 +315,27 @@ const TournamentDetails: React.FC = () => {
 
       {/* Tab Content */}
       <TabPanel value={activeTab} index={0}>
-        <ParticipantsList 
+        <ParticipantsList
           participants={tournamentDetails.participants}
-          tournamentId={parseInt(tournamentId || '0')}
+          tournamentId={parseInt(tournamentId || "0")}
         />
       </TabPanel>
-      
-      {tournament.status === 'in_progress' && (
+
+      {tournament.status === "in_progress" && (
         <TabPanel value={activeTab} index={1}>
-          <TournamentBracket 
-            tournamentId={parseInt(tournamentId || '0')}
+          <TournamentBracket
+            tournamentId={parseInt(tournamentId || "0")}
             bracket={tournamentDetails.bracket}
             currentRound={tournamentDetails.current_round}
             totalRounds={tournamentDetails.total_rounds}
           />
         </TabPanel>
       )}
-      
-      <TabPanel value={activeTab} index={tournament.status === 'in_progress' ? 2 : 1}>
+
+      <TabPanel
+        value={activeTab}
+        index={tournament.status === "in_progress" ? 2 : 1}
+      >
         <Card>
           <CardContent>
             <Typography variant="h6" gutterBottom>
@@ -330,7 +356,8 @@ const TournamentDetails: React.FC = () => {
                   Format: {tournament.format}
                 </Typography>
                 <Typography variant="body2" paragraph>
-                  Level Range: {tournament.min_level} - {tournament.max_level || 'No limit'}
+                  Level Range: {tournament.min_level} -{" "}
+                  {tournament.max_level || "No limit"}
                 </Typography>
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
@@ -341,7 +368,11 @@ const TournamentDetails: React.FC = () => {
                   Prize Pool: {tournament.prize_pool_credits} credits
                 </Typography>
                 <Typography variant="body2" paragraph>
-                  Registration Deadline: {format(new Date(tournament.registration_deadline), 'MMM dd, yyyy HH:mm')}
+                  Registration Deadline:{" "}
+                  {format(
+                    new Date(tournament.registration_deadline),
+                    "MMM dd, yyyy HH:mm"
+                  )}
                 </Typography>
                 <Typography variant="body2" paragraph>
                   Organizer: {tournament.organizer_username}

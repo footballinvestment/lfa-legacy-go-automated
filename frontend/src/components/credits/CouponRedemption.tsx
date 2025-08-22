@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Box,
   Card,
@@ -12,14 +12,14 @@ import {
   InputAdornment,
   Fade,
   Zoom,
-} from '@mui/material';
+} from "@mui/material";
 import {
   LocalOffer,
   Check,
   Error as ErrorIcon,
   Redeem,
-} from '@mui/icons-material';
-import { creditService, CouponRedemptionResponse } from '../../services/api';
+} from "@mui/icons-material";
+import { creditService, CouponRedemptionResponse } from "../../services/api";
 
 interface CouponRedemptionProps {
   onSuccess?: (response: CouponRedemptionResponse) => void;
@@ -30,7 +30,7 @@ const CouponRedemption: React.FC<CouponRedemptionProps> = ({
   onSuccess,
   onBalanceUpdate,
 }) => {
-  const [couponCode, setCouponCode] = useState('');
+  const [couponCode, setCouponCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState<CouponRedemptionResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -38,9 +38,9 @@ const CouponRedemption: React.FC<CouponRedemptionProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!couponCode.trim()) {
-      setError('Please enter a coupon code');
+      setError("Please enter a coupon code");
       return;
     }
 
@@ -49,11 +49,13 @@ const CouponRedemption: React.FC<CouponRedemptionProps> = ({
     setSuccess(null);
 
     try {
-      const response = await creditService.redeemCoupon(couponCode.trim().toUpperCase());
-      
+      const response = await creditService.redeemCoupon(
+        couponCode.trim().toUpperCase()
+      );
+
       setSuccess(response);
-      setCouponCode('');
-      
+      setCouponCode("");
+
       // Call callbacks
       if (onSuccess) {
         onSuccess(response);
@@ -61,14 +63,13 @@ const CouponRedemption: React.FC<CouponRedemptionProps> = ({
       if (onBalanceUpdate) {
         onBalanceUpdate(response.new_balance);
       }
-      
+
       // Auto-clear success message after 5 seconds
       setTimeout(() => {
         setSuccess(null);
       }, 5000);
-      
     } catch (err: any) {
-      setError(err.message || 'Failed to redeem coupon');
+      setError(err.message || "Failed to redeem coupon");
     } finally {
       setLoading(false);
     }
@@ -76,10 +77,12 @@ const CouponRedemption: React.FC<CouponRedemptionProps> = ({
 
   const validateCouponCode = async (code: string) => {
     if (!code.trim() || code.length < 3) return;
-    
+
     setValidating(true);
     try {
-      const validation = await creditService.validateCoupon(code.trim().toUpperCase());
+      const validation = await creditService.validateCoupon(
+        code.trim().toUpperCase()
+      );
       if (!validation.valid && validation.message) {
         setError(validation.message);
       } else {
@@ -97,19 +100,19 @@ const CouponRedemption: React.FC<CouponRedemptionProps> = ({
     setCouponCode(value);
     setError(null);
     setSuccess(null);
-    
+
     // Debounced validation
     const timeoutId = setTimeout(() => {
       validateCouponCode(value);
     }, 800);
-    
+
     return () => clearTimeout(timeoutId);
   };
 
   return (
-    <Card sx={{ maxWidth: 500, mx: 'auto' }}>
+    <Card sx={{ maxWidth: 500, mx: "auto" }}>
       <CardContent>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
           <LocalOffer color="primary" />
           <Typography variant="h6" component="h2" fontWeight="bold">
             Redeem Coupon
@@ -118,26 +121,20 @@ const CouponRedemption: React.FC<CouponRedemptionProps> = ({
 
         {success && (
           <Zoom in>
-            <Alert 
-              severity="success" 
-              sx={{ mb: 3 }}
-              icon={<Check />}
-            >
+            <Alert severity="success" sx={{ mb: 3 }} icon={<Check />}>
               <Box>
                 <Typography variant="subtitle2" fontWeight="bold">
                   {success.coupon_name} Redeemed!
                 </Typography>
-                <Typography variant="body2">
-                  {success.message}
-                </Typography>
-                <Box sx={{ display: 'flex', gap: 1, mt: 1, flexWrap: 'wrap' }}>
-                  <Chip 
+                <Typography variant="body2">{success.message}</Typography>
+                <Box sx={{ display: "flex", gap: 1, mt: 1, flexWrap: "wrap" }}>
+                  <Chip
                     label={`+${success.credits_awarded} Credits`}
                     color="success"
                     size="small"
                     icon={<Redeem />}
                   />
-                  <Chip 
+                  <Chip
                     label={`Balance: ${success.new_balance}`}
                     color="primary"
                     size="small"
@@ -150,11 +147,7 @@ const CouponRedemption: React.FC<CouponRedemptionProps> = ({
 
         {error && (
           <Fade in>
-            <Alert 
-              severity="error" 
-              sx={{ mb: 3 }}
-              icon={<ErrorIcon />}
-            >
+            <Alert severity="error" sx={{ mb: 3 }} icon={<ErrorIcon />}>
               {error}
             </Alert>
           </Fade>
@@ -191,22 +184,29 @@ const CouponRedemption: React.FC<CouponRedemptionProps> = ({
             size="large"
             disabled={loading || !couponCode.trim()}
             startIcon={loading ? <CircularProgress size={20} /> : <Redeem />}
-            sx={{ 
+            sx={{
               py: 1.5,
-              fontSize: '1.1rem',
-              fontWeight: 'bold',
+              fontSize: "1.1rem",
+              fontWeight: "bold",
             }}
           >
-            {loading ? 'Redeeming...' : 'Redeem Coupon'}
+            {loading ? "Redeeming..." : "Redeem Coupon"}
           </Button>
         </Box>
 
-        <Box sx={{ mt: 3, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+        <Box sx={{ mt: 3, p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
           <Typography variant="caption" color="text.secondary" display="block">
-            💡 <strong>Tip:</strong> Coupon codes are case-insensitive and can include letters and numbers.
+            💡 <strong>Tip:</strong> Coupon codes are case-insensitive and can
+            include letters and numbers.
           </Typography>
-          <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
-            🎁 Look for special coupon codes in tournaments, newsletters, and social media!
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            display="block"
+            sx={{ mt: 0.5 }}
+          >
+            🎁 Look for special coupon codes in tournaments, newsletters, and
+            social media!
           </Typography>
         </Box>
       </CardContent>

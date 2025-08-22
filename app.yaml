@@ -1,0 +1,3 @@
+
+# Entry point configuration
+entrypoint: gunicorn -b : app.main:app

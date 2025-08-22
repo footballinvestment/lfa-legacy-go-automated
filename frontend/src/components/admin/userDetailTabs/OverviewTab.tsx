@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   Box,
   Grid,
@@ -13,7 +13,7 @@ import {
   ListItemText,
   Badge,
   Divider,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Person,
   Email,
@@ -23,8 +23,8 @@ import {
   TrendingUp,
   Warning,
   Verified,
-} from '@mui/icons-material';
-import { AdminUser } from '../../../types/moderation';
+} from "@mui/icons-material";
+import { AdminUser } from "../../../types/moderation";
 
 interface OverviewTabProps {
   user: AdminUser;
@@ -33,20 +33,29 @@ interface OverviewTabProps {
 const OverviewTab: React.FC<OverviewTabProps> = ({ user }) => {
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return 'success';
-      case 'suspended': return 'warning';
-      case 'banned': return 'error';
-      case 'pending': return 'info';
-      default: return 'default';
+      case "active":
+        return "success";
+      case "suspended":
+        return "warning";
+      case "banned":
+        return "error";
+      case "pending":
+        return "info";
+      default:
+        return "default";
     }
   };
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case 'admin': return 'error';
-      case 'moderator': return 'warning';
-      case 'player': return 'primary';
-      default: return 'default';
+      case "admin":
+        return "error";
+      case "moderator":
+        return "warning";
+      case "player":
+        return "primary";
+      default:
+        return "default";
     }
   };
 
@@ -56,41 +65,49 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ user }) => {
         {/* User Avatar and Basic Info */}
         <Grid item xs={12} md={4}>
           <Card>
-            <CardContent sx={{ textAlign: 'center' }}>
+            <CardContent sx={{ textAlign: "center" }}>
               <Badge
-                color={user.roles.includes('admin') ? 'error' : 'default'}
-                variant={user.roles.includes('admin') ? 'dot' : undefined}
-                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                color={user.roles.includes("admin") ? "error" : "default"}
+                variant={user.roles.includes("admin") ? "dot" : undefined}
+                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
               >
-                <Avatar 
-                  sx={{ 
-                    width: 120, 
-                    height: 120, 
-                    mx: 'auto', 
-                    mb: 2, 
-                    fontSize: '3rem',
-                    bgcolor: 'primary.main'
+                <Avatar
+                  sx={{
+                    width: 120,
+                    height: 120,
+                    mx: "auto",
+                    mb: 2,
+                    fontSize: "3rem",
+                    bgcolor: "primary.main",
                   }}
                 >
                   {user.name.charAt(0).toUpperCase()}
                 </Avatar>
               </Badge>
-              
+
               <Typography variant="h5" gutterBottom>
                 {user.name}
-                {user.roles.includes('admin') && (
-                  <Verified sx={{ ml: 1, color: 'primary.main' }} />
+                {user.roles.includes("admin") && (
+                  <Verified sx={{ ml: 1, color: "primary.main" }} />
                 )}
               </Typography>
-              
+
               <Typography variant="body2" color="text.secondary" gutterBottom>
                 {user.email}
               </Typography>
-              
-              <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', mb: 2, flexWrap: 'wrap' }}>
-                <Chip 
-                  label={user.status} 
-                  color={getStatusColor(user.status) as any} 
+
+              <Box
+                sx={{
+                  display: "flex",
+                  gap: 1,
+                  justifyContent: "center",
+                  mb: 2,
+                  flexWrap: "wrap",
+                }}
+              >
+                <Chip
+                  label={user.status}
+                  color={getStatusColor(user.status) as any}
                   size="small"
                 />
                 {user.roles.map((role) => (
@@ -118,26 +135,20 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ user }) => {
               <Typography variant="h6" gutterBottom>
                 Account Information
               </Typography>
-              
+
               <List>
                 <ListItem>
                   <ListItemIcon>
                     <Person />
                   </ListItemIcon>
-                  <ListItemText
-                    primary="Full Name"
-                    secondary={user.name}
-                  />
+                  <ListItemText primary="Full Name" secondary={user.name} />
                 </ListItem>
 
                 <ListItem>
                   <ListItemIcon>
                     <Email />
                   </ListItemIcon>
-                  <ListItemText
-                    primary="Email"
-                    secondary={user.email}
-                  />
+                  <ListItemText primary="Email" secondary={user.email} />
                 </ListItem>
 
                 <ListItem>
@@ -171,53 +182,92 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ user }) => {
           <Grid item xs={12} md={6}>
             <Card>
               <CardContent>
-                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Typography
+                  variant="h6"
+                  gutterBottom
+                  sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                >
                   <EmojiEvents color="primary" />
                   Game Statistics
                 </Typography>
-                
+
                 <Grid container spacing={2} sx={{ mt: 1 }}>
                   <Grid item xs={6}>
-                    <Typography variant="h4" color="primary.main" align="center">
+                    <Typography
+                      variant="h4"
+                      color="primary.main"
+                      align="center"
+                    >
                       {user.game_stats.tournaments_played}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" align="center">
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      align="center"
+                    >
                       Tournaments
                     </Typography>
                   </Grid>
-                  
+
                   <Grid item xs={6}>
-                    <Typography variant="h4" color="success.main" align="center">
+                    <Typography
+                      variant="h4"
+                      color="success.main"
+                      align="center"
+                    >
                       {user.game_stats.win_rate}%
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" align="center">
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      align="center"
+                    >
                       Win Rate
                     </Typography>
                   </Grid>
-                  
+
                   <Grid item xs={4}>
-                    <Typography variant="h5" color="success.main" align="center">
+                    <Typography
+                      variant="h5"
+                      color="success.main"
+                      align="center"
+                    >
                       {user.game_stats.wins}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary" align="center" display="block">
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      align="center"
+                      display="block"
+                    >
                       Wins
                     </Typography>
                   </Grid>
-                  
+
                   <Grid item xs={4}>
                     <Typography variant="h5" color="error.main" align="center">
                       {user.game_stats.losses}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary" align="center" display="block">
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      align="center"
+                      display="block"
+                    >
                       Losses
                     </Typography>
                   </Grid>
-                  
+
                   <Grid item xs={4}>
                     <Typography variant="h5" color="info.main" align="center">
                       #{user.game_stats.rank}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary" align="center" display="block">
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      align="center"
+                      display="block"
+                    >
                       Rank
                     </Typography>
                   </Grid>
@@ -231,19 +281,23 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ user }) => {
         <Grid item xs={12} md={6}>
           <Card>
             <CardContent>
-              <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography
+                variant="h6"
+                gutterBottom
+                sx={{ display: "flex", alignItems: "center", gap: 1 }}
+              >
                 <TrendingUp color="secondary" />
                 Quick Overview
               </Typography>
-              
+
               <List dense>
                 <ListItem>
                   <ListItemText
                     primary="Account Status"
                     secondary={
-                      <Chip 
-                        label={user.status} 
-                        color={getStatusColor(user.status) as any} 
+                      <Chip
+                        label={user.status}
+                        color={getStatusColor(user.status) as any}
                         size="small"
                       />
                     }
@@ -256,9 +310,15 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ user }) => {
                   <ListItemText
                     primary="Total Violations"
                     secondary={
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Warning 
-                          color={user.violations && user.violations.length > 0 ? 'warning' : 'disabled'} 
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
+                        <Warning
+                          color={
+                            user.violations && user.violations.length > 0
+                              ? "warning"
+                              : "disabled"
+                          }
                           fontSize="small"
                         />
                         <Typography variant="body2">

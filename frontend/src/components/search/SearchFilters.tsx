@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Box,
   Typography,
@@ -23,7 +23,7 @@ import {
   Divider,
   Collapse,
   useTheme,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Add,
   Remove,
@@ -36,10 +36,10 @@ import {
   AttachMoney,
   Star,
   Group,
-} from '@mui/icons-material';
+} from "@mui/icons-material";
 // Using standard TextField for date input instead of MUI X DatePickers to avoid additional dependencies
-import { useSearch } from '../../contexts/SearchContext';
-import { FilterOperator, FilterType, SearchFilter } from '../../types/search';
+import { useSearch } from "../../contexts/SearchContext";
+import { FilterOperator, FilterType, SearchFilter } from "../../types/search";
 
 interface SearchFiltersProps {
   compact?: boolean;
@@ -48,22 +48,17 @@ interface SearchFiltersProps {
 
 const SearchFilters: React.FC<SearchFiltersProps> = ({
   compact = false,
-  showAdvanced = true
+  showAdvanced = true,
 }) => {
   const theme = useTheme();
-  const {
-    criteria,
-    addFilter,
-    removeFilter,
-    clearFilters,
-    filterSchema
-  } = useSearch();
+  const { criteria, addFilter, removeFilter, clearFilters, filterSchema } =
+    useSearch();
 
   const [newFilter, setNewFilter] = useState({
-    field: '',
-    operator: 'contains' as FilterOperator,
-    value: '' as any, // Allow any type for value to accommodate arrays, strings, numbers, etc.
-    type: 'text' as FilterType
+    field: "",
+    operator: "contains" as FilterOperator,
+    value: "" as any, // Allow any type for value to accommodate arrays, strings, numbers, etc.
+    type: "text" as FilterType,
   });
   const [showAddFilter, setShowAddFilter] = useState(false);
   const [quickFiltersExpanded, setQuickFiltersExpanded] = useState(true);
@@ -76,27 +71,33 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
       label: config.label,
       type: config.type,
       operators: config.operators,
-      options: config.options
+      options: config.options,
     }));
   };
 
   // Get operators for field type
   const getOperatorsForType = (type: FilterType): FilterOperator[] => {
     switch (type) {
-      case 'text':
-        return ['contains', 'equals', 'starts_with', 'ends_with', 'not_contains'];
-      case 'number':
-      case 'range':
-        return ['equals', 'greater_than', 'less_than', 'between'];
-      case 'date':
-        return ['equals', 'greater_than', 'less_than', 'between'];
-      case 'select':
-      case 'multiselect':
-        return ['equals', 'in', 'not_in'];
-      case 'boolean':
-        return ['equals'];
+      case "text":
+        return [
+          "contains",
+          "equals",
+          "starts_with",
+          "ends_with",
+          "not_contains",
+        ];
+      case "number":
+      case "range":
+        return ["equals", "greater_than", "less_than", "between"];
+      case "date":
+        return ["equals", "greater_than", "less_than", "between"];
+      case "select":
+      case "multiselect":
+        return ["equals", "in", "not_in"];
+      case "boolean":
+        return ["equals"];
       default:
-        return ['equals', 'contains'];
+        return ["equals", "contains"];
     }
   };
 
@@ -105,10 +106,10 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
     if (newFilter.field && newFilter.value) {
       addFilter(newFilter.field, newFilter.operator, newFilter.value);
       setNewFilter({
-        field: '',
-        operator: 'contains',
-        value: '',
-        type: 'text'
+        field: "",
+        operator: "contains",
+        value: "",
+        type: "text",
       });
       setShowAddFilter(false);
     }
@@ -116,30 +117,34 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
 
   // Handle field selection
   const handleFieldChange = (field: string) => {
-    const fieldConfig = getAvailableFields().find(f => f.value === field);
+    const fieldConfig = getAvailableFields().find((f) => f.value === field);
     if (fieldConfig) {
       setNewFilter({
         ...newFilter,
         field,
         type: fieldConfig.type,
-        operator: fieldConfig.operators[0] || 'equals',
-        value: ''
+        operator: fieldConfig.operators[0] || "equals",
+        value: "",
       });
     }
   };
 
   // Render filter value input based on type
   const renderValueInput = () => {
-    const fieldConfig = getAvailableFields().find(f => f.value === newFilter.field);
+    const fieldConfig = getAvailableFields().find(
+      (f) => f.value === newFilter.field
+    );
 
     switch (newFilter.type) {
-      case 'select':
+      case "select":
         return (
           <FormControl fullWidth size="small">
             <InputLabel>Value</InputLabel>
             <Select
               value={newFilter.value}
-              onChange={(e) => setNewFilter({ ...newFilter, value: e.target.value })}
+              onChange={(e) =>
+                setNewFilter({ ...newFilter, value: e.target.value })
+              }
               label="Value"
             >
               {fieldConfig?.options?.map((option) => (
@@ -151,19 +156,23 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
           </FormControl>
         );
 
-      case 'multiselect':
+      case "multiselect":
         return (
           <Autocomplete
             multiple
             options={fieldConfig?.options || []}
             getOptionLabel={(option) => option.label}
-            value={fieldConfig?.options?.filter(opt => 
-              Array.isArray(newFilter.value) && newFilter.value.includes(opt.value)
-            ) || []}
+            value={
+              fieldConfig?.options?.filter(
+                (opt) =>
+                  Array.isArray(newFilter.value) &&
+                  newFilter.value.includes(opt.value)
+              ) || []
+            }
             onChange={(_, value) => {
-              setNewFilter({ 
-                ...newFilter, 
-                value: value.map((v: any) => v.value) 
+              setNewFilter({
+                ...newFilter,
+                value: value.map((v: any) => v.value),
               });
             }}
             renderInput={(params) => (
@@ -182,8 +191,8 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
           />
         );
 
-      case 'number':
-      case 'range':
+      case "number":
+      case "range":
         return (
           <TextField
             fullWidth
@@ -191,32 +200,45 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
             type="number"
             label="Value"
             value={newFilter.value}
-            onChange={(e) => setNewFilter({ ...newFilter, value: Number(e.target.value) })}
+            onChange={(e) =>
+              setNewFilter({ ...newFilter, value: Number(e.target.value) })
+            }
           />
         );
 
-      case 'date':
+      case "date":
         return (
           <TextField
             fullWidth
             size="small"
             type="date"
             label="Date"
-            value={newFilter.value ? new Date(newFilter.value).toISOString().split('T')[0] : ''}
-            onChange={(e) => setNewFilter({ ...newFilter, value: new Date(e.target.value).toISOString() })}
+            value={
+              newFilter.value
+                ? new Date(newFilter.value).toISOString().split("T")[0]
+                : ""
+            }
+            onChange={(e) =>
+              setNewFilter({
+                ...newFilter,
+                value: new Date(e.target.value).toISOString(),
+              })
+            }
             InputLabelProps={{
               shrink: true,
             }}
           />
         );
 
-      case 'boolean':
+      case "boolean":
         return (
           <FormControl fullWidth size="small">
             <InputLabel>Value</InputLabel>
             <Select
               value={newFilter.value}
-              onChange={(e) => setNewFilter({ ...newFilter, value: e.target.value === 'true' })}
+              onChange={(e) =>
+                setNewFilter({ ...newFilter, value: e.target.value === "true" })
+              }
               label="Value"
             >
               <MenuItem value="true">Yes</MenuItem>
@@ -232,7 +254,9 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
             size="small"
             label="Value"
             value={newFilter.value}
-            onChange={(e) => setNewFilter({ ...newFilter, value: e.target.value })}
+            onChange={(e) =>
+              setNewFilter({ ...newFilter, value: e.target.value })
+            }
           />
         );
     }
@@ -240,7 +264,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
 
   // Quick filters for common use cases
   const renderQuickFilters = () => {
-    if (criteria.category === 'tournaments') {
+    if (criteria.category === "tournaments") {
       return (
         <Grid container spacing={2}>
           <Grid item xs={12} sm={6} md={3}>
@@ -248,7 +272,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
               <InputLabel>Status</InputLabel>
               <Select
                 value=""
-                onChange={(e) => addFilter('status', 'equals', e.target.value)}
+                onChange={(e) => addFilter("status", "equals", e.target.value)}
                 label="Status"
               >
                 <MenuItem value="upcoming">Upcoming</MenuItem>
@@ -267,11 +291,13 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
               placeholder="25"
               onChange={(e) => {
                 if (e.target.value) {
-                  addFilter('entry_fee', 'less_than', Number(e.target.value));
+                  addFilter("entry_fee", "less_than", Number(e.target.value));
                 }
               }}
               InputProps={{
-                startAdornment: <AttachMoney sx={{ color: 'action.active', mr: 0.5 }} />
+                startAdornment: (
+                  <AttachMoney sx={{ color: "action.active", mr: 0.5 }} />
+                ),
               }}
             />
           </Grid>
@@ -281,7 +307,9 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
               <InputLabel>Skill Level</InputLabel>
               <Select
                 value=""
-                onChange={(e) => addFilter('skill_level', 'equals', e.target.value)}
+                onChange={(e) =>
+                  addFilter("skill_level", "equals", e.target.value)
+                }
                 label="Skill Level"
               >
                 <MenuItem value="beginner">Beginner</MenuItem>
@@ -300,11 +328,13 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
               placeholder="New York"
               onChange={(e) => {
                 if (e.target.value) {
-                  addFilter('location', 'contains', e.target.value);
+                  addFilter("location", "contains", e.target.value);
                 }
               }}
               InputProps={{
-                startAdornment: <LocationOn sx={{ color: 'action.active', mr: 0.5 }} />
+                startAdornment: (
+                  <LocationOn sx={{ color: "action.active", mr: 0.5 }} />
+                ),
               }}
             />
           </Grid>
@@ -312,7 +342,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
       );
     }
 
-    if (criteria.category === 'users') {
+    if (criteria.category === "users") {
       return (
         <Grid container spacing={2}>
           <Grid item xs={12} sm={6} md={4}>
@@ -324,11 +354,13 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
               placeholder="10"
               onChange={(e) => {
                 if (e.target.value) {
-                  addFilter('level', 'greater_than', Number(e.target.value));
+                  addFilter("level", "greater_than", Number(e.target.value));
                 }
               }}
               InputProps={{
-                startAdornment: <Star sx={{ color: 'action.active', mr: 0.5 }} />
+                startAdornment: (
+                  <Star sx={{ color: "action.active", mr: 0.5 }} />
+                ),
               }}
             />
           </Grid>
@@ -342,11 +374,17 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
               placeholder="50"
               onChange={(e) => {
                 if (e.target.value) {
-                  addFilter('games_played', 'greater_than', Number(e.target.value));
+                  addFilter(
+                    "games_played",
+                    "greater_than",
+                    Number(e.target.value)
+                  );
                 }
               }}
               InputProps={{
-                startAdornment: <Group sx={{ color: 'action.active', mr: 0.5 }} />
+                startAdornment: (
+                  <Group sx={{ color: "action.active", mr: 0.5 }} />
+                ),
               }}
             />
           </Grid>
@@ -359,14 +397,20 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
               label="Joined After"
               onChange={(e) => {
                 if (e.target.value) {
-                  addFilter('join_date', 'greater_than', new Date(e.target.value).toISOString());
+                  addFilter(
+                    "join_date",
+                    "greater_than",
+                    new Date(e.target.value).toISOString()
+                  );
                 }
               }}
               InputLabelProps={{
                 shrink: true,
               }}
               InputProps={{
-                startAdornment: <CalendarToday sx={{ color: 'action.active', mr: 0.5 }} />
+                startAdornment: (
+                  <CalendarToday sx={{ color: "action.active", mr: 0.5 }} />
+                ),
               }}
             />
           </Grid>
@@ -382,7 +426,12 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
       {/* Active Filters */}
       {criteria.filters.length > 0 && (
         <Box mb={3}>
-          <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+          <Box
+            display="flex"
+            alignItems="center"
+            justifyContent="space-between"
+            mb={2}
+          >
             <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
               Active Filters ({criteria.filters.length})
             </Typography>
@@ -412,10 +461,10 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
       )}
 
       {/* Quick Filters */}
-      <Accordion 
-        expanded={quickFiltersExpanded} 
+      <Accordion
+        expanded={quickFiltersExpanded}
         onChange={() => setQuickFiltersExpanded(!quickFiltersExpanded)}
-        sx={{ mb: 2, borderRadius: 2, '&:before': { display: 'none' } }}
+        sx={{ mb: 2, borderRadius: 2, "&:before": { display: "none" } }}
       >
         <AccordionSummary expandIcon={<ExpandMore />}>
           <Box display="flex" alignItems="center" gap={1}>
@@ -425,16 +474,19 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
             </Typography>
           </Box>
         </AccordionSummary>
-        <AccordionDetails>
-          {renderQuickFilters()}
-        </AccordionDetails>
+        <AccordionDetails>{renderQuickFilters()}</AccordionDetails>
       </Accordion>
 
       {/* Add Custom Filter */}
       {showAdvanced && (
         <Card variant="outlined" sx={{ borderRadius: 2 }}>
           <CardContent>
-            <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+            <Box
+              display="flex"
+              alignItems="center"
+              justifyContent="space-between"
+              mb={2}
+            >
               <Box display="flex" alignItems="center" gap={1}>
                 <Tune color="primary" />
                 <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
@@ -447,7 +499,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
                 onClick={() => setShowAddFilter(!showAddFilter)}
                 variant="outlined"
               >
-                {showAddFilter ? 'Cancel' : 'Add Filter'}
+                {showAddFilter ? "Cancel" : "Add Filter"}
               </Button>
             </Box>
 
@@ -475,16 +527,18 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
                     <InputLabel>Operator</InputLabel>
                     <Select
                       value={newFilter.operator}
-                      onChange={(e) => setNewFilter({ 
-                        ...newFilter, 
-                        operator: e.target.value as FilterOperator 
-                      })}
+                      onChange={(e) =>
+                        setNewFilter({
+                          ...newFilter,
+                          operator: e.target.value as FilterOperator,
+                        })
+                      }
                       label="Operator"
                       disabled={!newFilter.field}
                     >
                       {getOperatorsForType(newFilter.type).map((operator) => (
                         <MenuItem key={operator} value={operator}>
-                          {operator.replace('_', ' ')}
+                          {operator.replace("_", " ")}
                         </MenuItem>
                       ))}
                     </Select>
@@ -501,7 +555,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
                     variant="contained"
                     onClick={handleAddFilter}
                     disabled={!newFilter.field || !newFilter.value}
-                    sx={{ height: '40px' }}
+                    sx={{ height: "40px" }}
                   >
                     Add
                   </Button>

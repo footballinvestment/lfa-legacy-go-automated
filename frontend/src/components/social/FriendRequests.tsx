@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -14,7 +14,7 @@ import {
   Tooltip,
   Tabs,
   Tab,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Check,
   Close,
@@ -22,9 +22,9 @@ import {
   PersonAdd,
   Schedule,
   Send,
-} from '@mui/icons-material';
-import { format, formatDistanceToNow } from 'date-fns';
-import { socialService, FriendRequest } from '../../services/api';
+} from "@mui/icons-material";
+import { format, formatDistanceToNow } from "date-fns";
+import { socialService, FriendRequest } from "../../services/api";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -54,7 +54,7 @@ const FriendRequests: React.FC = () => {
       const requests = await socialService.getFriendRequests();
       setFriendRequests(requests);
     } catch (err: any) {
-      setError(err.message || 'Failed to load friend requests');
+      setError(err.message || "Failed to load friend requests");
     } finally {
       setLoading(false);
     }
@@ -74,7 +74,7 @@ const FriendRequests: React.FC = () => {
       await socialService.respondToFriendRequest(requestId, true);
       await loadFriendRequests();
     } catch (err: any) {
-      setError(err.message || 'Failed to accept friend request');
+      setError(err.message || "Failed to accept friend request");
     } finally {
       setActionLoading(null);
     }
@@ -86,7 +86,7 @@ const FriendRequests: React.FC = () => {
       await socialService.respondToFriendRequest(requestId, false);
       await loadFriendRequests();
     } catch (err: any) {
-      setError(err.message || 'Failed to decline friend request');
+      setError(err.message || "Failed to decline friend request");
     } finally {
       setActionLoading(null);
     }
@@ -94,35 +94,48 @@ const FriendRequests: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'accepted': return 'success';
-      case 'declined': return 'error';
-      default: return 'warning';
+      case "accepted":
+        return "success";
+      case "declined":
+        return "error";
+      default:
+        return "warning";
     }
   };
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'accepted': return 'Accepted';
-      case 'declined': return 'Declined';
-      default: return 'Pending';
+      case "accepted":
+        return "Accepted";
+      case "declined":
+        return "Declined";
+      default:
+        return "Pending";
     }
   };
 
   // Filter requests by type
-  const incomingRequests = friendRequests.filter(req => 
-    req.status === 'pending' && req.to_user_id
+  const incomingRequests = friendRequests.filter(
+    (req) => req.status === "pending" && req.to_user_id
   );
-  const sentRequests = friendRequests.filter(req => 
-    req.status === 'pending' && req.from_user_id
+  const sentRequests = friendRequests.filter(
+    (req) => req.status === "pending" && req.from_user_id
   );
-  const completedRequests = friendRequests.filter(req => 
-    ['accepted', 'declined'].includes(req.status)
+  const completedRequests = friendRequests.filter((req) =>
+    ["accepted", "declined"].includes(req.status)
   );
 
   return (
     <Box>
       {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
         <Typography variant="h6">Friend Requests</Typography>
         <Tooltip title="Refresh">
           <IconButton onClick={loadFriendRequests} disabled={loading}>
@@ -140,20 +153,20 @@ const FriendRequests: React.FC = () => {
       )}
 
       {/* Request Tabs */}
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+      <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}>
         <Tabs value={activeTab} onChange={handleTabChange}>
-          <Tab 
-            label={`Incoming (${incomingRequests.length})`} 
+          <Tab
+            label={`Incoming (${incomingRequests.length})`}
             icon={<PersonAdd />}
             iconPosition="start"
           />
-          <Tab 
-            label={`Sent (${sentRequests.length})`} 
+          <Tab
+            label={`Sent (${sentRequests.length})`}
             icon={<Send />}
             iconPosition="start"
           />
-          <Tab 
-            label={`History (${completedRequests.length})`} 
+          <Tab
+            label={`History (${completedRequests.length})`}
             icon={<Schedule />}
             iconPosition="start"
           />
@@ -168,15 +181,15 @@ const FriendRequests: React.FC = () => {
               <Grid key={request.id} size={{ xs: 12, md: 6 }}>
                 <Card>
                   <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      <Avatar 
-                        sx={{ 
-                          bgcolor: 'primary.main', 
+                    <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                      <Avatar
+                        sx={{
+                          bgcolor: "primary.main",
                           mr: 2,
                           width: 48,
                           height: 48,
-                          fontSize: '1.2rem',
-                          fontWeight: 'bold'
+                          fontSize: "1.2rem",
+                          fontWeight: "bold",
                         }}
                       >
                         {request.from_user.username.charAt(0).toUpperCase()}
@@ -196,11 +209,14 @@ const FriendRequests: React.FC = () => {
 
                     <Box sx={{ mb: 2 }}>
                       <Typography variant="body2" color="text.secondary">
-                        Sent {formatDistanceToNow(new Date(request.created_at), { addSuffix: true })}
+                        Sent{" "}
+                        {formatDistanceToNow(new Date(request.created_at), {
+                          addSuffix: true,
+                        })}
                       </Typography>
                     </Box>
 
-                    <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Box sx={{ display: "flex", gap: 1 }}>
                       <Button
                         variant="contained"
                         color="success"
@@ -228,13 +244,14 @@ const FriendRequests: React.FC = () => {
             ))}
           </Grid>
         ) : (
-          <Box sx={{ textAlign: 'center', py: 6 }}>
-            <PersonAdd sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+          <Box sx={{ textAlign: "center", py: 6 }}>
+            <PersonAdd sx={{ fontSize: 64, color: "text.secondary", mb: 2 }} />
             <Typography variant="h6" color="text.secondary">
               No incoming requests
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Friend requests will appear here when players want to connect with you
+              Friend requests will appear here when players want to connect with
+              you
             </Typography>
           </Box>
         )}
@@ -248,15 +265,15 @@ const FriendRequests: React.FC = () => {
               <Grid key={request.id} size={{ xs: 12, md: 6 }}>
                 <Card>
                   <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      <Avatar 
-                        sx={{ 
-                          bgcolor: 'secondary.main', 
+                    <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                      <Avatar
+                        sx={{
+                          bgcolor: "secondary.main",
                           mr: 2,
                           width: 48,
                           height: 48,
-                          fontSize: '1.2rem',
-                          fontWeight: 'bold'
+                          fontSize: "1.2rem",
+                          fontWeight: "bold",
                         }}
                       >
                         {request.to_user.username.charAt(0).toUpperCase()}
@@ -272,16 +289,15 @@ const FriendRequests: React.FC = () => {
                           Level {request.to_user.level}
                         </Typography>
                       </Box>
-                      <Chip 
-                        label="Pending"
-                        color="warning"
-                        size="small"
-                      />
+                      <Chip label="Pending" color="warning" size="small" />
                     </Box>
 
                     <Box sx={{ mb: 2 }}>
                       <Typography variant="body2" color="text.secondary">
-                        Sent {formatDistanceToNow(new Date(request.created_at), { addSuffix: true })}
+                        Sent{" "}
+                        {formatDistanceToNow(new Date(request.created_at), {
+                          addSuffix: true,
+                        })}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
                         Waiting for response...
@@ -293,8 +309,8 @@ const FriendRequests: React.FC = () => {
             ))}
           </Grid>
         ) : (
-          <Box sx={{ textAlign: 'center', py: 6 }}>
-            <Send sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+          <Box sx={{ textAlign: "center", py: 6 }}>
+            <Send sx={{ fontSize: 64, color: "text.secondary", mb: 2 }} />
             <Typography variant="h6" color="text.secondary">
               No sent requests
             </Typography>
@@ -313,31 +329,40 @@ const FriendRequests: React.FC = () => {
               <Grid key={request.id} size={{ xs: 12, md: 6 }}>
                 <Card>
                   <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      <Avatar 
-                        sx={{ 
-                          bgcolor: 'grey.500', 
+                    <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                      <Avatar
+                        sx={{
+                          bgcolor: "grey.500",
                           mr: 2,
                           width: 48,
                           height: 48,
-                          fontSize: '1.2rem',
-                          fontWeight: 'bold'
+                          fontSize: "1.2rem",
+                          fontWeight: "bold",
                         }}
                       >
-                        {(request.from_user?.username || request.to_user?.username || 'U').charAt(0).toUpperCase()}
+                        {(
+                          request.from_user?.username ||
+                          request.to_user?.username ||
+                          "U"
+                        )
+                          .charAt(0)
+                          .toUpperCase()}
                       </Avatar>
                       <Box sx={{ flex: 1 }}>
                         <Typography variant="subtitle1" fontWeight="bold">
-                          {request.from_user?.full_name || request.to_user?.full_name}
+                          {request.from_user?.full_name ||
+                            request.to_user?.full_name}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          @{request.from_user?.username || request.to_user?.username}
+                          @
+                          {request.from_user?.username ||
+                            request.to_user?.username}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          {format(new Date(request.created_at), 'MMM dd, yyyy')}
+                          {format(new Date(request.created_at), "MMM dd, yyyy")}
                         </Typography>
                       </Box>
-                      <Chip 
+                      <Chip
                         label={getStatusText(request.status)}
                         color={getStatusColor(request.status)}
                         size="small"
@@ -349,8 +374,8 @@ const FriendRequests: React.FC = () => {
             ))}
           </Grid>
         ) : (
-          <Box sx={{ textAlign: 'center', py: 6 }}>
-            <Schedule sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+          <Box sx={{ textAlign: "center", py: 6 }}>
+            <Schedule sx={{ fontSize: 64, color: "text.secondary", mb: 2 }} />
             <Typography variant="h6" color="text.secondary">
               No request history
             </Typography>

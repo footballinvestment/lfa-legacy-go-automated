@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -33,7 +33,7 @@ import {
   InputAdornment,
   useTheme,
   Collapse,
-} from '@mui/material';
+} from "@mui/material";
 import {
   ArrowBack,
   Check,
@@ -53,20 +53,24 @@ import {
   VisibilityOff,
   Edit,
   Save,
-} from '@mui/icons-material';
-import { TransitionProps } from '@mui/material/transitions';
-import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { Tournament, TournamentCreateRequest, TournamentFormat } from '../../types/tournament';
-import { useSafeAuth } from '../../SafeAuthContext';
-import ErrorBoundary from '../common/ErrorBoundary';
+} from "@mui/icons-material";
+import { TransitionProps } from "@mui/material/transitions";
+import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import {
+  Tournament,
+  TournamentCreateRequest,
+  TournamentFormat,
+} from "../../types/tournament";
+import { useSafeAuth } from "../../SafeAuthContext";
+import ErrorBoundary from "../common/ErrorBoundary";
 
 const Transition = React.forwardRef(function Transition(
   props: TransitionProps & {
     children: React.ReactElement;
   },
-  ref: React.Ref<unknown>,
+  ref: React.Ref<unknown>
 ) {
   return <Slide direction="up" ref={ref} {...props} />;
 });
@@ -80,7 +84,7 @@ interface MobileCreateTournamentProps {
 const MobileCreateTournament: React.FC<MobileCreateTournamentProps> = ({
   open,
   onClose,
-  onSubmit
+  onSubmit,
 }) => {
   const theme = useTheme();
   const { user } = useSafeAuth();
@@ -90,94 +94,119 @@ const MobileCreateTournament: React.FC<MobileCreateTournamentProps> = ({
   const [activeStep, setActiveStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<Partial<TournamentCreateRequest>>({
-    name: '',
-    description: '',
-    location: '',
+    name: "",
+    description: "",
+    location: "",
     startDate: new Date(Date.now() + 86400000).toISOString(), // Tomorrow
     maxParticipants: 8,
     entryFee: 0,
     prizePool: 0,
-    rules: '',
-    format: 'single_elimination',
+    rules: "",
+    format: "single_elimination",
     isPublic: true,
-    skillLevel: 'intermediate',
+    skillLevel: "intermediate",
     tags: [],
-    minParticipants: 4
+    minParticipants: 4,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [customRules, setCustomRules] = useState(false);
 
-  const steps = [
-    'Basic Info',
-    'Details',
-    'Rules & Settings',
-    'Review'
-  ];
+  const steps = ["Basic Info", "Details", "Rules & Settings", "Review"];
 
-  const tournamentFormats: { value: TournamentFormat; label: string; description: string }[] = [
-    { 
-      value: 'single_elimination', 
-      label: 'Single Elimination', 
-      description: 'One loss and you\'re out' 
+  const tournamentFormats: {
+    value: TournamentFormat;
+    label: string;
+    description: string;
+  }[] = [
+    {
+      value: "single_elimination",
+      label: "Single Elimination",
+      description: "One loss and you're out",
     },
-    { 
-      value: 'double_elimination', 
-      label: 'Double Elimination', 
-      description: 'Get a second chance' 
+    {
+      value: "double_elimination",
+      label: "Double Elimination",
+      description: "Get a second chance",
     },
-    { 
-      value: 'round_robin', 
-      label: 'Round Robin', 
-      description: 'Everyone plays everyone' 
+    {
+      value: "round_robin",
+      label: "Round Robin",
+      description: "Everyone plays everyone",
     },
-    { 
-      value: 'swiss', 
-      label: 'Swiss System', 
-      description: 'Balanced tournament' 
-    }
+    {
+      value: "swiss",
+      label: "Swiss System",
+      description: "Balanced tournament",
+    },
   ];
 
   const skillLevels = [
-    { value: 'beginner', label: '🟢 Beginner', description: 'New to the game' },
-    { value: 'intermediate', label: '🟡 Intermediate', description: 'Some experience' },
-    { value: 'advanced', label: '🟠 Advanced', description: 'Experienced player' },
-    { value: 'professional', label: '🔴 Professional', description: 'Pro level skills' }
+    { value: "beginner", label: "🟢 Beginner", description: "New to the game" },
+    {
+      value: "intermediate",
+      label: "🟡 Intermediate",
+      description: "Some experience",
+    },
+    {
+      value: "advanced",
+      label: "🟠 Advanced",
+      description: "Experienced player",
+    },
+    {
+      value: "professional",
+      label: "🔴 Professional",
+      description: "Pro level skills",
+    },
   ];
 
   const popularTags = [
-    'competitive', 'casual', 'weekly', 'monthly', 'indoor', 'outdoor',
-    '7v7', '5v5', '11v11', 'youth', 'adult', 'mixed', 'beginner-friendly'
+    "competitive",
+    "casual",
+    "weekly",
+    "monthly",
+    "indoor",
+    "outdoor",
+    "7v7",
+    "5v5",
+    "11v11",
+    "youth",
+    "adult",
+    "mixed",
+    "beginner-friendly",
   ];
 
   // Handle form field changes
-  const handleChange = (field: keyof TournamentCreateRequest) => (
-    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | any
-  ) => {
-    const value = event.target ? event.target.value : event;
-    setFormData(prev => ({ ...prev, [field]: value }));
-    
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
-    }
-  };
+  const handleChange =
+    (field: keyof TournamentCreateRequest) =>
+    (
+      event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | any
+    ) => {
+      const value = event.target ? event.target.value : event;
+      setFormData((prev) => ({ ...prev, [field]: value }));
+
+      // Clear error when user starts typing
+      if (errors[field]) {
+        setErrors((prev) => ({ ...prev, [field]: "" }));
+      }
+    };
 
   // Handle date change
-  const handleDateChange = (field: keyof TournamentCreateRequest) => (date: Date | null) => {
-    if (date) {
-      setFormData(prev => ({ ...prev, [field]: date.toISOString() }));
-    }
-  };
+  const handleDateChange =
+    (field: keyof TournamentCreateRequest) => (date: Date | null) => {
+      if (date) {
+        setFormData((prev) => ({ ...prev, [field]: date.toISOString() }));
+      }
+    };
 
   // Handle tag selection
   const handleTagToggle = (tag: string) => {
     const currentTags = formData.tags || [];
     const newTags = currentTags.includes(tag)
-      ? currentTags.filter(t => t !== tag)
+      ? currentTags.filter((t) => t !== tag)
       : [...currentTags, tag];
-    
-    setFormData(prev => ({ ...prev, tags: newTags }));
+
+    setFormData((prev) => ({ ...prev, tags: newTags }));
   };
 
   // Handle image upload
@@ -187,7 +216,7 @@ const MobileCreateTournament: React.FC<MobileCreateTournamentProps> = ({
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
-        setFormData(prev => ({ ...prev, imageUrl: reader.result as string }));
+        setFormData((prev) => ({ ...prev, imageUrl: reader.result as string }));
       };
       reader.readAsDataURL(file);
     }
@@ -199,20 +228,25 @@ const MobileCreateTournament: React.FC<MobileCreateTournamentProps> = ({
 
     switch (step) {
       case 0: // Basic Info
-        if (!formData.name?.trim()) newErrors.name = 'Tournament name is required';
-        if (!formData.description?.trim()) newErrors.description = 'Description is required';
-        if (!formData.location?.trim()) newErrors.location = 'Location is required';
+        if (!formData.name?.trim())
+          newErrors.name = "Tournament name is required";
+        if (!formData.description?.trim())
+          newErrors.description = "Description is required";
+        if (!formData.location?.trim())
+          newErrors.location = "Location is required";
         break;
-      
+
       case 1: // Details
-        if (!formData.startDate) newErrors.startDate = 'Start date is required';
-        if ((formData.maxParticipants || 0) < 2) newErrors.maxParticipants = 'At least 2 participants required';
-        if ((formData.entryFee || 0) < 0) newErrors.entryFee = 'Entry fee cannot be negative';
+        if (!formData.startDate) newErrors.startDate = "Start date is required";
+        if ((formData.maxParticipants || 0) < 2)
+          newErrors.maxParticipants = "At least 2 participants required";
+        if ((formData.entryFee || 0) < 0)
+          newErrors.entryFee = "Entry fee cannot be negative";
         break;
-      
+
       case 2: // Rules & Settings
         if (customRules && !formData.rules?.trim()) {
-          newErrors.rules = 'Custom rules are required';
+          newErrors.rules = "Custom rules are required";
         }
         break;
     }
@@ -227,19 +261,24 @@ const MobileCreateTournament: React.FC<MobileCreateTournamentProps> = ({
       if (activeStep === steps.length - 1) {
         handleSubmit();
       } else {
-        setActiveStep(prev => prev + 1);
+        setActiveStep((prev) => prev + 1);
       }
     }
   };
 
   // Handle previous step
   const handleBack = () => {
-    setActiveStep(prev => prev - 1);
+    setActiveStep((prev) => prev - 1);
   };
 
   // Handle form submission
   const handleSubmit = async () => {
-    if (!formData.name || !formData.description || !formData.location || !formData.startDate) {
+    if (
+      !formData.name ||
+      !formData.description ||
+      !formData.location ||
+      !formData.startDate
+    ) {
       return;
     }
 
@@ -254,22 +293,22 @@ const MobileCreateTournament: React.FC<MobileCreateTournamentProps> = ({
         maxParticipants: formData.maxParticipants || 8,
         entryFee: formData.entryFee || 0,
         prizePool: formData.prizePool,
-        rules: customRules ? formData.rules || '' : getDefaultRules(),
-        format: formData.format as TournamentFormat || 'single_elimination',
+        rules: customRules ? formData.rules || "" : getDefaultRules(),
+        format: (formData.format as TournamentFormat) || "single_elimination",
         isPublic: formData.isPublic ?? true,
         registrationDeadline: formData.registrationDeadline,
         minParticipants: formData.minParticipants,
         ageRestriction: formData.ageRestriction,
         skillLevel: formData.skillLevel as any,
         tags: formData.tags,
-        imageUrl: formData.imageUrl
+        imageUrl: formData.imageUrl,
       };
 
       await onSubmit(tournamentData);
       onClose();
       resetForm();
     } catch (error) {
-      console.error('Failed to create tournament:', error);
+      console.error("Failed to create tournament:", error);
     } finally {
       setLoading(false);
     }
@@ -279,19 +318,19 @@ const MobileCreateTournament: React.FC<MobileCreateTournamentProps> = ({
   const resetForm = () => {
     setActiveStep(0);
     setFormData({
-      name: '',
-      description: '',
-      location: '',
+      name: "",
+      description: "",
+      location: "",
       startDate: new Date(Date.now() + 86400000).toISOString(),
       maxParticipants: 8,
       entryFee: 0,
       prizePool: 0,
-      rules: '',
-      format: 'single_elimination',
+      rules: "",
+      format: "single_elimination",
       isPublic: true,
-      skillLevel: 'intermediate',
+      skillLevel: "intermediate",
       tags: [],
-      minParticipants: 4
+      minParticipants: 4,
     });
     setErrors({});
     setImagePreview(null);
@@ -321,7 +360,8 @@ const MobileCreateTournament: React.FC<MobileCreateTournamentProps> = ({
                 Let's start with the basics
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Give your tournament a name and description that attracts players
+                Give your tournament a name and description that attracts
+                players
               </Typography>
             </Box>
 
@@ -329,8 +369,8 @@ const MobileCreateTournament: React.FC<MobileCreateTournamentProps> = ({
               <TextField
                 fullWidth
                 label="Tournament Name"
-                value={formData.name || ''}
-                onChange={handleChange('name')}
+                value={formData.name || ""}
+                onChange={handleChange("name")}
                 error={!!errors.name}
                 helperText={errors.name}
                 placeholder="e.g., Friday Night Championship"
@@ -342,8 +382,8 @@ const MobileCreateTournament: React.FC<MobileCreateTournamentProps> = ({
                 label="Description"
                 multiline
                 rows={3}
-                value={formData.description || ''}
-                onChange={handleChange('description')}
+                value={formData.description || ""}
+                onChange={handleChange("description")}
                 error={!!errors.description}
                 helperText={errors.description}
                 placeholder="Tell players what makes this tournament special..."
@@ -353,13 +393,13 @@ const MobileCreateTournament: React.FC<MobileCreateTournamentProps> = ({
               <TextField
                 fullWidth
                 label="Location"
-                value={formData.location || ''}
-                onChange={handleChange('location')}
+                value={formData.location || ""}
+                onChange={handleChange("location")}
                 error={!!errors.location}
                 helperText={errors.location}
                 placeholder="e.g., Central Park, NYC"
                 InputProps={{
-                  startAdornment: <LocationOn color="action" sx={{ mr: 1 }} />
+                  startAdornment: <LocationOn color="action" sx={{ mr: 1 }} />,
                 }}
               />
             </Box>
@@ -367,23 +407,27 @@ const MobileCreateTournament: React.FC<MobileCreateTournamentProps> = ({
             {/* Tournament Image Upload */}
             <Card sx={{ mb: 3 }}>
               <CardContent>
-                <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
+                <Typography
+                  variant="subtitle1"
+                  gutterBottom
+                  sx={{ fontWeight: 600 }}
+                >
                   Tournament Image (Optional)
                 </Typography>
-                
+
                 {imagePreview ? (
                   <Box position="relative">
                     <Avatar
                       src={imagePreview}
-                      sx={{ width: '100%', height: 200, borderRadius: 2 }}
+                      sx={{ width: "100%", height: 200, borderRadius: 2 }}
                       variant="rounded"
                     />
                     <IconButton
                       sx={{
-                        position: 'absolute',
+                        position: "absolute",
                         top: 8,
                         right: 8,
-                        bgcolor: 'background.paper'
+                        bgcolor: "background.paper",
                       }}
                       onClick={() => fileInputRef.current?.click()}
                     >
@@ -394,30 +438,33 @@ const MobileCreateTournament: React.FC<MobileCreateTournamentProps> = ({
                   <Paper
                     sx={{
                       height: 120,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      cursor: "pointer",
                       border: `2px dashed ${theme.palette.divider}`,
-                      bgcolor: 'background.default'
+                      bgcolor: "background.default",
                     }}
                     onClick={() => fileInputRef.current?.click()}
                   >
                     <Box textAlign="center">
-                      <PhotoCamera color="action" sx={{ fontSize: 40, mb: 1 }} />
+                      <PhotoCamera
+                        color="action"
+                        sx={{ fontSize: 40, mb: 1 }}
+                      />
                       <Typography variant="body2" color="text.secondary">
                         Add a tournament image
                       </Typography>
                     </Box>
                   </Paper>
                 )}
-                
+
                 <input
                   type="file"
                   ref={fileInputRef}
                   onChange={handleImageUpload}
                   accept="image/*"
-                  style={{ display: 'none' }}
+                  style={{ display: "none" }}
                 />
               </CardContent>
             </Card>
@@ -440,14 +487,14 @@ const MobileCreateTournament: React.FC<MobileCreateTournamentProps> = ({
               <DateTimePicker
                 label="Start Date & Time"
                 value={formData.startDate ? new Date(formData.startDate) : null}
-                onChange={handleDateChange('startDate')}
+                onChange={handleDateChange("startDate")}
                 slotProps={{
                   textField: {
                     fullWidth: true,
                     error: !!errors.startDate,
                     helperText: errors.startDate,
-                    sx: { mb: 2 }
-                  }
+                    sx: { mb: 2 },
+                  },
                 }}
               />
             </LocalizationProvider>
@@ -458,15 +505,17 @@ const MobileCreateTournament: React.FC<MobileCreateTournamentProps> = ({
               </Typography>
               <Slider
                 value={formData.maxParticipants || 8}
-                onChange={(_, value) => handleChange('maxParticipants')({ target: { value } })}
+                onChange={(_, value) =>
+                  handleChange("maxParticipants")({ target: { value } })
+                }
                 min={2}
                 max={64}
                 step={2}
                 marks={[
-                  { value: 4, label: '4' },
-                  { value: 16, label: '16' },
-                  { value: 32, label: '32' },
-                  { value: 64, label: '64' }
+                  { value: 4, label: "4" },
+                  { value: 16, label: "16" },
+                  { value: 32, label: "32" },
+                  { value: 64, label: "64" },
                 ]}
                 sx={{ mb: 3 }}
               />
@@ -479,11 +528,13 @@ const MobileCreateTournament: React.FC<MobileCreateTournamentProps> = ({
                   label="Entry Fee"
                   type="number"
                   value={formData.entryFee || 0}
-                  onChange={handleChange('entryFee')}
+                  onChange={handleChange("entryFee")}
                   error={!!errors.entryFee}
                   helperText={errors.entryFee}
                   InputProps={{
-                    startAdornment: <InputAdornment position="start">$</InputAdornment>
+                    startAdornment: (
+                      <InputAdornment position="start">$</InputAdornment>
+                    ),
                   }}
                 />
               </Grid>
@@ -493,26 +544,29 @@ const MobileCreateTournament: React.FC<MobileCreateTournamentProps> = ({
                   label="Prize Pool"
                   type="number"
                   value={formData.prizePool || 0}
-                  onChange={handleChange('prizePool')}
+                  onChange={handleChange("prizePool")}
                   InputProps={{
-                    startAdornment: <InputAdornment position="start">$</InputAdornment>
+                    startAdornment: (
+                      <InputAdornment position="start">$</InputAdornment>
+                    ),
                   }}
                 />
               </Grid>
             </Grid>
 
             <Alert severity="info" sx={{ mb: 2 }}>
-              Prize pool is automatically calculated as 80% of total entry fees collected
+              Prize pool is automatically calculated as 80% of total entry fees
+              collected
             </Alert>
 
             <FormControl fullWidth>
               <InputLabel>Skill Level</InputLabel>
               <Select
-                value={formData.skillLevel || 'intermediate'}
-                onChange={handleChange('skillLevel')}
+                value={formData.skillLevel || "intermediate"}
+                onChange={handleChange("skillLevel")}
                 label="Skill Level"
               >
-                {skillLevels.map(level => (
+                {skillLevels.map((level) => (
                   <MenuItem key={level.value} value={level.value}>
                     <Box>
                       <Typography variant="body1">{level.label}</Typography>
@@ -542,11 +596,11 @@ const MobileCreateTournament: React.FC<MobileCreateTournamentProps> = ({
             <FormControl fullWidth sx={{ mb: 3 }}>
               <InputLabel>Tournament Format</InputLabel>
               <Select
-                value={formData.format || 'single_elimination'}
-                onChange={handleChange('format')}
+                value={formData.format || "single_elimination"}
+                onChange={handleChange("format")}
                 label="Tournament Format"
               >
-                {tournamentFormats.map(format => (
+                {tournamentFormats.map((format) => (
                   <MenuItem key={format.value} value={format.value}>
                     <Box>
                       <Typography variant="body1">{format.label}</Typography>
@@ -561,7 +615,12 @@ const MobileCreateTournament: React.FC<MobileCreateTournamentProps> = ({
 
             <Card sx={{ mb: 3 }}>
               <CardContent>
-                <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+                <Box
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="space-between"
+                  mb={2}
+                >
                   <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
                     Tournament Rules
                   </Typography>
@@ -590,10 +649,12 @@ const MobileCreateTournament: React.FC<MobileCreateTournamentProps> = ({
                     multiline
                     rows={6}
                     label="Custom Rules"
-                    value={formData.rules || ''}
-                    onChange={handleChange('rules')}
+                    value={formData.rules || ""}
+                    onChange={handleChange("rules")}
                     error={!!errors.rules}
-                    helperText={errors.rules || 'Enter your custom tournament rules'}
+                    helperText={
+                      errors.rules || "Enter your custom tournament rules"
+                    }
                     placeholder={getDefaultRules()}
                   />
                 </Collapse>
@@ -602,21 +663,33 @@ const MobileCreateTournament: React.FC<MobileCreateTournamentProps> = ({
 
             <Card sx={{ mb: 3 }}>
               <CardContent>
-                <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
+                <Typography
+                  variant="subtitle1"
+                  gutterBottom
+                  sx={{ fontWeight: 600 }}
+                >
                   Tags (Optional)
                 </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mb: 2 }}
+                >
                   Help players find your tournament
                 </Typography>
-                
+
                 <Box display="flex" flexWrap="wrap" gap={1}>
-                  {popularTags.map(tag => (
+                  {popularTags.map((tag) => (
                     <Chip
                       key={tag}
                       label={tag}
                       onClick={() => handleTagToggle(tag)}
-                      color={formData.tags?.includes(tag) ? 'primary' : 'default'}
-                      variant={formData.tags?.includes(tag) ? 'filled' : 'outlined'}
+                      color={
+                        formData.tags?.includes(tag) ? "primary" : "default"
+                      }
+                      variant={
+                        formData.tags?.includes(tag) ? "filled" : "outlined"
+                      }
                       size="small"
                     />
                   ))}
@@ -628,7 +701,7 @@ const MobileCreateTournament: React.FC<MobileCreateTournamentProps> = ({
               control={
                 <Switch
                   checked={formData.isPublic ?? true}
-                  onChange={(e) => handleChange('isPublic')(e.target.checked)}
+                  onChange={(e) => handleChange("isPublic")(e.target.checked)}
                 />
               }
               label={
@@ -658,32 +731,36 @@ const MobileCreateTournament: React.FC<MobileCreateTournamentProps> = ({
             {formData.imageUrl && (
               <Avatar
                 src={formData.imageUrl}
-                sx={{ width: '100%', height: 150, borderRadius: 2, mb: 3 }}
+                sx={{ width: "100%", height: 150, borderRadius: 2, mb: 3 }}
                 variant="rounded"
               />
             )}
 
             <Card sx={{ mb: 2 }}>
               <CardContent>
-                <Typography variant="h6" gutterBottom>{formData.name}</Typography>
+                <Typography variant="h6" gutterBottom>
+                  {formData.name}
+                </Typography>
                 <Typography variant="body2" color="text.secondary" paragraph>
                   {formData.description}
                 </Typography>
-                
+
                 <Grid container spacing={2}>
                   <Grid item xs={6}>
                     <Box display="flex" alignItems="center" gap={1} mb={1}>
                       <LocationOn fontSize="small" color="action" />
-                      <Typography variant="body2">{formData.location}</Typography>
+                      <Typography variant="body2">
+                        {formData.location}
+                      </Typography>
                     </Box>
                   </Grid>
                   <Grid item xs={6}>
                     <Box display="flex" alignItems="center" gap={1} mb={1}>
                       <Schedule fontSize="small" color="action" />
                       <Typography variant="body2">
-                        {formData.startDate ? 
-                          new Date(formData.startDate).toLocaleDateString() : ''
-                        }
+                        {formData.startDate
+                          ? new Date(formData.startDate).toLocaleDateString()
+                          : ""}
                       </Typography>
                     </Box>
                   </Grid>
@@ -708,7 +785,7 @@ const MobileCreateTournament: React.FC<MobileCreateTournamentProps> = ({
                 {formData.tags && formData.tags.length > 0 && (
                   <Box mt={2}>
                     <Box display="flex" gap={1} flexWrap="wrap">
-                      {formData.tags.map(tag => (
+                      {formData.tags.map((tag) => (
                         <Chip key={tag} label={tag} size="small" />
                       ))}
                     </Box>
@@ -719,7 +796,8 @@ const MobileCreateTournament: React.FC<MobileCreateTournamentProps> = ({
 
             <Alert severity="success">
               <Typography variant="body2">
-                Ready to create your tournament! Players will be able to join immediately after creation.
+                Ready to create your tournament! Players will be able to join
+                immediately after creation.
               </Typography>
             </Alert>
           </Container>
@@ -739,7 +817,10 @@ const MobileCreateTournament: React.FC<MobileCreateTournamentProps> = ({
     >
       <ErrorBoundary>
         {/* App Bar */}
-        <AppBar position="sticky" sx={{ bgcolor: 'background.paper', color: 'text.primary' }}>
+        <AppBar
+          position="sticky"
+          sx={{ bgcolor: "background.paper", color: "text.primary" }}
+        >
           <Toolbar>
             <IconButton
               edge="start"
@@ -749,23 +830,23 @@ const MobileCreateTournament: React.FC<MobileCreateTournamentProps> = ({
             >
               <ArrowBack />
             </IconButton>
-            
+
             <Typography variant="h6" sx={{ flex: 1, fontWeight: 600 }}>
               Create Tournament
             </Typography>
-            
+
             {activeStep < steps.length - 1 && (
               <Typography variant="body2" color="text.secondary">
                 {activeStep + 1} of {steps.length}
               </Typography>
             )}
           </Toolbar>
-          
+
           {loading && <LinearProgress />}
         </AppBar>
 
         {/* Stepper */}
-        <Box sx={{ p: 2, bgcolor: 'background.default' }}>
+        <Box sx={{ p: 2, bgcolor: "background.default" }}>
           <Stepper activeStep={activeStep} alternativeLabel>
             {steps.map((label) => (
               <Step key={label}>
@@ -776,21 +857,21 @@ const MobileCreateTournament: React.FC<MobileCreateTournamentProps> = ({
         </Box>
 
         {/* Content */}
-        <Box sx={{ flex: 1, overflow: 'auto', pb: 10 }}>
+        <Box sx={{ flex: 1, overflow: "auto", pb: 10 }}>
           {renderStepContent(activeStep)}
         </Box>
 
         {/* Navigation Buttons */}
-        <Paper 
-          elevation={8} 
-          sx={{ 
-            position: 'fixed', 
-            bottom: 0, 
-            left: 0, 
-            right: 0, 
+        <Paper
+          elevation={8}
+          sx={{
+            position: "fixed",
+            bottom: 0,
+            left: 0,
+            right: 0,
             p: 2,
             borderTopLeftRadius: 16,
-            borderTopRightRadius: 16
+            borderTopRightRadius: 16,
           }}
         >
           <Box display="flex" gap={2}>
@@ -804,15 +885,21 @@ const MobileCreateTournament: React.FC<MobileCreateTournamentProps> = ({
                 Back
               </Button>
             )}
-            
+
             <Button
               variant="contained"
               onClick={handleNext}
               disabled={loading}
               sx={{ flex: 1, py: 1.5 }}
-              startIcon={activeStep === steps.length - 1 ? <Check /> : <ArrowForward />}
+              startIcon={
+                activeStep === steps.length - 1 ? <Check /> : <ArrowForward />
+              }
             >
-              {loading ? 'Creating...' : activeStep === steps.length - 1 ? 'Create Tournament' : 'Next'}
+              {loading
+                ? "Creating..."
+                : activeStep === steps.length - 1
+                  ? "Create Tournament"
+                  : "Next"}
             </Button>
           </Box>
         </Paper>

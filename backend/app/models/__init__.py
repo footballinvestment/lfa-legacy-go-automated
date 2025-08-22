@@ -6,7 +6,14 @@ from .user import User, UserSession
 
 # BIZTONSÁGOS: Csak azokat importáljuk, amik biztosan léteznek
 try:
-    from .location import Location, GameDefinition, GameSession, LocationType, GameSessionStatus
+    from .location import (
+        Location,
+        GameDefinition,
+        GameSession,
+        LocationType,
+        GameSessionStatus,
+    )
+
     LOCATION_MODELS_AVAILABLE = True
     print("✅ Location models imported successfully")
 except ImportError as e:
@@ -15,6 +22,7 @@ except ImportError as e:
 
 try:
     from .tournament import Tournament, TournamentParticipant
+
     TOURNAMENT_MODELS_AVAILABLE = True
     print("✅ Tournament models imported successfully")
 except ImportError as e:
@@ -27,6 +35,7 @@ print("⚠️ Weather models temporarily disabled for stability")
 
 try:
     from .game_results import GameResult
+
     GAME_RESULTS_AVAILABLE = True
     print("✅ Game Results models imported successfully")
 except ImportError as e:
@@ -40,6 +49,7 @@ print("🔥 Moderation models temporarily disabled to fix relationship conflicts
 # ✅ JAVÍTOTT: Social models import nevek
 try:
     from .friends import Friendship, FriendRequest, Challenge, UserBlock
+
     SOCIAL_MODELS_AVAILABLE = True
     print("✅ Social models imported successfully")
 except ImportError as e:
@@ -48,6 +58,7 @@ except ImportError as e:
 
 try:
     from .coupon import Coupon, CouponUsage
+
     COUPON_MODELS_AVAILABLE = True
     print("✅ Coupon models imported successfully")
 except ImportError as e:
@@ -55,53 +66,39 @@ except ImportError as e:
     print(f"⚠️ Coupon models not available: {e}")
 
 # Alapvető export lista
-__all__ = [
-    "User",
-    "UserSession"
-]
+__all__ = ["User", "UserSession"]
 
 # Feltételes exportok
 if LOCATION_MODELS_AVAILABLE:
-    __all__.extend([
-        "Location",
-        "GameDefinition", 
-        "GameSession",
-        "LocationType",
-        "GameSessionStatus"
-    ])
+    __all__.extend(
+        [
+            "Location",
+            "GameDefinition",
+            "GameSession",
+            "LocationType",
+            "GameSessionStatus",
+        ]
+    )
 
 if TOURNAMENT_MODELS_AVAILABLE:
-    __all__.extend([
-        "Tournament",
-        "TournamentParticipant"
-    ])
+    __all__.extend(["Tournament", "TournamentParticipant"])
 
 if GAME_RESULTS_AVAILABLE:
-    __all__.extend([
-        "GameResult"
-    ])
+    __all__.extend(["GameResult"])
 
 # MODERATION MODELS KIHAGYVA
 # if MODERATION_MODELS_AVAILABLE:
 #     __all__.extend([
 #         "UserViolation",
-#         "ModerationLog", 
+#         "ModerationLog",
 #         "UserReport"
 #     ])
 
 if SOCIAL_MODELS_AVAILABLE:
-    __all__.extend([
-        "Friendship",
-        "FriendRequest",
-        "Challenge", 
-        "UserBlock"
-    ])
+    __all__.extend(["Friendship", "FriendRequest", "Challenge", "UserBlock"])
 
 if COUPON_MODELS_AVAILABLE:
-    __all__.extend([
-        "Coupon",
-        "CouponUsage"
-    ])
+    __all__.extend(["Coupon", "CouponUsage"])
 
 # Modell csoportok státusza
 available_groups = []
@@ -145,4 +142,6 @@ if unavailable_groups:
 print(f"✅ Total models loaded: {len(__all__)}")
 print(f"✅ Exported models: {', '.join(__all__)}")
 
-print("✅ Successfully imported: User, UserSession, Location, GameDefinition, GameSession, Tournament models, Social models, Coupon models")
+print(
+    "✅ Successfully imported: User, UserSession, Location, GameDefinition, GameSession, Tournament models, Social models, Coupon models"
+)

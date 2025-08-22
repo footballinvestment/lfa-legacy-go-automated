@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -16,7 +16,7 @@ import {
   InputAdornment,
   Grid,
   Divider,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Timeline,
   Login,
@@ -28,9 +28,9 @@ import {
   Warning,
   Search,
   Schedule,
-} from '@mui/icons-material';
-import { AdminUser, ModerationLog } from '../../../types/moderation';
-import { moderationApi } from '../../../services/moderationApi';
+} from "@mui/icons-material";
+import { AdminUser, ModerationLog } from "../../../types/moderation";
+import { moderationApi } from "../../../services/moderationApi";
 
 interface HistoryTabProps {
   user: AdminUser;
@@ -38,7 +38,14 @@ interface HistoryTabProps {
 
 interface ActivityItem {
   id: string;
-  type: 'login' | 'logout' | 'profile_update' | 'tournament_join' | 'violation_added' | 'status_change' | 'role_change';
+  type:
+    | "login"
+    | "logout"
+    | "profile_update"
+    | "tournament_join"
+    | "violation_added"
+    | "status_change"
+    | "role_change";
   description: string;
   timestamp: string;
   details?: Record<string, any>;
@@ -54,7 +61,7 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ user }) => {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
 
   const itemsPerPage = 10;
 
@@ -67,70 +74,86 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ user }) => {
         page,
         limit: itemsPerPage,
       });
-      
+
       setModerationLogs(logs);
 
       // Generate mock activity data (in real app, this would come from API)
       const mockActivities: ActivityItem[] = [
         {
-          id: '1',
-          type: 'login',
-          description: 'User logged in from web browser',
+          id: "1",
+          type: "login",
+          description: "User logged in from web browser",
           timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-          details: { ip_address: '192.168.1.100', user_agent: 'Chrome/91.0' },
+          details: { ip_address: "192.168.1.100", user_agent: "Chrome/91.0" },
         },
         {
-          id: '2',
-          type: 'tournament_join',
+          id: "2",
+          type: "tournament_join",
           description: 'Joined tournament "Friday Night Championship"',
           timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
-          details: { tournament_id: 42, tournament_name: 'Friday Night Championship' },
+          details: {
+            tournament_id: 42,
+            tournament_name: "Friday Night Championship",
+          },
         },
         {
-          id: '3',
-          type: 'profile_update',
-          description: 'Updated profile information',
+          id: "3",
+          type: "profile_update",
+          description: "Updated profile information",
           timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-          details: { fields_updated: ['bio', 'location'] },
+          details: { fields_updated: ["bio", "location"] },
         },
         {
-          id: '4',
-          type: 'login',
-          description: 'User logged in from mobile app',
-          timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-          details: { ip_address: '192.168.1.105', user_agent: 'Mobile App v1.2' },
+          id: "4",
+          type: "login",
+          description: "User logged in from mobile app",
+          timestamp: new Date(
+            Date.now() - 2 * 24 * 60 * 60 * 1000
+          ).toISOString(),
+          details: {
+            ip_address: "192.168.1.105",
+            user_agent: "Mobile App v1.2",
+          },
         },
         {
-          id: '5',
-          type: 'status_change',
-          description: 'Account status changed from pending to active',
-          timestamp: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-          actor: { id: 1, name: 'System Admin' },
-          details: { old_status: 'pending', new_status: 'active' },
+          id: "5",
+          type: "status_change",
+          description: "Account status changed from pending to active",
+          timestamp: new Date(
+            Date.now() - 7 * 24 * 60 * 60 * 1000
+          ).toISOString(),
+          actor: { id: 1, name: "System Admin" },
+          details: { old_status: "pending", new_status: "active" },
         },
       ];
 
       // Add moderation logs to activities
       const moderationActivities: ActivityItem[] = logs.map((log) => ({
         id: `mod-${log.id}`,
-        type: 'status_change',
+        type: "status_change",
         description: `${log.action} performed by admin`,
         timestamp: log.created_at,
-        actor: { id: log.actor_id, name: 'Admin User' },
+        actor: { id: log.actor_id, name: "Admin User" },
         details: log.details,
       }));
 
       const allActivities = [...mockActivities, ...moderationActivities]
-        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-        .filter(activity => 
-          searchTerm === '' || 
-          activity.description.toLowerCase().includes(searchTerm.toLowerCase())
+        .sort(
+          (a, b) =>
+            new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+        )
+        .filter(
+          (activity) =>
+            searchTerm === "" ||
+            activity.description
+              .toLowerCase()
+              .includes(searchTerm.toLowerCase())
         );
 
       setActivities(allActivities);
       setTotalPages(Math.ceil(allActivities.length / itemsPerPage));
     } catch (error) {
-      console.error('Error loading history:', error);
+      console.error("Error loading history:", error);
     } finally {
       setLoading(false);
     }
@@ -140,43 +163,43 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ user }) => {
     loadHistory();
   }, [user.id, page, searchTerm]);
 
-  const getActivityIcon = (type: ActivityItem['type']) => {
+  const getActivityIcon = (type: ActivityItem["type"]) => {
     switch (type) {
-      case 'login':
+      case "login":
         return <Login color="success" />;
-      case 'logout':
+      case "logout":
         return <Logout color="warning" />;
-      case 'profile_update':
+      case "profile_update":
         return <Edit color="info" />;
-      case 'tournament_join':
+      case "tournament_join":
         return <EmojiEvents color="primary" />;
-      case 'violation_added':
+      case "violation_added":
         return <Warning color="error" />;
-      case 'status_change':
-      case 'role_change':
+      case "status_change":
+      case "role_change":
         return <Security color="secondary" />;
       default:
         return <Timeline />;
     }
   };
 
-  const getActivityColor = (type: ActivityItem['type']) => {
+  const getActivityColor = (type: ActivityItem["type"]) => {
     switch (type) {
-      case 'login':
-        return 'success';
-      case 'logout':
-        return 'warning';
-      case 'profile_update':
-        return 'info';
-      case 'tournament_join':
-        return 'primary';
-      case 'violation_added':
-        return 'error';
-      case 'status_change':
-      case 'role_change':
-        return 'secondary';
+      case "login":
+        return "success";
+      case "logout":
+        return "warning";
+      case "profile_update":
+        return "info";
+      case "tournament_join":
+        return "primary";
+      case "violation_added":
+        return "error";
+      case "status_change":
+      case "role_change":
+        return "secondary";
       default:
-        return 'default';
+        return "default";
     }
   };
 
@@ -185,18 +208,24 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ user }) => {
     const time = new Date(timestamp);
     const diffInSeconds = Math.floor((now.getTime() - time.getTime()) / 1000);
 
-    if (diffInSeconds < 60) return 'Just now';
-    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
-    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
-    if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 86400)} days ago`;
+    if (diffInSeconds < 60) return "Just now";
+    if (diffInSeconds < 3600)
+      return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+    if (diffInSeconds < 86400)
+      return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+    if (diffInSeconds < 2592000)
+      return `${Math.floor(diffInSeconds / 86400)} days ago`;
     return time.toLocaleDateString();
   };
 
-  const paginatedActivities = activities.slice((page - 1) * itemsPerPage, page * itemsPerPage);
+  const paginatedActivities = activities.slice(
+    (page - 1) * itemsPerPage,
+    page * itemsPerPage
+  );
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+      <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
         <CircularProgress />
       </Box>
     );
@@ -212,9 +241,9 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ user }) => {
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid item xs={12} sm={3}>
           <Card>
-            <CardContent sx={{ textAlign: 'center', py: 2 }}>
+            <CardContent sx={{ textAlign: "center", py: 2 }}>
               <Typography variant="h4" color="primary">
-                {activities.filter(a => a.type === 'login').length}
+                {activities.filter((a) => a.type === "login").length}
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 Total Logins
@@ -222,12 +251,12 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ user }) => {
             </CardContent>
           </Card>
         </Grid>
-        
+
         <Grid item xs={12} sm={3}>
           <Card>
-            <CardContent sx={{ textAlign: 'center', py: 2 }}>
+            <CardContent sx={{ textAlign: "center", py: 2 }}>
               <Typography variant="h4" color="secondary">
-                {activities.filter(a => a.type === 'tournament_join').length}
+                {activities.filter((a) => a.type === "tournament_join").length}
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 Tournament Joins
@@ -235,12 +264,12 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ user }) => {
             </CardContent>
           </Card>
         </Grid>
-        
+
         <Grid item xs={12} sm={3}>
           <Card>
-            <CardContent sx={{ textAlign: 'center', py: 2 }}>
+            <CardContent sx={{ textAlign: "center", py: 2 }}>
               <Typography variant="h4" color="info.main">
-                {activities.filter(a => a.type === 'profile_update').length}
+                {activities.filter((a) => a.type === "profile_update").length}
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 Profile Updates
@@ -248,12 +277,12 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ user }) => {
             </CardContent>
           </Card>
         </Grid>
-        
+
         <Grid item xs={12} sm={3}>
           <Card>
-            <CardContent sx={{ textAlign: 'center', py: 2 }}>
+            <CardContent sx={{ textAlign: "center", py: 2 }}>
               <Typography variant="h4" color="error.main">
-                {activities.filter(a => a.type === 'violation_added').length}
+                {activities.filter((a) => a.type === "violation_added").length}
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 Admin Actions
@@ -284,13 +313,15 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ user }) => {
       <Card>
         <CardContent>
           {paginatedActivities.length === 0 ? (
-            <Box sx={{ textAlign: 'center', py: 4 }}>
-              <Schedule sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+            <Box sx={{ textAlign: "center", py: 4 }}>
+              <Schedule sx={{ fontSize: 64, color: "text.secondary", mb: 2 }} />
               <Typography variant="h6" color="text.secondary">
                 No activity found
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                {searchTerm ? 'Try adjusting your search terms' : 'This user has no recorded activity'}
+                {searchTerm
+                  ? "Try adjusting your search terms"
+                  : "This user has no recorded activity"}
               </Typography>
             </Box>
           ) : (
@@ -299,26 +330,28 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ user }) => {
                 <React.Fragment key={activity.id}>
                   <ListItem alignItems="flex-start">
                     <ListItemIcon>
-                      <Avatar 
-                        sx={{ 
-                          width: 40, 
-                          height: 40, 
-                          bgcolor: `${getActivityColor(activity.type)}.main` 
+                      <Avatar
+                        sx={{
+                          width: 40,
+                          height: 40,
+                          bgcolor: `${getActivityColor(activity.type)}.main`,
                         }}
                       >
                         {getActivityIcon(activity.type)}
                       </Avatar>
                     </ListItemIcon>
-                    
+
                     <ListItemText
                       primary={
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
                           <Typography variant="body1">
                             {activity.description}
                           </Typography>
-                          <Chip 
-                            label={activity.type.replace('_', ' ')} 
-                            size="small" 
+                          <Chip
+                            label={activity.type.replace("_", " ")}
+                            size="small"
                             color={getActivityColor(activity.type) as any}
                             variant="outlined"
                           />
@@ -327,27 +360,46 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ user }) => {
                       secondary={
                         <Box>
                           <Typography variant="caption" color="text.secondary">
-                            {formatTimeAgo(activity.timestamp)} • {new Date(activity.timestamp).toLocaleString()}
+                            {formatTimeAgo(activity.timestamp)} •{" "}
+                            {new Date(activity.timestamp).toLocaleString()}
                           </Typography>
-                          
+
                           {activity.actor && (
-                            <Typography variant="caption" color="text.secondary" display="block">
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              display="block"
+                            >
                               Performed by: {activity.actor.name}
                             </Typography>
                           )}
-                          
-                          {activity.details && Object.keys(activity.details).length > 0 && (
-                            <Box sx={{ mt: 1, p: 1, bgcolor: 'grey.50', borderRadius: 1 }}>
-                              <Typography variant="caption" color="text.secondary">
-                                Details: {JSON.stringify(activity.details, null, 2)}
-                              </Typography>
-                            </Box>
-                          )}
+
+                          {activity.details &&
+                            Object.keys(activity.details).length > 0 && (
+                              <Box
+                                sx={{
+                                  mt: 1,
+                                  p: 1,
+                                  bgcolor: "grey.50",
+                                  borderRadius: 1,
+                                }}
+                              >
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                >
+                                  Details:{" "}
+                                  {JSON.stringify(activity.details, null, 2)}
+                                </Typography>
+                              </Box>
+                            )}
                         </Box>
                       }
                     />
                   </ListItem>
-                  {index < paginatedActivities.length - 1 && <Divider variant="inset" component="li" />}
+                  {index < paginatedActivities.length - 1 && (
+                    <Divider variant="inset" component="li" />
+                  )}
                 </React.Fragment>
               ))}
             </List>
@@ -357,7 +409,7 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ user }) => {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
           <Pagination
             count={totalPages}
             page={page}

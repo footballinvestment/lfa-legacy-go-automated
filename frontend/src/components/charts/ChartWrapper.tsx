@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef } from "react";
 import {
   Box,
   Card,
@@ -8,15 +8,15 @@ import {
   CircularProgress,
   Alert,
   useTheme,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Download,
   Fullscreen,
   Refresh,
   ZoomIn,
   ZoomOut,
-} from '@mui/icons-material';
-import { ResponsiveContainer } from 'recharts';
+} from "@mui/icons-material";
+import { ResponsiveContainer } from "recharts";
 
 export interface ChartWrapperProps {
   title: string;
@@ -26,7 +26,7 @@ export interface ChartWrapperProps {
   error?: string | null;
   height?: number;
   showControls?: boolean;
-  onExport?: (format: 'png' | 'pdf' | 'csv') => void;
+  onExport?: (format: "png" | "pdf" | "csv") => void;
   onRefresh?: () => void;
   className?: string;
 }
@@ -37,7 +37,7 @@ export interface ChartConfig {
   animationDuration: number;
   showGrid: boolean;
   showLegend: boolean;
-  legendPosition: 'top' | 'bottom' | 'left' | 'right';
+  legendPosition: "top" | "bottom" | "left" | "right";
   darkMode: boolean;
 }
 
@@ -68,7 +68,7 @@ const ChartWrapper: React.FC<ChartWrapperProps> = ({
   const [zoom, setZoom] = useState(1);
   const chartRef = useRef<HTMLDivElement>(null);
 
-  const handleExport = (format: 'png' | 'pdf' | 'csv') => {
+  const handleExport = (format: "png" | "pdf" | "csv") => {
     if (onExport) {
       onExport(format);
     } else {
@@ -89,11 +89,11 @@ const ChartWrapper: React.FC<ChartWrapperProps> = ({
   };
 
   const handleZoomIn = () => {
-    setZoom(prev => Math.min(prev + 0.2, 3));
+    setZoom((prev) => Math.min(prev + 0.2, 3));
   };
 
   const handleZoomOut = () => {
-    setZoom(prev => Math.max(prev - 0.2, 0.5));
+    setZoom((prev) => Math.max(prev - 0.2, 0.5));
   };
 
   const defaultConfig: ChartConfig = {
@@ -108,27 +108,34 @@ const ChartWrapper: React.FC<ChartWrapperProps> = ({
     animationDuration: 1000,
     showGrid: true,
     showLegend: true,
-    legendPosition: 'bottom',
-    darkMode: theme.palette.mode === 'dark',
+    legendPosition: "bottom",
+    darkMode: theme.palette.mode === "dark",
   };
 
   return (
-    <Card 
+    <Card
       ref={chartRef}
       className={className}
-      sx={{ 
-        height: isFullscreen ? '100vh' : 'auto',
-        position: isFullscreen ? 'fixed' : 'relative',
-        top: isFullscreen ? 0 : 'auto',
-        left: isFullscreen ? 0 : 'auto',
-        width: isFullscreen ? '100vw' : '100%',
-        zIndex: isFullscreen ? 9999 : 'auto',
+      sx={{
+        height: isFullscreen ? "100vh" : "auto",
+        position: isFullscreen ? "fixed" : "relative",
+        top: isFullscreen ? 0 : "auto",
+        left: isFullscreen ? 0 : "auto",
+        width: isFullscreen ? "100vw" : "100%",
+        zIndex: isFullscreen ? 9999 : "auto",
         backgroundColor: theme.palette.background.paper,
       }}
     >
       <CardContent>
         {/* Chart Header */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            mb: 2,
+          }}
+        >
           <Box>
             <Typography variant="h6" component="h3" gutterBottom>
               {title}
@@ -139,10 +146,14 @@ const ChartWrapper: React.FC<ChartWrapperProps> = ({
               </Typography>
             )}
           </Box>
-          
+
           {showControls && (
-            <Box sx={{ display: 'flex', gap: 0.5 }}>
-              <IconButton size="small" onClick={() => handleExport('png')} title="Export as PNG">
+            <Box sx={{ display: "flex", gap: 0.5 }}>
+              <IconButton
+                size="small"
+                onClick={() => handleExport("png")}
+                title="Export as PNG"
+              >
                 <Download />
               </IconButton>
               <IconButton size="small" onClick={handleZoomIn} title="Zoom In">
@@ -151,7 +162,11 @@ const ChartWrapper: React.FC<ChartWrapperProps> = ({
               <IconButton size="small" onClick={handleZoomOut} title="Zoom Out">
                 <ZoomOut />
               </IconButton>
-              <IconButton size="small" onClick={handleFullscreen} title="Fullscreen">
+              <IconButton
+                size="small"
+                onClick={handleFullscreen}
+                title="Fullscreen"
+              >
                 <Fullscreen />
               </IconButton>
               {onRefresh && (
@@ -164,34 +179,36 @@ const ChartWrapper: React.FC<ChartWrapperProps> = ({
         </Box>
 
         {/* Chart Content */}
-        <Box sx={{ position: 'relative', height: height * zoom }}>
+        <Box sx={{ position: "relative", height: height * zoom }}>
           {loading && (
-            <Box 
-              sx={{ 
-                position: 'absolute', 
-                top: 0, 
-                left: 0, 
-                right: 0, 
-                bottom: 0, 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center',
-                backgroundColor: 'rgba(255, 255, 255, 0.8)',
+            <Box
+              sx={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: "rgba(255, 255, 255, 0.8)",
                 zIndex: 1,
               }}
             >
               <CircularProgress />
             </Box>
           )}
-          
+
           {error && (
             <Alert severity="error" sx={{ mb: 2 }}>
               {error}
             </Alert>
           )}
-          
+
           {!loading && !error && (
-            <Box sx={{ transform: `scale(${zoom})`, transformOrigin: 'top left' }}>
+            <Box
+              sx={{ transform: `scale(${zoom})`, transformOrigin: "top left" }}
+            >
               <ResponsiveContainer width="100%" height={height}>
                 {children}
               </ResponsiveContainer>
@@ -205,19 +222,19 @@ const ChartWrapper: React.FC<ChartWrapperProps> = ({
 
 // Export defaultConfig separately to avoid circular dependency
 export const defaultConfig: ChartConfig = {
-  colors: ['#1976d2', '#dc004e', '#2e7d32', '#ed6c02', '#d32f2f'],
+  colors: ["#1976d2", "#dc004e", "#2e7d32", "#ed6c02", "#d32f2f"],
   animation: true,
   animationDuration: 1000,
   showGrid: true,
   showLegend: true,
-  legendPosition: 'bottom',
+  legendPosition: "bottom",
   darkMode: false,
 };
 
 export default ChartWrapper;
 
 // Utility function to get theme-aware colors
-export const getChartColors = (theme: any, colorScheme: string = 'default') => {
+export const getChartColors = (theme: any, colorScheme: string = "default") => {
   const schemes = {
     default: [
       theme.palette.primary.main,
@@ -226,11 +243,11 @@ export const getChartColors = (theme: any, colorScheme: string = 'default') => {
       theme.palette.warning.main,
       theme.palette.error.main,
     ],
-    ocean: ['#0077be', '#00a8cc', '#7ed9e6', '#4caf50', '#81c784'],
-    sunset: ['#ff6b6b', '#ffa726', '#ffcc02', '#66bb6a', '#42a5f5'],
-    forest: ['#2e7d32', '#388e3c', '#4caf50', '#66bb6a', '#81c784'],
-    corporate: ['#1976d2', '#1e88e5', '#42a5f5', '#64b5f6', '#90caf9'],
+    ocean: ["#0077be", "#00a8cc", "#7ed9e6", "#4caf50", "#81c784"],
+    sunset: ["#ff6b6b", "#ffa726", "#ffcc02", "#66bb6a", "#42a5f5"],
+    forest: ["#2e7d32", "#388e3c", "#4caf50", "#66bb6a", "#81c784"],
+    corporate: ["#1976d2", "#1e88e5", "#42a5f5", "#64b5f6", "#90caf9"],
   };
-  
+
   return schemes[colorScheme as keyof typeof schemes] || schemes.default;
 };
