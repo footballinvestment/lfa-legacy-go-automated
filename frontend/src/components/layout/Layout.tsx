@@ -20,8 +20,8 @@ import {
   ListItemText,
   useMediaQuery,
   useTheme,
-} from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+} from "@mui/material";
+import { useNavigate } from "react-router-dom";
 import {
   SportsSoccer,
   Dashboard as DashboardIcon,
@@ -32,8 +32,8 @@ import {
   Menu as MenuIcon,
   People,
   Assessment,
-} from '@mui/icons-material';
-import { useSafeAuth } from '../../SafeAuthContext';
+} from "@mui/icons-material";
+import { useSafeAuth } from "../../SafeAuthContext";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -43,8 +43,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { state, logout } = useSafeAuth();
   const navigate = useNavigate();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [mobileOpen, setMobileOpen] = React.useState(false);
 
@@ -56,9 +56,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     setAnchorEl(null);
   };
 
-  const handleLogout = () => {
-    logout();
-    handleClose();
+  const handleLogout = async () => {
+    try {
+      await logout();
+      handleClose();
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout failed:', error);
+      handleClose();
+      navigate('/login');
+    }
   };
 
   const handleMobileDrawerToggle = () => {
@@ -66,33 +73,33 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   const navigationItems = [
-    { label: 'Dashboard', href: '/', icon: <DashboardIcon /> },
-    { label: 'Tournaments', href: '/tournaments', icon: <EmojiEvents /> },
-    { label: 'Social', href: '/social', icon: <People /> },
-    { label: 'Game Results', href: '/game-results', icon: <Assessment /> },
-    { label: 'Profile', href: '/profile', icon: <Person /> },
+    { label: "Dashboard", href: "/", icon: <DashboardIcon /> },
+    { label: "Tournaments", href: "/tournaments", icon: <EmojiEvents /> },
+    { label: "Social", href: "/social", icon: <People /> },
+    { label: "Game Results", href: "/game-results", icon: <Assessment /> },
+    { label: "Profile", href: "/profile", icon: <Person /> },
   ];
 
   const drawer = (
     <Box sx={{ width: 250 }}>
-      <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+      <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <SportsSoccer color="primary" />
           <Typography variant="h6" fontWeight="bold">
             LFA Legacy GO
           </Typography>
         </Box>
       </Box>
-      
+
       <List>
         {navigationItems.map((item) => (
-          <ListItem 
+          <ListItem
             key={item.label}
             onClick={() => {
               navigate(item.href);
               setMobileOpen(false);
             }}
-            sx={{ cursor: 'pointer' }}
+            sx={{ cursor: "pointer" }}
           >
             <ListItemIcon>{item.icon}</ListItemIcon>
             <ListItemText primary={item.label} />
@@ -104,7 +111,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   return (
     <Box sx={{ flexGrow: 1 }}>
-      <AppBar position="static" sx={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>
+      <AppBar
+        position="static"
+        sx={{ background: "linear-gradient(135deg, #10b981, #059669)" }}
+      >
         <Toolbar>
           {isMobile && (
             <IconButton
@@ -117,14 +127,18 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               <MenuIcon />
             </IconButton>
           )}
-          
+
           <SportsSoccer sx={{ mr: 2 }} />
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: 'bold' }}>
+          <Typography
+            variant="h6"
+            component="div"
+            sx={{ flexGrow: 1, fontWeight: "bold" }}
+          >
             LFA Legacy GO
           </Typography>
 
           {!isMobile && (
-            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+            <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
               {navigationItems.map((item) => (
                 <Button
                   key={item.label}
@@ -132,8 +146,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   startIcon={item.icon}
                   onClick={() => navigate(item.href)}
                   sx={{
-                    '&:hover': {
-                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    "&:hover": {
+                      backgroundColor: "rgba(255, 255, 255, 0.1)",
                     },
                   }}
                 >
@@ -143,14 +157,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             </Box>
           )}
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             {state.user && (
               <Chip
                 label={`${state.user.credits} Credits`}
                 color="secondary"
                 variant="outlined"
                 size={isMobile ? "small" : "medium"}
-                sx={{ color: 'white', borderColor: 'white' }}
+                sx={{ color: "white", borderColor: "white" }}
               />
             )}
 
@@ -168,18 +182,23 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               id="menu-appbar"
               anchorEl={anchorEl}
               anchorOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
+                vertical: "top",
+                horizontal: "right",
               }}
               keepMounted
               transformOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
+                vertical: "top",
+                horizontal: "right",
               }}
               open={Boolean(anchorEl)}
               onClose={handleClose}
             >
-              <MenuItem onClick={() => { navigate('/profile'); handleClose(); }}>
+              <MenuItem
+                onClick={() => {
+                  navigate("/profile");
+                  handleClose();
+                }}
+              >
                 <Person sx={{ mr: 1 }} /> Profile
               </MenuItem>
               <MenuItem onClick={handleLogout}>
@@ -199,18 +218,18 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           keepMounted: true, // Better open performance on mobile.
         }}
         sx={{
-          display: { xs: 'block', md: 'none' },
-          '& .MuiDrawer-paper': { boxSizing: 'border-box', width: 250 },
+          display: { xs: "block", md: "none" },
+          "& .MuiDrawer-paper": { boxSizing: "border-box", width: 250 },
         }}
       >
         {drawer}
       </Drawer>
 
-      <Container 
-        maxWidth="lg" 
-        sx={{ 
+      <Container
+        maxWidth="lg"
+        sx={{
           py: { xs: 2, sm: 3, md: 4 },
-          px: { xs: 2, sm: 3, md: 4 }
+          px: { xs: 2, sm: 3, md: 4 },
         }}
       >
         {children}

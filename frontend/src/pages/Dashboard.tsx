@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, memo, useCallback, useMemo } from "react";
 import {
   Box,
   Typography,
   Grid,
   Card,
   CardContent,
-  Chip,
   Button,
   LinearProgress,
   Alert,
@@ -20,7 +19,6 @@ import {
   TrendingUp,
   Refresh,
   Add,
-  Timeline,
   AccountBalanceWallet,
 } from "@mui/icons-material";
 import { useSafeAuth } from "../SafeAuthContext";
@@ -36,7 +34,7 @@ interface DashboardStats {
   recentActivity: string[];
 }
 
-const Dashboard: React.FC = () => {
+const Dashboard = memo(() => {
   // 🔥 KRITIKUS JAVÍTÁS: refreshStats kinyerése az SafeAuthContext-ből
   const { state, refreshStats } = useSafeAuth();
   const navigate = useNavigate();
@@ -46,20 +44,23 @@ const Dashboard: React.FC = () => {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
 
-  const loadDashboardStats = async () => {
+  const loadDashboardStats = useCallback(async () => {
     setLoading(true);
     setError(null);
 
     try {
       const tournaments = await tournamentService.getTournaments();
+      const completedTournaments = tournaments.filter((t: any) => t.status === "completed").length;
+      const upcomingTournaments = tournaments.filter((t: any) => t.status === "registration").length;
+      
       setStats({
         totalTournaments: tournaments.length,
-        activeTournaments: tournaments.filter(
-          (t: any) => t.status === "registration"
-        ).length,
+        activeTournaments: upcomingTournaments,
         recentActivity: [
-          "Registered for tournament",
-          "Completed profile setup",
+          `⚽ ${completedTournaments} tournaments completed`,
+          `🏆 ${upcomingTournaments} tournaments open for registration`,
+          `📊 ${state.user?.games_won || 0} games won this season`,
+          `🎯 ${Math.round(((state.user?.games_won || 0) / Math.max((state.user?.games_won || 0) + (state.user?.games_lost || 0), 1)) * 100)}% win rate`,
         ],
       });
     } catch (err: any) {
@@ -67,78 +68,87 @@ const Dashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [state.user]);
 
   useEffect(() => {
     loadDashboardStats();
-  }, []);
+  }, [loadDashboardStats]);
 
   // 🎯 JAVÍTOTT: Most már megfelelően frissíti az auth context user adatait
-  const handleCouponSuccess = async (response: CouponRedemptionResponse) => {
-    setSuccessMessage(
-      `🎉 ${response.coupon_name} redeemed! +${response.credits_awarded} credits`
-    );
-    setSnackbarOpen(true);
+  const handleCouponSuccess = useCallback(
+    async (response: CouponRedemptionResponse) => {
+      setSuccessMessage(
+        `🎉 ${response.coupon_name} redeemed! +${response.credits_awarded} credits`
+      );
+      setSnackbarOpen(true);
 
-    // 🚀 KULCS JAVÍTÁS: Azonnal frissíti a user adatokat az auth context-ben
-    try {
-      await refreshStats();
-      console.log("✅ User stats frissítve kupon beváltás után");
-    } catch (error) {
-      console.error("❌ User stats frissítés sikertelen:", error);
+      // 🚀 KULCS JAVÍTÁS: Azonnal frissíti a user adatokat az auth context-ben
+      try {
+        await refreshStats();
+        console.log("✅ User stats frissítve kupon beváltás után");
+      } catch (error) {
+        console.error("❌ User stats frissítés sikertelen:", error);
 
-      // Fallback: késleltetett frissítés ha az azonnali nem sikerült
-      setTimeout(async () => {
-        try {
-          await refreshStats();
-          console.log("✅ User stats frissítve (fallback)");
-        } catch (fallbackError) {
-          console.error("❌ Fallback frissítés is sikertelen:", fallbackError);
-        }
-      }, 1500);
-    }
+        // Fallback: késleltetett frissítés ha az azonnali nem sikerült
+        setTimeout(async () => {
+          try {
+            await refreshStats();
+            console.log("✅ User stats frissítve (fallback)");
+          } catch (fallbackError) {
+            console.error(
+              "❌ Fallback frissítés is sikertelen:",
+              fallbackError
+            );
+          }
+        }, 1500);
+      }
 
-    // Dashboard stats frissítése is
-    setTimeout(() => {
-      loadDashboardStats();
-    }, 1000);
-  };
+      // Dashboard stats frissítése is
+      setTimeout(() => {
+        loadDashboardStats();
+      }, 1000);
+    },
+    [refreshStats, loadDashboardStats]
+  );
 
-  const handleCreditBalanceUpdate = (newBalance: number) => {
+  const handleCreditBalanceUpdate = useCallback((newBalance: number) => {
     // Opcionális: Direkt user context frissítés ha szükséges
     console.log("Credit balance frissítve:", newBalance);
-  };
+  }, []);
 
-  const userStats = [
-    {
-      title: "Level",
-      value: state.user?.level || 1,
-      icon: <TrendingUp />,
-      color: "primary" as const,
-      progress: (state.user?.xp || 0) % 100,
-    },
-    {
-      title: "Credits",
-      value: state.user?.credits || 0, // 📊 Ez most már valós időben frissül!
-      icon: <EmojiEvents />,
-      color: "secondary" as const,
-      action: () => {
-        document.getElementById("coupon-section")?.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-        });
+  const userStats = useMemo(
+    () => [
+      {
+        title: "Level",
+        value: state.user?.level || 1,
+        icon: <TrendingUp />,
+        color: "primary" as const,
+        progress: (state.user?.xp || 0) % 100,
       },
-    },
-    {
-      title: "Games Played",
-      value: state.user?.games_played || 0,
-      icon: <Person />,
-      color: "success" as const,
-      winRate: state.user?.games_played
-        ? ((state.user.games_won || 0) / state.user.games_played) * 100
-        : 0,
-    },
-  ];
+      {
+        title: "Credits",
+        value: state.user?.credits || 0, // 📊 Ez most már valós időben frissül!
+        icon: <EmojiEvents />,
+        color: "secondary" as const,
+        action: () => {
+          document.getElementById("coupon-section")?.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
+        },
+      },
+      {
+        title: "Games Played",
+        value: state.user?.games_played || 0,
+        icon: <Person />,
+        color: "success" as const,
+        winRate: state.user?.games_played
+          ? ((state.user.games_won || 0) / state.user.games_played) * 100
+          : 0,
+      },
+    ],
+    [state.user]
+  );
 
   return (
     <Box>
@@ -263,36 +273,74 @@ const Dashboard: React.FC = () => {
         ))}
       </Grid>
 
-      {/* Tournament Stats */}
+      {/* Football Gaming Stats */}
       {stats && (
         <Box sx={{ mt: 4 }}>
           <Typography variant="h6" gutterBottom>
-            Tournament Overview
+            ⚽ Football Gaming Overview
           </Typography>
           <Grid container spacing={2}>
-            <Grid size={{ xs: 6 }}>
+            <Grid size={{ xs: 6, md: 3 }}>
               <Card>
                 <CardContent sx={{ textAlign: "center" }}>
                   <Typography variant="h5" color="primary">
                     {stats.totalTournaments}
                   </Typography>
                   <Typography color="text.secondary">
-                    Total Tournaments
+                    🏆 Tournaments Available
                   </Typography>
                 </CardContent>
               </Card>
             </Grid>
-            <Grid size={{ xs: 6 }}>
+            <Grid size={{ xs: 6, md: 3 }}>
               <Card>
                 <CardContent sx={{ textAlign: "center" }}>
                   <Typography variant="h5" color="success.main">
                     {stats.activeTournaments}
                   </Typography>
-                  <Typography color="text.secondary">Active Now</Typography>
+                  <Typography color="text.secondary">🔥 Open for Registration</Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid size={{ xs: 6, md: 3 }}>
+              <Card>
+                <CardContent sx={{ textAlign: "center" }}>
+                  <Typography variant="h5" color="warning.main">
+                    {state.user?.games_won || 0}
+                  </Typography>
+                  <Typography color="text.secondary">⚽ Games Won</Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid size={{ xs: 6, md: 3 }}>
+              <Card>
+                <CardContent sx={{ textAlign: "center" }}>
+                  <Typography variant="h5" color="info.main">
+                    {Math.round(((state.user?.games_won || 0) / Math.max((state.user?.games_won || 0) + (state.user?.games_lost || 0), 1)) * 100)}%
+                  </Typography>
+                  <Typography color="text.secondary">🎯 Win Rate</Typography>
                 </CardContent>
               </Card>
             </Grid>
           </Grid>
+        </Box>
+      )}
+
+      {/* Recent Activity */}
+      {stats && stats.recentActivity && (
+        <Box sx={{ mt: 4 }}>
+          <Typography variant="h6" gutterBottom>
+            📈 Recent Activity
+          </Typography>
+          <Card>
+            <CardContent>
+              {stats.recentActivity.map((activity, index) => (
+                <Typography key={index} sx={{ mb: 1 }}>
+                  {activity}
+                </Typography>
+              ))}
+            </CardContent>
+          </Card>
         </Box>
       )}
 
@@ -396,6 +444,6 @@ const Dashboard: React.FC = () => {
       />
     </Box>
   );
-};
+});
 
 export default Dashboard;
