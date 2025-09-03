@@ -28,6 +28,7 @@ from ..models.user import (
     UserLogin,
     UserCreateProtected,
 )
+from ..services.password_security import PasswordSecurityService
 import os
 
 # Configure logging
@@ -108,6 +109,30 @@ async def get_current_admin(current_user: User = Depends(get_current_active_user
             status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions"
         )
     return current_user
+
+
+def get_password_service():
+    """Dependency for password security service"""
+    return PasswordSecurityService()
+
+
+# =============================================================================
+# PASSWORD SECURITY ENDPOINTS
+# =============================================================================
+
+
+@router.post("/validate-password")
+async def validate_password(
+    request: dict,
+    password_service: PasswordSecurityService = Depends(get_password_service)
+):
+    """🔒 Validate password strength - NIST 2024 compliant"""
+    password = request.get("password")
+    if not password:
+        raise HTTPException(status_code=400, detail="Password required")
+    
+    validation = await password_service.validate_password_strength(password)
+    return validation
 
 
 # =============================================================================
@@ -207,9 +232,12 @@ async def get_current_admin(current_user: User = Depends(get_current_active_user
     },
 )
 async def register(
-    user_data: UserCreate, request: Request, db: Session = Depends(get_db)
+    user_data: UserCreate, 
+    request: Request, 
+    db: Session = Depends(get_db),
+    password_service: PasswordSecurityService = Depends(get_password_service)
 ):
-    """🆕 User registration with password hashing and JWT tokens"""
+    """🆕 User registration with enhanced password security"""
     start_time = time.time()
     client_ip = request.client.host if request.client else "unknown"
 
@@ -243,10 +271,23 @@ async def register(
                 detail="Full name must be at least 2 characters long",
             )
 
-        # Create hashed password
-        hashed_password = get_password_hash(user_data.password)
+        # Validate password with NIST 2024 standards
+        validation = await password_service.validate_password_strength(user_data.password)
+        
+        if not validation["valid"]:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "type": "password_validation",
+                    "errors": validation["feedback"],
+                    "strength_score": validation["score"]
+                }
+            )
 
-        # ✅ EGYETLEN JAVÍTÁS: total_credits_purchased eltávolítva
+        # Create hashed password with Argon2id
+        hashed_password = password_service.hash_password(user_data.password)
+
+        # Create user with enhanced security fields
         new_user = User(
             username=user_data.username,
             email=user_data.email,
@@ -256,11 +297,11 @@ async def register(
             is_active=True,
             level=1,
             credits=5,
-            # total_credits_purchased automatikusan 0 lesz (default)
             created_at=datetime.utcnow(),
             last_login=datetime.utcnow(),
             last_activity=datetime.utcnow(),
-            # registration_ip eltávolítva - nincs ilyen mező
+            password_updated_at=datetime.utcnow(),
+            password_breach_checked=True
         )
 
         db.add(new_user)
@@ -274,15 +315,16 @@ async def register(
         )
 
         logger.info(
-            f"✅ User registered: {new_user.username} in {time.time() - start_time:.2f}s"
+            f"✅ User registered: {new_user.username} in {time.time() - start_time:.2f}s, security_score: {validation['score']}"
         )
 
-        return LoginResponse(
-            access_token=access_token,
-            token_type="bearer",
-            expires_in=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-            user=UserResponse.model_validate(new_user),
-        )
+        return {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "expires_in": ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+            "user": UserResponse.model_validate(new_user),
+            "security_score": validation["score"]
+        }
 
     except IntegrityError:
         db.rollback()

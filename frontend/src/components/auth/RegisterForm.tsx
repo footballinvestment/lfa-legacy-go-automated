@@ -25,6 +25,7 @@ import {
 } from "@mui/icons-material";
 import { useSafeAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import PasswordStrengthMeter from './PasswordStrengthMeter';
 
 interface RegisterFormProps {
   onSwitchToLogin?: () => void;
@@ -55,6 +56,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [passwordValid, setPasswordValid] = useState(false);
 
   // ✅ JAVÍTOTT: Form validation
   const validateForm = (): string | null => {
@@ -80,8 +82,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
     if (!formData.password) {
       return "Password is required";
     }
-    if (formData.password.length < 6) {
-      return "Password must be at least 6 characters long";
+    if (formData.password.length < 12) {
+      return "Password must be at least 12 characters long";
     }
     if (formData.password !== formData.confirmPassword) {
       return "Passwords do not match";
@@ -258,37 +260,43 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
             />
 
             {/* Password Field */}
-            <TextField
-              fullWidth
-              label="Password"
-              type={showPassword ? "text" : "password"}
-              variant="outlined"
-              value={formData.password}
-              onChange={handleInputChange("password")}
-              required
-              inputProps={{
-                minLength: 6,
-                maxLength: 100,
-              }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Lock color="action" />
-                  </InputAdornment>
-                ),
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      onClick={() => setShowPassword(!showPassword)}
-                      edge="end"
-                    >
-                      {showPassword ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-              helperText="Minimum 6 characters"
-            />
+            <Box>
+              <TextField
+                fullWidth
+                label="Password"
+                type={showPassword ? "text" : "password"}
+                variant="outlined"
+                value={formData.password}
+                onChange={handleInputChange("password")}
+                required
+                inputProps={{
+                  minLength: 12,
+                  maxLength: 100,
+                }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Lock color="action" />
+                    </InputAdornment>
+                  ),
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => setShowPassword(!showPassword)}
+                        edge="end"
+                      >
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+                helperText="Minimum 12 characters (NIST 2024 standard)"
+              />
+              <PasswordStrengthMeter 
+                password={formData.password}
+                onValidationChange={setPasswordValid}
+              />
+            </Box>
 
             {/* Confirm Password Field */}
             <TextField
@@ -331,7 +339,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
               variant="contained"
               size="large"
               fullWidth
-              disabled={state.loading}
+              disabled={state.loading || !passwordValid}
               sx={{
                 mt: 2,
                 py: 1.5,

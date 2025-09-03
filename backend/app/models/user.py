@@ -83,6 +83,14 @@ class User(Base):
     # ✅ JAVÍTÁS: login_count mező hozzáadva a hiányzó funkcionalitáshoz
     login_count = Column(Integer, default=0)
     
+    # Enhanced security fields
+    password_updated_at = Column(DateTime, default=datetime.utcnow)
+    password_breach_checked = Column(Boolean, default=False)
+    failed_login_attempts = Column(Integer, default=0)
+    account_locked_until = Column(DateTime, nullable=True)
+    mfa_enabled = Column(Boolean, default=False)
+    force_password_reset = Column(Boolean, default=False)
+    
     # ✅ JAVÍTÁS: last_purchase_date mező hozzáadva a credits funkcionalitáshoz
     last_purchase_date = Column(DateTime, nullable=True)
     
