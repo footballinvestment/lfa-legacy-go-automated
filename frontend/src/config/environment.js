@@ -1,8 +1,9 @@
 // === Environment Configuration - FIXED VERSION ===
 const config = {
-  API_URL:
-    process.env.REACT_APP_API_URL ||
-    "https://lfa-legacy-go-backend-376491487980.us-central1.run.app", // Production backend URL
+  API_URL: process.env.REACT_APP_API_URL || 
+    (process.env.NODE_ENV === 'production' 
+      ? "https://lfa-legacy-go-backend-376491487980.us-central1.run.app"
+      : "http://localhost:8002"),
   NODE_ENV: process.env.NODE_ENV,
   DEBUG: process.env.REACT_APP_DEBUG === "true",
 };
