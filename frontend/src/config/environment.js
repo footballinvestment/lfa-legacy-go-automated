@@ -2,19 +2,16 @@
 const config = {
   API_URL:
     process.env.REACT_APP_API_URL ||
-    "http://localhost:8002", // FIXED: Default to local backend on port 8002
+    "https://lfa-legacy-go-backend-376491487980.us-central1.run.app", // Production backend URL
   NODE_ENV: process.env.NODE_ENV,
   DEBUG: process.env.REACT_APP_DEBUG === "true",
 };
 
-// FIXED: Updated validation for local development
-if (config.NODE_ENV === "development" && !config.API_URL.includes("localhost:8002")) {
-  console.warn("⚠️ API_URL not localhost:8002 in development:", config.API_URL);
-  if (config.DEBUG) {
-    alert(
-      `Development Warning: API URL is ${config.API_URL}. Expected: http://localhost:8002`
-    );
-  }
+// Environment validation for development vs production
+if (config.NODE_ENV === "development" && !config.API_URL.includes("localhost")) {
+  console.warn("⚠️ Using production API in development mode:", config.API_URL);
+} else if (config.NODE_ENV === "production" && config.API_URL.includes("localhost")) {
+  console.error("🚨 CRITICAL: Using localhost API in production mode!");
 }
 
 console.log("🔧 Environment Config:", {
