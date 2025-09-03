@@ -1,11 +1,16 @@
 [build]
-  command = "echo 'Using pre-built files'"
-  publish = "."
+  base = "frontend"  
+  publish = "build"
+  command = "npm run build"
 
 [build.environment]
   NODE_VERSION = "18"
+  NODE_OPTIONS = "--max-old-space-size=8192"
+  GENERATE_SOURCEMAP = "false"
+  DISABLE_ESLINT_PLUGIN = "true"
+  TSC_COMPILE_ON_ERROR = "true"
+  SKIP_PREFLIGHT_CHECK = "true"
   REACT_APP_API_URL = "https://lfa-legacy-go-backend-376491487980.us-central1.run.app"
-  REACT_APP_DEBUG = "true"
 
 # CRITICAL: Catch-all redirect for SPA
 [[redirects]]
