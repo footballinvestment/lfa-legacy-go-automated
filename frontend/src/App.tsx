@@ -16,7 +16,7 @@ import {
 
 // Import all original pages
 import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
+import SimpleDashboard from "./components/dashboard";
 import Tournaments from "./pages/Tournaments";
 import Profile from "./pages/Profile";
 import CreditsPage from "./pages/CreditsPage";
@@ -49,7 +49,7 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Layout>
-                    <Dashboard />
+                    <SimpleDashboard />
                   </Layout>
                 </ProtectedRoute>
               }

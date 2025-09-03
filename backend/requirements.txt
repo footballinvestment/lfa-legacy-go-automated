@@ -79,3 +79,4 @@ wrapt==1.17.3
 yarl==1.20.1
 orjson==3.9.15
 schedule==1.2.2
+python-socketio==5.10.0

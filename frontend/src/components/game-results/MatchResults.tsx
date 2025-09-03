@@ -21,6 +21,8 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Divider,
+  Paper,
 } from "@mui/material";
 import {
   Add,
@@ -32,6 +34,9 @@ import {
   Visibility,
   Star,
   LocationOn,
+  Sports,
+  TrendingUp,
+  CheckCircle,
 } from "@mui/icons-material";
 import { format, formatDistanceToNow } from "date-fns";
 
@@ -105,63 +110,76 @@ interface GameResult {
   can_edit: boolean;
 }
 
+interface NewGameResult {
+  opponent_id: number;
+  opponent_username: string;
+  result: "win" | "loss" | "draw";
+  user_score: number;
+  opponent_score: number;
+  duration: number;
+  location: string;
+  notes?: string;
+}
+
 const MatchResults: React.FC = () => {
-  const [recentResults, setRecentResults] = useState<GameResult[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [results, setResults] = useState<GameResult[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [submitDialog, setSubmitDialog] = useState(false);
-  const [detailDialog, setDetailDialog] = useState<GameResult | null>(null);
-  const [newResult, setNewResult] = useState({
-    opponent_id: "",
-    game_type: "football",
-    result: "",
-    my_score: "",
-    opponent_score: "",
-    duration: "",
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedResult, setSelectedResult] = useState<GameResult | null>(null);
+  const [newResult, setNewResult] = useState<NewGameResult>({
+    opponent_id: 0,
+    opponent_username: "",
+    result: "win",
+    user_score: 0,
+    opponent_score: 0,
+    duration: 90,
     location: "",
     notes: "",
   });
 
-  const loadRecentResults = async () => {
-    setLoading(true);
-    setError(null);
+  useEffect(() => {
+    loadResults();
+  }, []);
+
+  const loadResults = async () => {
     try {
-      const results = await gameResultsService.getRecentResults();
-      setRecentResults(results);
+      setLoading(true);
+      const data = await gameResultsService.getRecentResults();
+      setResults(data);
+      setError(null);
     } catch (err: any) {
-      setError(err.message || "Failed to load recent results");
+      setError(err.message || "Failed to load game results");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    loadRecentResults();
-  }, []);
-
-  const handleSubmitResult = async () => {
+  const handleAddResult = async () => {
     try {
       const gameData = {
         ...newResult,
-        score: `${newResult.my_score}-${newResult.opponent_score}`,
+        score: `${newResult.user_score}-${newResult.opponent_score}`,
         played_at: new Date().toISOString(),
       };
 
       await gameResultsService.submitGameResult(gameData);
-      setSubmitDialog(false);
+      await loadResults(); // Refresh results
+      setDialogOpen(false);
+
+      // Reset form
       setNewResult({
-        opponent_id: "",
-        game_type: "football",
-        result: "",
-        my_score: "",
-        opponent_score: "",
-        duration: "",
+        opponent_id: 0,
+        opponent_username: "",
+        result: "win",
+        user_score: 0,
+        opponent_score: 0,
+        duration: 90,
         location: "",
         notes: "",
       });
-      await loadRecentResults();
     } catch (err: any) {
-      setError(err.message || "Failed to submit game result");
+      setError(err.message || "Failed to add game result");
     }
   };
 
@@ -181,413 +199,409 @@ const MatchResults: React.FC = () => {
   const getResultIcon = (result: string) => {
     switch (result) {
       case "win":
-        return "🏆";
+        return <CheckCircle />;
       case "loss":
-        return "😞";
+        return <Sports />;
       case "draw":
-        return "🤝";
+        return <TrendingUp />;
       default:
-        return "⚽";
+        return <EmojiEvents />;
     }
   };
 
+  if (loading) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Typography variant="h6" gutterBottom>
+          Loading match results...
+        </Typography>
+        <LinearProgress />
+      </Box>
+    );
+  }
+
   return (
-    <Box>
+    <Box sx={{ p: 3 }}>
       {/* Header */}
       <Box
         sx={{
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          mb: 3,
+          mb: 4,
         }}
       >
-        <Typography variant="h6">Recent Match Results</Typography>
-        <Box sx={{ display: "flex", gap: 1 }}>
-          <Tooltip title="Refresh">
-            <IconButton onClick={loadRecentResults} disabled={loading}>
-              <Refresh />
-            </IconButton>
-          </Tooltip>
+        <Typography variant="h4" component="h1" fontWeight="bold">
+          🏆 Match Results
+        </Typography>
+        <Box sx={{ display: "flex", gap: 2 }}>
+          <Button
+            variant="outlined"
+            startIcon={<Refresh />}
+            onClick={loadResults}
+            disabled={loading}
+          >
+            Refresh
+          </Button>
           <Button
             variant="contained"
             startIcon={<Add />}
-            onClick={() => setSubmitDialog(true)}
+            onClick={() => setDialogOpen(true)}
           >
             Add Result
           </Button>
         </Box>
       </Box>
 
-      {loading && <LinearProgress sx={{ mb: 2 }} />}
-
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
+        <Alert severity="error" sx={{ mb: 3 }}>
           {error}
         </Alert>
       )}
 
-      {/* Recent Results */}
-      {recentResults.length > 0 ? (
-        <Grid container spacing={2}>
-          {recentResults.map((game) => (
-            <Grid key={game.id} size={{ xs: 12, md: 6 }}>
+      {/* Results Grid */}
+      <Grid container spacing={3}>
+        {results.length === 0 ? (
+          <Grid size={{ xs: 12 }}>
+            <Paper sx={{ p: 6, textAlign: "center" }}>
+              <Sports sx={{ fontSize: 64, color: "text.secondary", mb: 2 }} />
+              <Typography variant="h6" color="text.secondary" sx={{ mb: 1 }}>
+                No Match Results Yet
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                Record your first match result to start tracking your
+                performance!
+              </Typography>
+              <Button
+                variant="contained"
+                startIcon={<Add />}
+                onClick={() => setDialogOpen(true)}
+                size="large"
+              >
+                Add Your First Result
+              </Button>
+            </Paper>
+          </Grid>
+        ) : (
+          results.map((result) => (
+            <Grid size={{ xs: 12, md: 6, lg: 4 }} key={result.id}>
               <Card
                 sx={{
                   height: "100%",
-                  transition: "transform 0.2s, box-shadow 0.2s",
-                  "&:hover": {
-                    transform: "translateY(-2px)",
-                    boxShadow: 3,
-                  },
+                  display: "flex",
+                  flexDirection: "column",
+                  "&:hover": { boxShadow: 4 },
                 }}
               >
-                <CardContent>
+                <CardContent sx={{ flexGrow: 1 }}>
                   {/* Result Header */}
                   <Box
                     sx={{
                       display: "flex",
-                      alignItems: "center",
                       justifyContent: "space-between",
+                      alignItems: "flex-start",
                       mb: 2,
                     }}
                   >
-                    <Box sx={{ display: "flex", alignItems: "center" }}>
-                      <Typography variant="h6" component="span" sx={{ mr: 2 }}>
-                        {getResultIcon(game.result)}
-                      </Typography>
-                      <Chip
-                        label={game.result.toUpperCase()}
-                        color={getResultColor(game.result)}
-                        size="small"
-                      />
+                    <Chip
+                      icon={getResultIcon(result.result)}
+                      label={result.result.toUpperCase()}
+                      color={getResultColor(result.result)}
+                      sx={{ fontWeight: "bold" }}
+                    />
+                    <Box sx={{ display: "flex", gap: 1 }}>
+                      {result.can_edit && (
+                        <IconButton
+                          size="small"
+                          onClick={() => setSelectedResult(result)}
+                        >
+                          <Edit />
+                        </IconButton>
+                      )}
+                      <IconButton size="small">
+                        <Visibility />
+                      </IconButton>
                     </Box>
-                    <Typography variant="h6" fontWeight="bold" color="primary">
-                      {game.score}
+                  </Box>
+
+                  {/* Score Display */}
+                  <Box sx={{ textAlign: "center", mb: 3 }}>
+                    <Typography variant="h4" fontWeight="bold" color="primary">
+                      {result.score}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Final Score
                     </Typography>
                   </Box>
 
                   {/* Opponent Info */}
                   <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-                    <Avatar sx={{ bgcolor: "primary.main", mr: 2 }}>
-                      {game.opponent.username.charAt(0).toUpperCase()}
+                    <Avatar sx={{ mr: 2, bgcolor: "secondary.main" }}>
+                      {result.opponent.full_name.charAt(0)}
                     </Avatar>
-                    <Box sx={{ flex: 1 }}>
+                    <Box sx={{ flexGrow: 1 }}>
                       <Typography variant="subtitle1" fontWeight="bold">
-                        vs {game.opponent.full_name}
+                        vs {result.opponent.full_name}
                       </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        @{result.opponent.username} • Level{" "}
+                        {result.opponent.level}
+                      </Typography>
+                    </Box>
+                  </Box>
+
+                  <Divider sx={{ mb: 2 }} />
+
+                  {/* Match Details */}
+                  <Box
+                    sx={{ display: "flex", flexDirection: "column", gap: 1 }}
+                  >
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Schedule fontSize="small" color="action" />
+                      <Typography variant="body2">
+                        {format(
+                          new Date(result.played_at),
+                          "MMM dd, yyyy HH:mm"
+                        )}
+                      </Typography>
+                    </Box>
+
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <LocationOn fontSize="small" color="action" />
+                      <Typography variant="body2">{result.location}</Typography>
+                    </Box>
+
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Sports fontSize="small" color="action" />
+                      <Typography variant="body2">
+                        {result.duration} minutes
+                      </Typography>
+                    </Box>
+
+                    {result.tournament_name && (
                       <Box
                         sx={{ display: "flex", alignItems: "center", gap: 1 }}
                       >
-                        <Typography variant="body2" color="text.secondary">
-                          @{game.opponent.username}
+                        <EmojiEvents fontSize="small" color="action" />
+                        <Typography variant="body2">
+                          {result.tournament_name}
                         </Typography>
-                        <Chip
-                          label={`Level ${game.opponent.level}`}
-                          size="small"
-                          variant="outlined"
-                          icon={<Star />}
-                        />
-                      </Box>
-                    </Box>
-                  </Box>
-
-                  {/* Game Details */}
-                  <Box sx={{ mb: 2 }}>
-                    <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-                      <Schedule
-                        sx={{ mr: 1, fontSize: 16, color: "text.secondary" }}
-                      />
-                      <Typography variant="body2" color="text.secondary">
-                        {formatDistanceToNow(new Date(game.played_at), {
-                          addSuffix: true,
-                        })}
-                      </Typography>
-                    </Box>
-
-                    <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-                      <LocationOn
-                        sx={{ mr: 1, fontSize: 16, color: "text.secondary" }}
-                      />
-                      <Typography variant="body2" color="text.secondary">
-                        {game.location}
-                      </Typography>
-                    </Box>
-
-                    {game.tournament_name && (
-                      <Box sx={{ mt: 1 }}>
-                        <Chip
-                          label={game.tournament_name}
-                          size="small"
-                          color="secondary"
-                          variant="outlined"
-                          icon={<EmojiEvents />}
-                        />
                       </Box>
                     )}
                   </Box>
 
-                  {/* Actions */}
-                  <Box sx={{ display: "flex", gap: 1 }}>
-                    <Button
-                      size="small"
-                      startIcon={<Visibility />}
-                      onClick={() => setDetailDialog(game)}
-                      sx={{ flex: 1 }}
-                    >
-                      Details
-                    </Button>
-                    {game.can_edit && (
-                      <Button
-                        size="small"
-                        startIcon={<Edit />}
-                        variant="outlined"
-                        sx={{ flex: 1 }}
-                      >
-                        Edit
-                      </Button>
-                    )}
+                  {/* Time Ago */}
+                  <Box
+                    sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: "divider" }}
+                  >
+                    <Typography variant="caption" color="text.secondary">
+                      Played {formatDistanceToNow(new Date(result.played_at))}{" "}
+                      ago
+                    </Typography>
                   </Box>
                 </CardContent>
               </Card>
             </Grid>
-          ))}
-        </Grid>
-      ) : (
-        <Box sx={{ textAlign: "center", py: 6 }}>
-          <EmojiEvents sx={{ fontSize: 64, color: "text.secondary", mb: 2 }} />
-          <Typography variant="h6" color="text.secondary">
-            No recent results
+          ))
+        )}
+      </Grid>
+
+      {/* Statistics Summary */}
+      {results.length > 0 && (
+        <Box sx={{ mt: 6 }}>
+          <Typography variant="h5" gutterBottom fontWeight="bold">
+            📊 Quick Stats
           </Typography>
-          <Typography variant="body2" color="text.secondary" gutterBottom>
-            Submit your game results to track your performance!
-          </Typography>
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            onClick={() => setSubmitDialog(true)}
-            sx={{ mt: 2 }}
-          >
-            Add Your First Result
-          </Button>
+          <Grid container spacing={3}>
+            <Grid size={{ xs: 6, sm: 3 }}>
+              <Card>
+                <CardContent sx={{ textAlign: "center" }}>
+                  <Typography variant="h4" color="primary">
+                    {results.length}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Total Matches
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            <Grid size={{ xs: 6, sm: 3 }}>
+              <Card>
+                <CardContent sx={{ textAlign: "center" }}>
+                  <Typography variant="h4" color="success.main">
+                    {results.filter((r) => r.result === "win").length}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Wins
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            <Grid size={{ xs: 6, sm: 3 }}>
+              <Card>
+                <CardContent sx={{ textAlign: "center" }}>
+                  <Typography variant="h4" color="warning.main">
+                    {results.filter((r) => r.result === "draw").length}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Draws
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            <Grid size={{ xs: 6, sm: 3 }}>
+              <Card>
+                <CardContent sx={{ textAlign: "center" }}>
+                  <Typography variant="h4" color="error.main">
+                    {results.filter((r) => r.result === "loss").length}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Losses
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
         </Box>
       )}
 
-      {/* Submit Result Dialog */}
+      {/* Add Result Dialog */}
       <Dialog
-        open={submitDialog}
-        onClose={() => setSubmitDialog(false)}
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle>Submit Game Result</DialogTitle>
+        <DialogTitle>Add Match Result</DialogTitle>
         <DialogContent>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
-            <FormControl fullWidth>
-              <InputLabel>Game Type</InputLabel>
-              <Select
-                value={newResult.game_type}
+          <Grid container spacing={2} sx={{ mt: 1 }}>
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                fullWidth
+                label="Opponent Username"
+                value={newResult.opponent_username}
                 onChange={(e) =>
                   setNewResult((prev) => ({
                     ...prev,
-                    game_type: e.target.value,
+                    opponent_username: e.target.value,
                   }))
                 }
-                label="Game Type"
-              >
-                <MenuItem value="football">Football</MenuItem>
-                <MenuItem value="basketball">Basketball</MenuItem>
-                <MenuItem value="tennis">Tennis</MenuItem>
-              </Select>
-            </FormControl>
+                required
+              />
+            </Grid>
 
-            <TextField
-              label="Opponent User ID"
-              type="number"
-              value={newResult.opponent_id}
-              onChange={(e) =>
-                setNewResult((prev) => ({
-                  ...prev,
-                  opponent_id: e.target.value,
-                }))
-              }
-              helperText="Enter the user ID of your opponent"
-              fullWidth
-            />
+            <Grid size={{ xs: 12 }}>
+              <FormControl fullWidth>
+                <InputLabel>Match Result</InputLabel>
+                <Select
+                  value={newResult.result}
+                  onChange={(e) =>
+                    setNewResult((prev) => ({
+                      ...prev,
+                      result: e.target.value as any,
+                    }))
+                  }
+                  label="Match Result"
+                >
+                  <MenuItem value="win">Win</MenuItem>
+                  <MenuItem value="loss">Loss</MenuItem>
+                  <MenuItem value="draw">Draw</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
 
-            <Box sx={{ display: "flex", gap: 2 }}>
+            <Grid size={{ xs: 6 }}>
               <TextField
+                fullWidth
                 label="Your Score"
                 type="number"
-                value={newResult.my_score}
+                value={newResult.user_score}
                 onChange={(e) =>
                   setNewResult((prev) => ({
                     ...prev,
-                    my_score: e.target.value,
+                    user_score: parseInt(e.target.value) || 0,
                   }))
                 }
-                fullWidth
+                inputProps={{ min: 0, max: 20 }}
+                required
               />
+            </Grid>
+
+            <Grid size={{ xs: 6 }}>
               <TextField
+                fullWidth
                 label="Opponent Score"
                 type="number"
                 value={newResult.opponent_score}
                 onChange={(e) =>
                   setNewResult((prev) => ({
                     ...prev,
-                    opponent_score: e.target.value,
+                    opponent_score: parseInt(e.target.value) || 0,
                   }))
                 }
-                fullWidth
+                inputProps={{ min: 0, max: 20 }}
+                required
               />
-            </Box>
+            </Grid>
 
-            <FormControl fullWidth>
-              <InputLabel>Result</InputLabel>
-              <Select
-                value={newResult.result}
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                fullWidth
+                label="Location"
+                value={newResult.location}
                 onChange={(e) =>
-                  setNewResult((prev) => ({ ...prev, result: e.target.value }))
+                  setNewResult((prev) => ({
+                    ...prev,
+                    location: e.target.value,
+                  }))
                 }
-                label="Result"
-              >
-                <MenuItem value="win">Win</MenuItem>
-                <MenuItem value="loss">Loss</MenuItem>
-                <MenuItem value="draw">Draw</MenuItem>
-              </Select>
-            </FormControl>
+                required
+              />
+            </Grid>
 
-            <TextField
-              label="Game Duration (minutes)"
-              type="number"
-              value={newResult.duration}
-              onChange={(e) =>
-                setNewResult((prev) => ({ ...prev, duration: e.target.value }))
-              }
-              fullWidth
-            />
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                fullWidth
+                label="Match Duration (minutes)"
+                type="number"
+                value={newResult.duration}
+                onChange={(e) =>
+                  setNewResult((prev) => ({
+                    ...prev,
+                    duration: parseInt(e.target.value) || 90,
+                  }))
+                }
+                inputProps={{ min: 1, max: 180 }}
+              />
+            </Grid>
 
-            <TextField
-              label="Location"
-              value={newResult.location}
-              onChange={(e) =>
-                setNewResult((prev) => ({ ...prev, location: e.target.value }))
-              }
-              fullWidth
-            />
-
-            <TextField
-              label="Notes (Optional)"
-              multiline
-              rows={3}
-              value={newResult.notes}
-              onChange={(e) =>
-                setNewResult((prev) => ({ ...prev, notes: e.target.value }))
-              }
-              fullWidth
-            />
-          </Box>
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                fullWidth
+                label="Notes (optional)"
+                multiline
+                rows={3}
+                value={newResult.notes}
+                onChange={(e) =>
+                  setNewResult((prev) => ({ ...prev, notes: e.target.value }))
+                }
+                placeholder="Add any notes about the match..."
+              />
+            </Grid>
+          </Grid>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setSubmitDialog(false)}>Cancel</Button>
+          <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
           <Button
-            onClick={handleSubmitResult}
             variant="contained"
-            disabled={
-              !newResult.opponent_id ||
-              !newResult.my_score ||
-              !newResult.opponent_score ||
-              !newResult.result
-            }
+            onClick={handleAddResult}
+            disabled={!newResult.opponent_username || !newResult.location}
           >
-            Submit Result
+            Add Result
           </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Detail Dialog */}
-      <Dialog
-        open={Boolean(detailDialog)}
-        onClose={() => setDetailDialog(null)}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle>Match Details</DialogTitle>
-        <DialogContent>
-          {detailDialog && (
-            <Box>
-              <Grid container spacing={2}>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography variant="h6" gutterBottom>
-                    Game Information
-                  </Typography>
-                  <Typography variant="body2" paragraph>
-                    <strong>Type:</strong> {detailDialog.game_type}
-                  </Typography>
-                  <Typography variant="body2" paragraph>
-                    <strong>Result:</strong> {detailDialog.result.toUpperCase()}
-                  </Typography>
-                  <Typography variant="body2" paragraph>
-                    <strong>Score:</strong> {detailDialog.score}
-                  </Typography>
-                  <Typography variant="body2" paragraph>
-                    <strong>Duration:</strong> {detailDialog.duration} minutes
-                  </Typography>
-                  <Typography variant="body2" paragraph>
-                    <strong>Location:</strong> {detailDialog.location}
-                  </Typography>
-                  <Typography variant="body2" paragraph>
-                    <strong>Played:</strong>{" "}
-                    {format(
-                      new Date(detailDialog.played_at),
-                      "MMM dd, yyyy HH:mm"
-                    )}
-                  </Typography>
-                </Grid>
-
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography variant="h6" gutterBottom>
-                    Opponent
-                  </Typography>
-                  <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-                    <Avatar
-                      sx={{
-                        bgcolor: "primary.main",
-                        mr: 2,
-                        width: 56,
-                        height: 56,
-                      }}
-                    >
-                      {detailDialog.opponent.username.charAt(0).toUpperCase()}
-                    </Avatar>
-                    <Box>
-                      <Typography variant="h6">
-                        {detailDialog.opponent.full_name}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        @{detailDialog.opponent.username}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Level {detailDialog.opponent.level}
-                      </Typography>
-                    </Box>
-                  </Box>
-
-                  {detailDialog.tournament_name && (
-                    <Box>
-                      <Typography variant="body2" paragraph>
-                        <strong>Tournament:</strong>{" "}
-                        {detailDialog.tournament_name}
-                      </Typography>
-                    </Box>
-                  )}
-                </Grid>
-              </Grid>
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDetailDialog(null)}>Close</Button>
         </DialogActions>
       </Dialog>
     </Box>

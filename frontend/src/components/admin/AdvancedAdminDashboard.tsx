@@ -68,610 +68,338 @@ import {
 } from "@mui/icons-material";
 import { useSafeAuth } from "../../SafeAuthContext";
 
-interface AdminMetrics {
-  totalUsers: number;
-  activeUsers: number;
-  totalTournaments: number;
-  activeTournaments: number;
-  pendingApprovals: number;
-  systemAlerts: number;
-  serverUptime: number;
-  avgResponseTime: number;
+interface AdminUser {
+  id: number;
+  username: string;
+  email: string;
+  full_name: string;
+  is_active: boolean;
+  is_admin: boolean;
+  created_at: string;
+  last_login?: string;
 }
 
-interface SystemHealth {
-  status: "healthy" | "warning" | "critical";
-  services: Array<{
-    name: string;
-    status: "online" | "offline" | "degraded";
-    responseTime: number;
-    lastCheck: string;
-  }>;
-  databases: Array<{
-    name: string;
-    status: "connected" | "disconnected" | "slow";
-    connections: number;
-    queries: number;
-  }>;
-  resources: {
-    cpu: number;
-    memory: number;
-    disk: number;
-    network: number;
-  };
-}
-
-interface UserAction {
-  id: string;
-  userId: string;
-  userName: string;
-  action: string;
-  timestamp: string;
-  ipAddress: string;
-  userAgent: string;
-  status: "success" | "failed" | "suspicious";
-}
-
-interface AdminAlert {
-  id: string;
-  type: "security" | "system" | "user" | "tournament";
-  priority: "low" | "medium" | "high" | "critical";
-  title: string;
-  description: string;
-  timestamp: string;
-  resolved: boolean;
-  assignedTo?: string;
-}
-
-interface ModeratorAction {
-  id: string;
-  targetType: "user" | "tournament" | "content";
-  targetId: string;
-  action: "suspend" | "ban" | "approve" | "reject" | "delete";
-  reason: string;
-  moderatorId: string;
-  timestamp: string;
-  status: "pending" | "completed" | "failed";
+interface AdminStats {
+  total_users: number;
+  active_users: number;
+  total_tournaments: number;
+  active_tournaments: number;
+  total_revenue: number;
+  monthly_revenue: number;
 }
 
 const AdvancedAdminDashboard: React.FC = () => {
-  const { user } = useSafeAuth();
+  const { state } = useSafeAuth();
   const navigate = useNavigate();
-  const [selectedTab, setSelectedTab] = useState(0);
-  const [alerts, setAlerts] = useState<AdminAlert[]>([]);
-  const [userActions, setUserActions] = useState<UserAction[]>([]);
-  const [systemMetrics, setSystemMetrics] = useState<AdminMetrics | null>(null);
-  const [moderationQueue, setModerationQueue] = useState<ModeratorAction[]>([]);
-  const [systemHealth, setSystemHealth] = useState<SystemHealth | null>(null);
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState("");
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<any>(null);
-  const [autoRefresh, setAutoRefresh] = useState(true);
 
-  // Mock data
+  const [activeTab, setActiveTab] = useState(0);
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [stats, setStats] = useState<AdminStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
+  const [editDialog, setEditDialog] = useState(false);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success" as any,
+  });
+
+  // Dummy admin data for now
   useEffect(() => {
-    const mockMetrics: AdminMetrics = {
-      totalUsers: 15847,
-      activeUsers: 3247,
-      totalTournaments: 1247,
-      activeTournaments: 23,
-      pendingApprovals: 8,
-      systemAlerts: 5,
-      serverUptime: 99.8,
-      avgResponseTime: 285,
+    const fetchAdminData = async () => {
+      try {
+        setLoading(true);
+        // Simulate API calls
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        setStats({
+          total_users: 1247,
+          active_users: 892,
+          total_tournaments: 156,
+          active_tournaments: 23,
+          total_revenue: 45890,
+          monthly_revenue: 8920,
+        });
+
+        setUsers([
+          {
+            id: 1,
+            username: "testuser",
+            email: "test@example.com",
+            full_name: "Test User",
+            is_active: true,
+            is_admin: false,
+            created_at: "2024-01-15T10:30:00Z",
+          },
+        ]);
+      } catch (err) {
+        setError("Failed to load admin data");
+      } finally {
+        setLoading(false);
+      }
     };
 
-    const mockAlerts: AdminAlert[] = [
-      {
-        id: "1",
-        type: "security",
-        priority: "high",
-        title: "Multiple Failed Login Attempts",
-        description:
-          "User ID 1234 has 15 failed login attempts in the last hour",
-        timestamp: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
-        resolved: false,
-      },
-      {
-        id: "2",
-        type: "system",
-        priority: "medium",
-        title: "High CPU Usage",
-        description: "Server CPU usage exceeded 85% for the last 10 minutes",
-        timestamp: new Date(Date.now() - 25 * 60 * 1000).toISOString(),
-        resolved: false,
-      },
-      {
-        id: "3",
-        type: "tournament",
-        priority: "low",
-        title: "Tournament Approval Needed",
-        description: "5 tournaments are waiting for admin approval",
-        timestamp: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
-        resolved: false,
-      },
-    ];
+    if (state.user?.is_admin) {
+      fetchAdminData();
+    }
+  }, [state.user]);
 
-    const mockUserActions: UserAction[] = [
-      {
-        id: "1",
-        userId: "1234",
-        userName: "john.doe@example.com",
-        action: "Login",
-        timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-        ipAddress: "192.168.1.100",
-        userAgent: "Mozilla/5.0 Chrome/91.0",
-        status: "success",
-      },
-      {
-        id: "2",
-        userId: "5678",
-        userName: "suspicious.user@test.com",
-        action: "Multiple Password Reset Attempts",
-        timestamp: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
-        ipAddress: "10.0.0.50",
-        userAgent: "Bot/1.0",
-        status: "suspicious",
-      },
-    ];
-
-    const mockSystemHealth: SystemHealth = {
-      status: "healthy",
-      services: [
-        {
-          name: "API Gateway",
-          status: "online",
-          responseTime: 45,
-          lastCheck: new Date().toISOString(),
-        },
-        {
-          name: "Authentication",
-          status: "online",
-          responseTime: 32,
-          lastCheck: new Date().toISOString(),
-        },
-        {
-          name: "Tournament Service",
-          status: "online",
-          responseTime: 78,
-          lastCheck: new Date().toISOString(),
-        },
-        {
-          name: "Notification Service",
-          status: "degraded",
-          responseTime: 245,
-          lastCheck: new Date().toISOString(),
-        },
-      ],
-      databases: [
-        {
-          name: "Primary DB",
-          status: "connected",
-          connections: 45,
-          queries: 1250,
-        },
-        {
-          name: "Analytics DB",
-          status: "connected",
-          connections: 12,
-          queries: 340,
-        },
-        {
-          name: "Cache Redis",
-          status: "connected",
-          connections: 8,
-          queries: 2150,
-        },
-      ],
-      resources: {
-        cpu: 45,
-        memory: 72,
-        disk: 38,
-        network: 25,
-      },
-    };
-
-    setSystemMetrics(mockMetrics);
-    setAlerts(mockAlerts);
-    setUserActions(mockUserActions);
-    setSystemHealth(mockSystemHealth);
-  }, []);
-
-  // Auto refresh
-  useEffect(() => {
-    if (!autoRefresh) return;
-
-    const interval = setInterval(() => {
-      console.log("Refreshing admin data...");
-      // In real app, this would fetch fresh data from API
-    }, 30000);
-
-    return () => clearInterval(interval);
-  }, [autoRefresh]);
-
-  const handleUserAction = (action: string, userId: string) => {
-    console.log(`Performing ${action} on user ${userId}`);
-    setSnackbarMessage(`${action} action completed successfully`);
-    setSnackbarOpen(true);
-  };
-
-  const handleAlertResolve = (alertId: string) => {
-    setAlerts((prev) =>
-      prev.map((alert) =>
-        alert.id === alertId ? { ...alert, resolved: true } : alert
-      )
+  if (!state.user?.is_admin) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Alert severity="error">
+          Access denied. Admin privileges required.
+        </Alert>
+      </Box>
     );
-    setSnackbarMessage("Alert resolved successfully");
-    setSnackbarOpen(true);
+  }
+
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setActiveTab(newValue);
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "online":
-      case "connected":
-      case "success":
-      case "healthy":
-        return "success";
-      case "degraded":
-      case "slow":
-      case "warning":
-        return "warning";
-      case "offline":
-      case "disconnected":
-      case "failed":
-      case "critical":
-        return "error";
-      default:
-        return "default";
+  const handleUserEdit = (user: AdminUser) => {
+    setSelectedUser(user);
+    setEditDialog(true);
+  };
+
+  const handleUserToggle = async (
+    userId: number,
+    field: "is_active" | "is_admin"
+  ) => {
+    try {
+      // Simulate API call
+      const userIndex = users.findIndex((u) => u.id === userId);
+      if (userIndex !== -1) {
+        const updatedUsers = [...users];
+        updatedUsers[userIndex] = {
+          ...updatedUsers[userIndex],
+          [field]: !updatedUsers[userIndex][field],
+        };
+        setUsers(updatedUsers);
+        setSnackbar({
+          open: true,
+          message: `User ${field} updated successfully`,
+          severity: "success",
+        });
+      }
+    } catch (err) {
+      setSnackbar({
+        open: true,
+        message: "Failed to update user",
+        severity: "error",
+      });
     }
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case "critical":
-        return "error";
-      case "high":
-        return "warning";
-      case "medium":
-        return "info";
-      case "low":
-        return "success";
-      default:
-        return "default";
-    }
-  };
+  if (loading) {
+    return (
+      <Box sx={{ p: 3, textAlign: "center" }}>
+        <Typography variant="h5" gutterBottom>
+          Loading Admin Dashboard...
+        </Typography>
+        <LinearProgress sx={{ mt: 2 }} />
+      </Box>
+    );
+  }
 
-  const renderSystemOverview = () => (
-    <Grid container spacing={3}>
-      {/* Key Metrics */}
-      <Grid item xs={12} sm={6} md={3}>
-        <Card
-          sx={{
-            cursor: "pointer",
-            transition: "all 0.2s ease",
-            "&:hover": {
-              boxShadow: 4,
-              transform: "translateY(-2px)",
-            },
-          }}
-          onClick={() => navigate("/admin/users")}
+  return (
+    <Box sx={{ p: 3 }}>
+      <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
+        🛠️ Advanced Admin Dashboard
+      </Typography>
+
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
+      )}
+
+      {/* Admin Stats Overview */}
+      {stats && (
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Card>
+              <CardContent>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Box>
+                    <Typography color="text.secondary" gutterBottom>
+                      Total Users
+                    </Typography>
+                    <Typography variant="h4">
+                      {stats.total_users.toLocaleString()}
+                    </Typography>
+                  </Box>
+                  <People color="primary" sx={{ fontSize: 40 }} />
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Card>
+              <CardContent>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Box>
+                    <Typography color="text.secondary" gutterBottom>
+                      Active Users
+                    </Typography>
+                    <Typography variant="h4" color="success.main">
+                      {stats.active_users.toLocaleString()}
+                    </Typography>
+                  </Box>
+                  <CheckCircle color="success" sx={{ fontSize: 40 }} />
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Card>
+              <CardContent>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Box>
+                    <Typography color="text.secondary" gutterBottom>
+                      Tournaments
+                    </Typography>
+                    <Typography variant="h4">
+                      {stats.total_tournaments}
+                    </Typography>
+                  </Box>
+                  <EmojiEvents color="warning" sx={{ fontSize: 40 }} />
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Card>
+              <CardContent>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Box>
+                    <Typography color="text.secondary" gutterBottom>
+                      Monthly Revenue
+                    </Typography>
+                    <Typography variant="h4" color="success.main">
+                      ${stats.monthly_revenue.toLocaleString()}
+                    </Typography>
+                  </Box>
+                  <TrendingUp color="success" sx={{ fontSize: 40 }} />
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+      )}
+
+      {/* Admin Tabs */}
+      <Paper sx={{ mb: 3 }}>
+        <Tabs
+          value={activeTab}
+          onChange={handleTabChange}
+          variant="scrollable"
+          scrollButtons="auto"
         >
-          <CardContent>
-            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-              <Avatar sx={{ bgcolor: "primary.main", mr: 2 }}>
-                <People />
-              </Avatar>
-              <Typography variant="h6">Total Users</Typography>
-            </Box>
-            <Typography variant="h4" sx={{ mb: 1 }}>
-              {systemMetrics?.totalUsers.toLocaleString()}
-            </Typography>
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <Chip
-                size="small"
-                label={`${systemMetrics?.activeUsers.toLocaleString()} active`}
-                color="success"
-              />
-              <Button
-                size="small"
-                variant="text"
-                sx={{ minWidth: "auto", p: 0.5 }}
-              >
-                Manage →
-              </Button>
-            </Box>
-          </CardContent>
-        </Card>
-      </Grid>
+          <Tab icon={<Dashboard />} label="Overview" />
+          <Tab icon={<People />} label="User Management" />
+          <Tab icon={<EmojiEvents />} label="Tournament Management" />
+          <Tab icon={<Assessment />} label="Analytics" />
+          <Tab icon={<Settings />} label="System Settings" />
+        </Tabs>
+      </Paper>
 
-      <Grid item xs={12} sm={6} md={3}>
-        <Card>
-          <CardContent>
-            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-              <Avatar sx={{ bgcolor: "secondary.main", mr: 2 }}>
-                <EmojiEvents />
-              </Avatar>
-              <Typography variant="h6">Tournaments</Typography>
-            </Box>
-            <Typography variant="h4" sx={{ mb: 1 }}>
-              {systemMetrics?.totalTournaments.toLocaleString()}
-            </Typography>
-            <Chip
-              size="small"
-              label={`${systemMetrics?.activeTournaments} active`}
-              color="info"
-            />
-          </CardContent>
-        </Card>
-      </Grid>
-
-      <Grid item xs={12} sm={6} md={3}>
-        <Card>
-          <CardContent>
-            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-              <Avatar sx={{ bgcolor: "warning.main", mr: 2 }}>
-                <NotificationImportant />
-              </Avatar>
-              <Typography variant="h6">Pending Approvals</Typography>
-            </Box>
-            <Typography variant="h4" sx={{ mb: 1 }}>
-              {systemMetrics?.pendingApprovals}
-            </Typography>
-            <Chip size="small" label="Needs attention" color="warning" />
-          </CardContent>
-        </Card>
-      </Grid>
-
-      <Grid item xs={12} sm={6} md={3}>
-        <Card>
-          <CardContent>
-            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-              <Avatar sx={{ bgcolor: "error.main", mr: 2 }}>
-                <Warning />
-              </Avatar>
-              <Typography variant="h6">System Alerts</Typography>
-            </Box>
-            <Typography variant="h4" sx={{ mb: 1 }}>
-              {systemMetrics?.systemAlerts}
-            </Typography>
-            <Chip size="small" label="Review required" color="error" />
-          </CardContent>
-        </Card>
-      </Grid>
-
-      {/* System Health Status */}
-      <Grid item xs={12} md={8}>
-        <Card>
-          <CardContent>
-            <Typography variant="h6" sx={{ mb: 3 }}>
-              System Services Status
-            </Typography>
-            <List>
-              {systemHealth?.services.map((service, index) => (
-                <ListItem key={index}>
-                  <ListItemIcon>
-                    <Avatar
-                      sx={{
-                        bgcolor: `${getStatusColor(service.status)}.main`,
-                        width: 32,
-                        height: 32,
-                      }}
-                    >
-                      <NetworkCheck fontSize="small" />
-                    </Avatar>
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={service.name}
-                    secondary={`Response: ${service.responseTime}ms • Last check: ${new Date(service.lastCheck).toLocaleTimeString()}`}
-                  />
-                  <Chip
-                    size="small"
-                    label={service.status}
-                    color={getStatusColor(service.status) as any}
-                  />
-                </ListItem>
-              ))}
-            </List>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      <Grid item xs={12} md={4}>
-        <Card>
-          <CardContent>
-            <Typography variant="h6" sx={{ mb: 3 }}>
-              Resource Usage
-            </Typography>
-
-            <Box sx={{ mb: 3 }}>
-              <Box
-                sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}
-              >
-                <Typography variant="body2">CPU</Typography>
-                <Typography variant="body2">
-                  {systemHealth?.resources.cpu}%
+      {/* Tab Content */}
+      {activeTab === 0 && (
+        <Grid container spacing={3}>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  System Health
                 </Typography>
-              </Box>
-              <LinearProgress
-                variant="determinate"
-                value={systemHealth?.resources.cpu}
-              />
-            </Box>
+                <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                  <CheckCircle color="success" sx={{ mr: 1 }} />
+                  <Typography>Database: Online</Typography>
+                </Box>
+                <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                  <CheckCircle color="success" sx={{ mr: 1 }} />
+                  <Typography>API Services: Running</Typography>
+                </Box>
+                <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                  <Warning color="warning" sx={{ mr: 1 }} />
+                  <Typography>Cache: 85% Full</Typography>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
 
-            <Box sx={{ mb: 3 }}>
-              <Box
-                sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}
-              >
-                <Typography variant="body2">Memory</Typography>
-                <Typography variant="body2">
-                  {systemHealth?.resources.memory}%
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  Recent Activity
                 </Typography>
-              </Box>
-              <LinearProgress
-                variant="determinate"
-                value={systemHealth?.resources.memory}
-                color="secondary"
-              />
-            </Box>
-
-            <Box sx={{ mb: 3 }}>
-              <Box
-                sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}
-              >
-                <Typography variant="body2">Disk</Typography>
-                <Typography variant="body2">
-                  {systemHealth?.resources.disk}%
-                </Typography>
-              </Box>
-              <LinearProgress
-                variant="determinate"
-                value={systemHealth?.resources.disk}
-                color="success"
-              />
-            </Box>
-
-            <Box>
-              <Box
-                sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}
-              >
-                <Typography variant="body2">Network</Typography>
-                <Typography variant="body2">
-                  {systemHealth?.resources.network}%
-                </Typography>
-              </Box>
-              <LinearProgress
-                variant="determinate"
-                value={systemHealth?.resources.network}
-                color="info"
-              />
-            </Box>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      {/* Quick Actions */}
-      <Grid item xs={12}>
-        <Card>
-          <CardContent>
-            <Typography variant="h6" sx={{ mb: 2 }}>
-              Quick Actions
-            </Typography>
-            <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-              <Button variant="outlined" startIcon={<Refresh />}>
-                Refresh All Data
-              </Button>
-              <Button variant="outlined" startIcon={<SystemUpdate />}>
-                System Maintenance
-              </Button>
-              <Button
-                variant="outlined"
-                startIcon={<Download />}
-                color="secondary"
-              >
-                Export Logs
-              </Button>
-              <Button
-                variant="outlined"
-                startIcon={<Security />}
-                color="warning"
-              >
-                Security Scan
-              </Button>
-            </Box>
-          </CardContent>
-        </Card>
-      </Grid>
-    </Grid>
-  );
-
-  const renderAlertsAndReports = () => (
-    <Grid container spacing={3}>
-      <Grid item xs={12}>
-        <Card>
-          <CardContent>
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                mb: 3,
-              }}
-            >
-              <Typography variant="h6">Active Alerts</Typography>
-              <Box sx={{ display: "flex", gap: 1 }}>
-                <Button size="small" startIcon={<FilterList />}>
-                  Filter
-                </Button>
-                <Button size="small" startIcon={<Refresh />}>
-                  Refresh
-                </Button>
-              </Box>
-            </Box>
-
-            <List>
-              {alerts
-                .filter((alert) => !alert.resolved)
-                .map((alert) => (
-                  <ListItem key={alert.id}>
+                <List>
+                  <ListItem>
                     <ListItemIcon>
-                      <Badge
-                        color={getPriorityColor(alert.priority) as any}
-                        variant="dot"
-                      >
-                        {alert.type === "security" && <Security />}
-                        {alert.type === "system" && <Warning />}
-                        {alert.type === "user" && <People />}
-                        {alert.type === "tournament" && <EmojiEvents />}
-                      </Badge>
+                      <Info color="info" />
                     </ListItemIcon>
                     <ListItemText
-                      primary={alert.title}
-                      secondary={
-                        <Box>
-                          <Typography variant="body2" color="text.secondary">
-                            {alert.description}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {new Date(alert.timestamp).toLocaleString()}
-                          </Typography>
-                        </Box>
-                      }
+                      primary="New user registration"
+                      secondary="2 minutes ago"
                     />
-                    <Box sx={{ display: "flex", gap: 1 }}>
-                      <Chip
-                        size="small"
-                        label={alert.priority}
-                        color={getPriorityColor(alert.priority) as any}
-                      />
-                      <Button
-                        size="small"
-                        onClick={() => handleAlertResolve(alert.id)}
-                      >
-                        Resolve
-                      </Button>
-                      <IconButton size="small">
-                        <MoreVert />
-                      </IconButton>
-                    </Box>
                   </ListItem>
-                ))}
-            </List>
-          </CardContent>
-        </Card>
-      </Grid>
-    </Grid>
-  );
+                  <ListItem>
+                    <ListItemIcon>
+                      <EmojiEvents color="warning" />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary="Tournament created"
+                      secondary="15 minutes ago"
+                    />
+                  </ListItem>
+                  <ListItem>
+                    <ListItemIcon>
+                      <Warning color="error" />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary="Failed login attempt"
+                      secondary="1 hour ago"
+                    />
+                  </ListItem>
+                </List>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+      )}
 
-  const renderActivityLogs = () => (
-    <Grid container spacing={3}>
-      <Grid item xs={12}>
+      {activeTab === 1 && (
         <Card>
           <CardContent>
             <Box
@@ -682,15 +410,19 @@ const AdvancedAdminDashboard: React.FC = () => {
                 mb: 3,
               }}
             >
-              <Typography variant="h6">Recent User Activity</Typography>
-              <Box sx={{ display: "flex", gap: 1 }}>
+              <Typography variant="h6">
+                User Management ({users.length} users)
+              </Typography>
+              <Box sx={{ display: "flex", gap: 2 }}>
                 <TextField
                   size="small"
-                  placeholder="Search..."
-                  InputProps={{ startAdornment: <Search /> }}
+                  placeholder="Search users..."
+                  InputProps={{
+                    startAdornment: <Search sx={{ mr: 1 }} />,
+                  }}
                 />
-                <Button size="small" startIcon={<Download />}>
-                  Export
+                <Button variant="contained" startIcon={<People />}>
+                  Add User
                 </Button>
               </Box>
             </Box>
@@ -700,39 +432,81 @@ const AdvancedAdminDashboard: React.FC = () => {
                 <TableHead>
                   <TableRow>
                     <TableCell>User</TableCell>
-                    <TableCell>Action</TableCell>
-                    <TableCell>Timestamp</TableCell>
-                    <TableCell>IP Address</TableCell>
+                    <TableCell>Email</TableCell>
                     <TableCell>Status</TableCell>
+                    <TableCell>Admin</TableCell>
+                    <TableCell>Created</TableCell>
                     <TableCell>Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {userActions.map((action) => (
-                    <TableRow key={action.id}>
-                      <TableCell>{action.userName}</TableCell>
-                      <TableCell>{action.action}</TableCell>
+                  {users.map((user) => (
+                    <TableRow key={user.id}>
                       <TableCell>
-                        {new Date(action.timestamp).toLocaleString()}
+                        <Box sx={{ display: "flex", alignItems: "center" }}>
+                          <Avatar sx={{ mr: 2 }}>
+                            {user.full_name.charAt(0)}
+                          </Avatar>
+                          <Box>
+                            <Typography variant="subtitle2">
+                              {user.full_name}
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              @{user.username}
+                            </Typography>
+                          </Box>
+                        </Box>
                       </TableCell>
-                      <TableCell>{action.ipAddress}</TableCell>
+                      <TableCell>{user.email}</TableCell>
                       <TableCell>
-                        <Chip
-                          size="small"
-                          label={action.status}
-                          color={getStatusColor(action.status) as any}
+                        <FormControlLabel
+                          control={
+                            <Switch
+                              checked={user.is_active}
+                              onChange={() =>
+                                handleUserToggle(user.id, "is_active")
+                              }
+                              size="small"
+                            />
+                          }
+                          label={user.is_active ? "Active" : "Inactive"}
                         />
                       </TableCell>
                       <TableCell>
-                        <IconButton
-                          size="small"
-                          onClick={() => setSelectedUser(action)}
-                        >
-                          <Visibility />
-                        </IconButton>
-                        <IconButton size="small">
-                          <Block />
-                        </IconButton>
+                        <FormControlLabel
+                          control={
+                            <Switch
+                              checked={user.is_admin}
+                              onChange={() =>
+                                handleUserToggle(user.id, "is_admin")
+                              }
+                              size="small"
+                            />
+                          }
+                          label={user.is_admin ? "Admin" : "User"}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        {new Date(user.created_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        <Box sx={{ display: "flex", gap: 1 }}>
+                          <IconButton
+                            size="small"
+                            onClick={() => handleUserEdit(user)}
+                          >
+                            <Edit />
+                          </IconButton>
+                          <IconButton size="small">
+                            <Visibility />
+                          </IconButton>
+                          <IconButton size="small" color="error">
+                            <Block />
+                          </IconButton>
+                        </Box>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -741,132 +515,96 @@ const AdvancedAdminDashboard: React.FC = () => {
             </TableContainer>
           </CardContent>
         </Card>
-      </Grid>
-    </Grid>
-  );
+      )}
 
-  return (
-    <Box sx={{ p: 3 }}>
-      {/* Header */}
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          mb: 3,
-        }}
-      >
-        <Typography
-          variant="h4"
-          component="h1"
-          sx={{ display: "flex", alignItems: "center", gap: 1 }}
-        >
-          <SupervisorAccount color="primary" />
-          Advanced Admin Dashboard
-        </Typography>
+      {activeTab === 2 && (
+        <Card>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>
+              Tournament Management
+            </Typography>
+            <Typography color="text.secondary">
+              Tournament management tools will be implemented here.
+            </Typography>
+          </CardContent>
+        </Card>
+      )}
 
-        <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-          <FormControlLabel
-            control={
-              <Switch
-                checked={autoRefresh}
-                onChange={(e) => setAutoRefresh(e.target.checked)}
-              />
-            }
-            label="Auto Refresh"
-          />
-          <Button variant="outlined" startIcon={<Refresh />}>
-            Refresh All
-          </Button>
-          <Button variant="contained" startIcon={<Settings />}>
-            Settings
-          </Button>
-        </Box>
-      </Box>
+      {activeTab === 3 && (
+        <Card>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>
+              Analytics Dashboard
+            </Typography>
+            <Typography color="text.secondary">
+              Advanced analytics and reporting tools will be implemented here.
+            </Typography>
+          </CardContent>
+        </Card>
+      )}
 
-      {/* System Status Banner */}
-      <Alert
-        severity={systemHealth?.status === "healthy" ? "success" : "warning"}
-        sx={{ mb: 3 }}
-      >
-        System Status: {systemHealth?.status?.toUpperCase()} • Uptime:{" "}
-        {systemMetrics?.serverUptime}% • Avg Response:{" "}
-        {systemMetrics?.avgResponseTime}ms
-      </Alert>
+      {activeTab === 4 && (
+        <Card>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>
+              System Settings
+            </Typography>
+            <Typography color="text.secondary">
+              System configuration options will be implemented here.
+            </Typography>
+          </CardContent>
+        </Card>
+      )}
 
-      {/* Tabs */}
-      <Paper sx={{ mb: 3 }}>
-        <Tabs
-          value={selectedTab}
-          onChange={(_, newValue) => setSelectedTab(newValue)}
-          sx={{ borderBottom: 1, borderColor: "divider" }}
-          variant="scrollable"
-          scrollButtons="auto"
-        >
-          <Tab label="System Overview" icon={<Dashboard />} />
-          <Tab label="User Management" icon={<People />} />
-          <Tab label="Tournament Oversight" icon={<EmojiEvents />} />
-          <Tab label="Alerts & Reports" icon={<Warning />} />
-          <Tab label="Activity Logs" icon={<Assessment />} />
-          <Tab label="System Health" icon={<NetworkCheck />} />
-        </Tabs>
-      </Paper>
-
-      {/* Tab Content */}
-      <Box>
-        {selectedTab === 0 && renderSystemOverview()}
-        {selectedTab === 1 && (
-          <Typography>User Management - Coming Soon</Typography>
-        )}
-        {selectedTab === 2 && (
-          <Typography>Tournament Oversight - Coming Soon</Typography>
-        )}
-        {selectedTab === 3 && renderAlertsAndReports()}
-        {selectedTab === 4 && renderActivityLogs()}
-        {selectedTab === 5 && (
-          <Typography>System Health - Coming Soon</Typography>
-        )}
-      </Box>
-
-      {/* Snackbar */}
+      {/* Snackbar for notifications */}
       <Snackbar
-        open={snackbarOpen}
+        open={snackbar.open}
         autoHideDuration={6000}
-        onClose={() => setSnackbarOpen(false)}
-        message={snackbarMessage}
-      />
+        onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+      >
+        <Alert
+          severity={snackbar.severity}
+          onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
 
-      {/* User Details Dialog */}
+      {/* Edit User Dialog */}
       <Dialog
-        open={dialogOpen}
-        onClose={() => setDialogOpen(false)}
-        maxWidth="md"
+        open={editDialog}
+        onClose={() => setEditDialog(false)}
+        maxWidth="sm"
         fullWidth
       >
-        <DialogTitle>User Details</DialogTitle>
+        <DialogTitle>Edit User</DialogTitle>
         <DialogContent>
           {selectedUser && (
-            <Box>
-              <Typography variant="body1">
-                User: {selectedUser.userName}
-              </Typography>
-              <Typography variant="body2">
-                Action: {selectedUser.action}
-              </Typography>
-              <Typography variant="body2">
-                IP: {selectedUser.ipAddress}
-              </Typography>
+            <Box sx={{ pt: 2 }}>
+              <TextField
+                fullWidth
+                label="Full Name"
+                value={selectedUser.full_name}
+                margin="normal"
+              />
+              <TextField
+                fullWidth
+                label="Email"
+                value={selectedUser.email}
+                margin="normal"
+              />
+              <TextField
+                fullWidth
+                label="Username"
+                value={selectedUser.username}
+                margin="normal"
+              />
             </Box>
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDialogOpen(false)}>Close</Button>
-          <Button
-            variant="contained"
-            onClick={() => handleUserAction("suspend", selectedUser?.userId)}
-          >
-            Suspend User
-          </Button>
+          <Button onClick={() => setEditDialog(false)}>Cancel</Button>
+          <Button variant="contained">Save Changes</Button>
         </DialogActions>
       </Dialog>
     </Box>

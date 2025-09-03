@@ -65,6 +65,15 @@ except ImportError as e:
     COUPON_MODELS_AVAILABLE = False
     print(f"⚠️ Coupon models not available: {e}")
 
+# Chat models import
+try:
+    from .chat import ChatRoom, ChatMessage, ChatRoomMembership
+    CHAT_MODELS_AVAILABLE = True
+    print("✅ Chat models imported successfully")
+except ImportError as e:
+    CHAT_MODELS_AVAILABLE = False
+    print(f"⚠️ Chat models not available: {e}")
+
 # Alapvető export lista
 __all__ = ["User", "UserSession"]
 
@@ -99,6 +108,9 @@ if SOCIAL_MODELS_AVAILABLE:
 
 if COUPON_MODELS_AVAILABLE:
     __all__.extend(["Coupon", "CouponUsage"])
+
+if CHAT_MODELS_AVAILABLE:
+    __all__.extend(["ChatRoom", "ChatMessage", "ChatRoomMembership"])
 
 # Modell csoportok státusza
 available_groups = []

@@ -29,7 +29,7 @@ import {
   Login as LoginIcon,
   PersonAdd,
 } from "@mui/icons-material";
-import { useSafeAuthForm } from "../../contexts/AuthContext";
+import { useSafeAuth } from "../../SafeAuthContext";
 
 interface TabPanelProps {
   children?: React.ReactNode;

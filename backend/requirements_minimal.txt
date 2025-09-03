@@ -1,0 +1,22 @@
+# LFA Legacy GO - Minimal Working Backend
+# Compatible with Python 3.11+ (3.13 compatible versions)
+
+# Core FastAPI (3.13 compatible)
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+
+# Data validation (3.13 compatible)  
+pydantic==2.10.1
+pydantic-settings==2.11.0
+
+# Authentication
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+
+# Utilities
+python-multipart==0.0.20
+python-dateutil==2.9.0
+requests==2.32.4
+
+# Development
+python-dotenv==1.1.1

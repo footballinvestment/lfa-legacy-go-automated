@@ -114,8 +114,24 @@ def get_user_public_data(user: User) -> Dict[str, Any]:
 
 def check_friendship_status(user1_id: int, user2_id: int, db: Session) -> Optional[str]:
     """Check friendship status between two users"""
-    # This would check the friendship table in a real implementation
-    # For now, return None (no friendship)
+    from ..models.friends import Friendship, FriendRequest, FriendRequestStatus
+    
+    # Check if they are friends
+    if Friendship.are_friends(db, user1_id, user2_id):
+        return "friends"
+    
+    # Check for pending friend request
+    pending_request = db.query(FriendRequest).filter(
+        or_(
+            and_(FriendRequest.sender_id == user1_id, FriendRequest.receiver_id == user2_id),
+            and_(FriendRequest.sender_id == user2_id, FriendRequest.receiver_id == user1_id)
+        ),
+        FriendRequest.status == FriendRequestStatus.PENDING
+    ).first()
+    
+    if pending_request:
+        return "pending"
+    
     return None
 
 
@@ -123,28 +139,93 @@ def get_friend_requests_for_user(
     user_id: int, db: Session, request_type: str = "all"
 ) -> List[Dict]:
     """Get friend requests for a user (sent or received)"""
-    # This would query the friend_requests table in a real implementation
-    # For now, return empty list
-    return []
+    from ..models.friends import FriendRequest, FriendRequestStatus
+    
+    query = db.query(FriendRequest)
+    
+    if request_type == "received":
+        query = query.filter(FriendRequest.receiver_id == user_id)
+    elif request_type == "sent":
+        query = query.filter(FriendRequest.sender_id == user_id)
+    else:  # all
+        query = query.filter(
+            or_(FriendRequest.sender_id == user_id, FriendRequest.receiver_id == user_id)
+        )
+    
+    requests = query.filter(FriendRequest.status == FriendRequestStatus.PENDING).all()
+    
+    result = []
+    for req in requests:
+        # Get sender and receiver info
+        sender = db.query(User).filter(User.id == req.sender_id).first()
+        receiver = db.query(User).filter(User.id == req.receiver_id).first()
+        
+        result.append({
+            "id": req.id,
+            "from_user_id": req.sender_id,
+            "to_user_id": req.receiver_id,
+            "status": req.status.value,
+            "created_at": req.created_at,
+            "from_user": get_user_public_data(sender) if sender else {},
+            "to_user": get_user_public_data(receiver) if receiver else {}
+        })
+    
+    return result
 
 
 def get_user_friends(user_id: int, db: Session) -> List[Dict]:
     """Get user's friends list"""
-    # This would query the friendships table in a real implementation
-    # For now, return empty list
-    return []
+    from ..models.friends import Friendship
+    
+    friendships = Friendship.get_friends_of_user(db, user_id)
+    
+    result = []
+    for friendship in friendships:
+        # Get the friend's ID
+        friend_id = friendship.get_friend_of(user_id)
+        if friend_id:
+            friend = db.query(User).filter(User.id == friend_id).first()
+            if friend:
+                friend_data = get_user_public_data(friend)
+                friend_data["friendship_since"] = friendship.created_at
+                result.append(friend_data)
+    
+    return result
 
 
 def create_friend_request(from_user_id: int, to_user_id: int, db: Session) -> Dict:
     """Create a new friend request"""
-    # This would create a record in friend_requests table
-    # For now, simulate creation
+    from ..models.friends import FriendRequest, FriendRequestStatus
+    
+    # Check if request already exists
+    existing_request = db.query(FriendRequest).filter(
+        or_(
+            and_(FriendRequest.sender_id == from_user_id, FriendRequest.receiver_id == to_user_id),
+            and_(FriendRequest.sender_id == to_user_id, FriendRequest.receiver_id == from_user_id)
+        ),
+        FriendRequest.status == FriendRequestStatus.PENDING
+    ).first()
+    
+    if existing_request:
+        raise ValueError("Friend request already exists")
+    
+    # Create new friend request
+    new_request = FriendRequest(
+        sender_id=from_user_id,
+        receiver_id=to_user_id,
+        status=FriendRequestStatus.PENDING
+    )
+    
+    db.add(new_request)
+    db.commit()
+    db.refresh(new_request)
+    
     request_data = {
-        "id": 1,
-        "from_user_id": from_user_id,
-        "to_user_id": to_user_id,
-        "status": "pending",
-        "created_at": datetime.utcnow(),
+        "id": new_request.id,
+        "from_user_id": new_request.sender_id,
+        "to_user_id": new_request.receiver_id,
+        "status": new_request.status.value,
+        "created_at": new_request.created_at,
     }
 
     logger.info(f"✅ Friend request created: {from_user_id} → {to_user_id}")
@@ -153,8 +234,33 @@ def create_friend_request(from_user_id: int, to_user_id: int, db: Session) -> Di
 
 def respond_to_friend_request(request_id: int, accept: bool, db: Session) -> bool:
     """Respond to a friend request"""
-    # This would update the friend request and create friendship if accepted
-    # For now, simulate response
+    from ..models.friends import FriendRequest, FriendRequestStatus, Friendship
+    
+    # Get the friend request
+    friend_request = db.query(FriendRequest).filter(
+        FriendRequest.id == request_id,
+        FriendRequest.status == FriendRequestStatus.PENDING
+    ).first()
+    
+    if not friend_request:
+        return False
+    
+    if accept:
+        # Accept the request
+        friend_request.accept()
+        
+        # Create friendship
+        Friendship.create_friendship(
+            db=db, 
+            user1_id=friend_request.sender_id, 
+            user2_id=friend_request.receiver_id
+        )
+    else:
+        # Decline the request
+        friend_request.decline()
+    
+    db.commit()
+    
     logger.info(
         f"✅ Friend request {request_id} {'accepted' if accept else 'declined'}"
     )

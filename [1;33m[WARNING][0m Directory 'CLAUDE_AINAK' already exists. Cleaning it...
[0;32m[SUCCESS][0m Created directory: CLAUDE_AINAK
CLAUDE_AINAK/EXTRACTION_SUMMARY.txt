@@ -1,0 +1,35 @@
+LFA LEGACY GO - Claude AI Extraction Summary
+==============================================
+Extraction Date: 2025 Aug 28 Csü 18:40:55 CEST
+Source Directory: /Users/lovas.zoltan/Seafile/Football Investment/Projects/GanballGames/lfa-legacy-go
+Target Directory: [1;33m[WARNING][0m Directory 'CLAUDE_AINAK' already exists. Cleaning it...
+[0;32m[SUCCESS][0m Created directory: CLAUDE_AINAK
+CLAUDE_AINAK
+
+INCLUDED CONTENT:
+- Source code (backend/, frontend/, src/)
+- Configuration files (package.json, tsconfig.json, requirements.txt)
+- Documentation (README.md, docs/)
+- Test files (tests/, __tests__/)
+- Migration scripts (migrations/)
+- Public assets (public/)
+- Environment examples (.env.example)
+
+EXCLUDED CONTENT:
+- Dependencies (node_modules/, venv/, __pycache__/)
+- Build artifacts (build/, dist/, .next/)
+- Cache files (.cache/, .pytest_cache/, .mypy_cache/)
+- Log files (*.log)
+- Database files (*.sqlite, *.sqlite3)
+- OS files (.DS_Store, Thumbs.db)
+- IDE files (.vscode/, .idea/)
+
+DIRECTORY SIZE:
+ 92K	[1;33m[WARNING][0m Directory 'CLAUDE_AINAK' already exists. Cleaning it...
+[0;32m[SUCCESS][0m Created directory: CLAUDE_AINAK
+CLAUDE_AINAK
+
+FILE COUNT:
+      27
+
+Ready for Claude AI development and debugging!

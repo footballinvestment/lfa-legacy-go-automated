@@ -94,6 +94,10 @@ class User(Base):
 
     # Relationships - EGYSZERŰSÍTETT (moderation relationships eltávolítva a konfliktus elkerülésére)
     sessions = relationship("UserSession", back_populates="user")
+    
+    # Chat system relationships
+    chat_messages = relationship("ChatMessage", back_populates="user")
+    chat_memberships = relationship("ChatRoomMembership", back_populates="user")
 
     def __repr__(self):
         return f"<User(id={self.id}, username={self.username})>"

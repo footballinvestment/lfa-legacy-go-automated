@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@playwright/test": "^1.55.0",
-    "axios": "^1.11.0"
+    "axios": "^1.11.0",
+    "playwright": "^1.55.0"
   }
 }

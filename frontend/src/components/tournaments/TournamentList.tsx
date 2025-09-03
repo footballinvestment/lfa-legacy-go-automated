@@ -50,7 +50,7 @@ import {
   Timeline,
   SportsScore,
 } from "@mui/icons-material";
-import { useSafeAuth } from "../../contexts/AuthContext";
+import { useSafeAuth } from "../../SafeAuthContext";
 
 // Tournament Types
 interface Tournament {
@@ -59,225 +59,102 @@ interface Tournament {
   name: string;
   description?: string;
   tournament_type: string;
-  game_type: string;
-  format: string;
   status: string;
-  location_id: number;
   location_name: string;
   start_time: string;
   end_time: string;
-  registration_deadline: string;
-  min_participants: number;
-  max_participants: number;
-  current_participants: number;
   entry_fee_credits: number;
   prize_pool_credits: number;
-  min_level: number;
-  max_level?: number;
-  organizer_id: number;
+  current_participants: number;
+  max_participants: number;
   organizer_username: string;
-  winner_id?: number;
-  winner_username?: string;
   is_registration_open: boolean;
   is_full: boolean;
-  can_start: boolean;
   created_at: string;
 }
 
-interface NewTournament {
-  name: string;
-  description: string;
-  tournament_type: string;
-  game_type: string;
-  format: string;
-  location_id: number;
-  start_time: string;
-  end_time: string;
-  registration_deadline: string;
-  min_participants: number;
-  max_participants: number;
-  entry_fee_credits: number;
-  prize_distribution: Record<string, number>;
-  min_level: number;
-  max_level: number;
+interface TournamentStats {
+  totalTournaments: number;
+  activeTournaments: string;
+  totalParticipants: number;
+  completionRate: number;
+  monthlyGrowth: number;
 }
 
 const TournamentList: React.FC = () => {
   const navigate = useNavigate();
-  const { state: authState } = useSafeAuth();
+  const { state } = useSafeAuth();
 
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState(0);
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [creating, setCreating] = useState(false);
+  const [currentTab, setCurrentTab] = useState(0);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedTournament, setSelectedTournament] =
     useState<Tournament | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
-  const [newTournament, setNewTournament] = useState<NewTournament>({
-    name: "",
-    description: "",
-    tournament_type: "daily_challenge",
-    game_type: "GAME1",
-    format: "single_elimination",
-    location_id: 1,
-    start_time: "",
-    end_time: "",
-    registration_deadline: "",
-    min_participants: 4,
-    max_participants: 16,
-    entry_fee_credits: 10,
-    prize_distribution: { "1st": 100 },
-    min_level: 1,
-    max_level: 50,
+  // Sample tournament stats
+  const [tournamentStats] = useState<TournamentStats>({
+    totalTournaments: 156,
+    activeTournaments: "23",
+    totalParticipants: 1247,
+    completionRate: 85,
+    monthlyGrowth: 12,
   });
 
-  // Enhanced Demo Tournament Data
-  const demoTournaments: Tournament[] = [
-    {
-      id: 1,
-      tournament_id: "TOURN_CHRISTMAS_2024",
-      name: "Christmas Championship",
-      description:
-        "Special holiday tournament with exciting prizes and festive atmosphere",
-      tournament_type: "championship",
-      game_type: "GAME1",
-      format: "single_elimination",
-      status: "registration",
-      location_id: 1,
-      location_name: "Central Sports Arena",
-      start_time: "2024-12-25T18:00:00",
-      end_time: "2024-12-25T20:00:00",
-      registration_deadline: "2024-12-25T16:00:00",
-      min_participants: 4,
-      max_participants: 16,
-      current_participants: 6,
-      entry_fee_credits: 50,
-      prize_pool_credits: 500,
-      min_level: 3,
-      max_level: undefined,
-      organizer_id: 1,
-      organizer_username: "admin",
-      winner_id: undefined,
-      winner_username: undefined,
-      is_registration_open: true,
-      is_full: false,
-      can_start: false,
-      created_at: "2024-12-12T10:00:00",
-    },
-    {
-      id: 2,
-      tournament_id: "TOURN_WEEKLY_001",
-      name: "Weekly Challenge #1",
-      description: "Regular weekly tournament for all skill levels",
-      tournament_type: "weekly_challenge",
-      game_type: "GAME1",
-      format: "round_robin",
-      status: "in_progress",
-      location_id: 2,
-      location_name: "North Arena",
-      start_time: "2024-12-20T15:00:00",
-      end_time: "2024-12-20T17:00:00",
-      registration_deadline: "2024-12-20T13:00:00",
-      min_participants: 6,
-      max_participants: 12,
-      current_participants: 8,
-      entry_fee_credits: 25,
-      prize_pool_credits: 200,
-      min_level: 1,
-      max_level: 10,
-      organizer_id: 2,
-      organizer_username: "tournament_master",
-      winner_id: undefined,
-      winner_username: undefined,
-      is_registration_open: false,
-      is_full: false,
-      can_start: true,
-      created_at: "2024-12-15T14:00:00",
-    },
-    {
-      id: 3,
-      tournament_id: "TOURN_NOVICE_005",
-      name: "Beginner's Cup #5",
-      description: "Perfect for new players to test their skills",
-      tournament_type: "beginner_friendly",
-      game_type: "GAME2",
-      format: "single_elimination",
-      status: "completed",
-      location_id: 1,
-      location_name: "Central Sports Arena",
-      start_time: "2024-12-18T14:00:00",
-      end_time: "2024-12-18T16:00:00",
-      registration_deadline: "2024-12-18T12:00:00",
-      min_participants: 4,
-      max_participants: 8,
-      current_participants: 8,
-      entry_fee_credits: 10,
-      prize_pool_credits: 80,
-      min_level: 1,
-      max_level: 5,
-      organizer_id: 1,
-      organizer_username: "admin",
-      winner_id: 5,
-      winner_username: "rookie_champion",
-      is_registration_open: false,
-      is_full: true,
-      can_start: false,
-      created_at: "2024-12-10T09:00:00",
-    },
-    {
-      id: 4,
-      tournament_id: "TOURN_ELITE_001",
-      name: "Elite Masters Series",
-      description: "High-stakes tournament for expert players only",
-      tournament_type: "elite_series",
-      game_type: "GAME1",
-      format: "double_elimination",
-      status: "registration",
-      location_id: 3,
-      location_name: "Premium Arena",
-      start_time: "2024-12-30T19:00:00",
-      end_time: "2024-12-30T22:00:00",
-      registration_deadline: "2024-12-29T18:00:00",
-      min_participants: 8,
-      max_participants: 32,
-      current_participants: 15,
-      entry_fee_credits: 100,
-      prize_pool_credits: 1000,
-      min_level: 8,
-      max_level: undefined,
-      organizer_id: 3,
-      organizer_username: "elite_organizer",
-      winner_id: undefined,
-      winner_username: undefined,
-      is_registration_open: true,
-      is_full: false,
-      can_start: false,
-      created_at: "2024-12-08T16:00:00",
-    },
-  ];
-
+  // Load tournaments
   useEffect(() => {
     const loadTournaments = async () => {
       try {
         setLoading(true);
+        // Simulate API call
+        await new Promise((resolve) => setTimeout(resolve, 1000));
 
-        // Demo: Using mock data
-        setTimeout(() => {
-          setTournaments(demoTournaments);
-          setLoading(false);
-        }, 1000);
+        const sampleTournaments: Tournament[] = [
+          {
+            id: 1,
+            tournament_id: "TOUR001",
+            name: "Evening Championship",
+            description: "Weekly championship tournament for all skill levels",
+            tournament_type: "Championship",
+            status: "registration_open",
+            location_name: "Downtown Sports Center",
+            start_time: "2024-12-15T18:00:00Z",
+            end_time: "2024-12-15T22:00:00Z",
+            entry_fee_credits: 15,
+            prize_pool_credits: 500,
+            current_participants: 8,
+            max_participants: 16,
+            organizer_username: "admin",
+            is_registration_open: true,
+            is_full: false,
+            created_at: "2024-12-01T10:00:00Z",
+          },
+          {
+            id: 2,
+            tournament_id: "TOUR002",
+            name: "Beginner's Cup",
+            description: "Perfect for new players to get started",
+            tournament_type: "Cup",
+            status: "in_progress",
+            location_name: "Riverside Football Club",
+            start_time: "2024-12-14T16:00:00Z",
+            end_time: "2024-12-14T20:00:00Z",
+            entry_fee_credits: 10,
+            prize_pool_credits: 250,
+            current_participants: 12,
+            max_participants: 12,
+            organizer_username: "moderator",
+            is_registration_open: false,
+            is_full: true,
+            created_at: "2024-11-28T14:30:00Z",
+          },
+        ];
 
-        // TODO: Real API call
-        // const response = await fetch('/api/tournaments');
-        // const data = await response.json();
-        // setTournaments(data);
-      } catch (err) {
-        console.error("Error loading tournaments:", err);
-        setError("Failed to load tournaments");
-        setTournaments(demoTournaments);
+        setTournaments(sampleTournaments);
+      } catch (err: any) {
+        setError(err.message || "Failed to load tournaments");
       } finally {
         setLoading(false);
       }
@@ -286,120 +163,11 @@ const TournamentList: React.FC = () => {
     loadTournaments();
   }, []);
 
-  const handleCreateTournament = async () => {
-    try {
-      setCreating(true);
-
-      // Demo: Create a new tournament
-      const newTournamentData: Tournament = {
-        id: Date.now(),
-        tournament_id: `TOURN_${Date.now()}`,
-        ...newTournament,
-        status: "registration",
-        location_name: "Central Sports Arena",
-        current_participants: 0,
-        prize_pool_credits: newTournament.entry_fee_credits * 8,
-        organizer_id: authState.user?.id || 1,
-        organizer_username: authState.user?.username || "current_user",
-        winner_id: undefined,
-        winner_username: undefined,
-        is_registration_open: true,
-        is_full: false,
-        can_start: false,
-        created_at: new Date().toISOString(),
-      };
-
-      setTimeout(() => {
-        setTournaments((prev) => [newTournamentData, ...prev]);
-        setShowCreateDialog(false);
-        setCreating(false);
-        // Reset form
-        setNewTournament({
-          name: "",
-          description: "",
-          tournament_type: "daily_challenge",
-          game_type: "GAME1",
-          format: "single_elimination",
-          location_id: 1,
-          start_time: "",
-          end_time: "",
-          registration_deadline: "",
-          min_participants: 4,
-          max_participants: 16,
-          entry_fee_credits: 10,
-          prize_distribution: { "1st": 100 },
-          min_level: 1,
-          max_level: 50,
-        });
-      }, 1500);
-
-      // TODO: Real API call
-      // const response = await fetch('/api/tournaments', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(newTournament)
-      // });
-      // const data = await response.json();
-    } catch (error) {
-      console.error("Error creating tournament:", error);
-      setCreating(false);
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "registration":
-        return "primary";
-      case "in_progress":
-        return "warning";
-      case "completed":
-        return "success";
-      case "cancelled":
-        return "error";
-      default:
-        return "default";
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "registration":
-        return <Schedule />;
-      case "in_progress":
-        return <PlayArrow />;
-      case "completed":
-        return <CheckCircle />;
-      default:
-        return <Schedule />;
-    }
-  };
-
-  const isOrganizer = (tournament: Tournament) => {
-    return authState.user?.id === tournament.organizer_id;
-  };
-
-  const filteredTournaments = tournaments.filter((tournament) => {
-    const statusFilters = ["all", "registration", "in_progress", "completed"];
-    const currentFilter = statusFilters[activeTab];
-    return currentFilter === "all" || tournament.status === currentFilter;
-  });
-
-  const handleViewTournament = (tournament: Tournament) => {
-    navigate(`/tournaments/${tournament.id}`);
-  };
-
-  const handleViewBracket = (tournament: Tournament) => {
-    navigate(`/tournaments/${tournament.id}/bracket`);
-  };
-
-  const handleManageMatches = (tournament: Tournament) => {
-    navigate(`/tournaments/${tournament.id}/matches`);
-  };
-
-  const handleMenuOpen = (
+  const handleMenuClick = (
     event: React.MouseEvent<HTMLElement>,
     tournament: Tournament
   ) => {
+    event.stopPropagation();
     setAnchorEl(event.currentTarget);
     setSelectedTournament(tournament);
   };
@@ -409,578 +177,410 @@ const TournamentList: React.FC = () => {
     setSelectedTournament(null);
   };
 
-  const TournamentCard: React.FC<{ tournament: Tournament }> = ({
-    tournament,
-  }) => (
-    <Card
-      sx={{
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
-        "&:hover": {
-          transform: "translateY(-4px)",
-          boxShadow: 4,
-          transition: "all 0.2s ease-in-out",
-        },
-        background: `linear-gradient(135deg, ${
-          tournament.status === "registration"
-            ? "#e3f2fd"
-            : tournament.status === "in_progress"
-              ? "#fff3e0"
-              : "#e8f5e8"
-        }, white)`,
-        cursor: "pointer",
-      }}
-      onClick={() => handleViewTournament(tournament)}
-    >
-      <CardContent sx={{ flexGrow: 1, position: "relative" }}>
-        {/* Header */}
-        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
-          <Chip
-            icon={getStatusIcon(tournament.status)}
-            label={tournament.status.replace("_", " ").toUpperCase()}
-            color={getStatusColor(tournament.status) as any}
-            size="small"
-          />
-          <IconButton
-            size="small"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleMenuOpen(e, tournament);
-            }}
-          >
-            <MoreVert />
-          </IconButton>
-        </Box>
+  const handleViewDetails = () => {
+    if (selectedTournament) {
+      navigate(`/tournaments/${selectedTournament.id}`);
+    }
+    handleMenuClose();
+  };
 
-        {/* Tournament Info */}
-        <Typography
-          variant="h6"
-          gutterBottom
-          sx={{ fontWeight: 700, mb: 1, lineHeight: 1.2 }}
-        >
-          {tournament.name}
-        </Typography>
+  const handleRegister = async (tournament: Tournament) => {
+    try {
+      // Simulate API call
+      alert(`Registered for ${tournament.name}!`);
+      // Refresh tournaments after registration
+    } catch (err: any) {
+      alert(err.message || "Registration failed");
+    }
+  };
 
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          sx={{ mb: 2, height: "40px", overflow: "hidden" }}
-        >
-          {tournament.description}
-        </Typography>
+  const getStatusColor = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case "registration_open":
+        return "success";
+      case "in_progress":
+        return "warning";
+      case "completed":
+        return "default";
+      case "cancelled":
+        return "error";
+      default:
+        return "default";
+    }
+  };
 
-        {/* Tournament Details */}
-        <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-          <EmojiEvents sx={{ mr: 1, fontSize: 16, color: "warning.main" }} />
-          <Typography variant="body2">
-            {tournament.tournament_type.replace("_", " ")}
-          </Typography>
-        </Box>
+  const formatDateTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleString();
+  };
 
-        <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-          <LocationOn sx={{ mr: 1, fontSize: 16, color: "primary.main" }} />
-          <Typography variant="body2">{tournament.location_name}</Typography>
-        </Box>
-
-        <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-          <Schedule sx={{ mr: 1, fontSize: 16, color: "info.main" }} />
-          <Typography variant="body2">
-            {new Date(tournament.start_time).toLocaleDateString()}{" "}
-            {new Date(tournament.start_time).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-          </Typography>
-        </Box>
-
+  // KPI Card component
+  const renderKPICard = (
+    title: string,
+    value: string,
+    icon: React.ReactNode,
+    color: string,
+    change?: string
+  ) => (
+    <Card sx={{ height: "100%" }}>
+      <CardContent>
         <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-          <People sx={{ mr: 1, fontSize: 16, color: "success.main" }} />
-          <Typography variant="body2">
-            {tournament.current_participants} / {tournament.max_participants}{" "}
-            players
+          <Avatar sx={{ bgcolor: color, mr: 2 }}>{icon}</Avatar>
+          <Typography variant="h6" sx={{ fontSize: "0.9rem", fontWeight: 600 }}>
+            {title}
           </Typography>
         </Box>
-
-        {/* Progress Bar */}
-        <LinearProgress
-          variant="determinate"
-          value={
-            (tournament.current_participants / tournament.max_participants) *
-            100
-          }
-          sx={{ mb: 2, height: 6, borderRadius: 3 }}
-        />
-
-        {/* Entry Fee & Prize */}
-        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
-          <Box sx={{ display: "flex", alignItems: "center" }}>
-            <AccountBalanceWallet
-              sx={{ mr: 0.5, fontSize: 14, color: "secondary.main" }}
-            />
-            <Typography variant="caption">
-              {tournament.entry_fee_credits} credits
-            </Typography>
-          </Box>
-          <Box sx={{ display: "flex", alignItems: "center" }}>
-            <EmojiEvents
-              sx={{ mr: 0.5, fontSize: 14, color: "warning.main" }}
-            />
-            <Typography variant="caption" sx={{ fontWeight: 600 }}>
-              {tournament.prize_pool_credits} prize
-            </Typography>
-          </Box>
-        </Box>
-
-        {/* Action Buttons */}
-        <Box sx={{ display: "flex", gap: 1 }}>
-          <Button
-            size="small"
-            variant="outlined"
-            startIcon={<Visibility />}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleViewTournament(tournament);
-            }}
-            sx={{ flexGrow: 1 }}
-          >
-            View
-          </Button>
-
-          {tournament.current_participants > 0 && (
-            <Button
-              size="small"
-              variant="outlined"
-              startIcon={<Timeline />}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleViewBracket(tournament);
-              }}
-            >
-              Bracket
-            </Button>
-          )}
-
-          {isOrganizer(tournament) && (
-            <Button
-              size="small"
-              variant="outlined"
-              startIcon={<SportsScore />}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleManageMatches(tournament);
-              }}
-            >
-              Manage
-            </Button>
-          )}
-        </Box>
-
-        {/* Organizer Badge */}
-        {isOrganizer(tournament) && (
+        <Typography variant="h4" sx={{ mb: 1, fontWeight: 700 }}>
+          {value}
+        </Typography>
+        {change && (
           <Chip
-            label="You're organizing"
             size="small"
-            color="info"
-            sx={{ mt: 1, alignSelf: "flex-start" }}
+            label={change}
+            color={change.startsWith("+") ? "success" : "error"}
+            sx={{ fontSize: "0.75rem" }}
           />
         )}
       </CardContent>
     </Card>
   );
 
+  const renderOverviewTab = () => (
+    <Grid container spacing={3}>
+      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        {renderKPICard(
+          "Total Tournaments",
+          tournamentStats.totalTournaments.toLocaleString(),
+          <EmojiEvents />,
+          "#1976d2",
+          `+${tournamentStats.monthlyGrowth}%`
+        )}
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        {renderKPICard(
+          "Active Tournaments",
+          tournamentStats.activeTournaments,
+          <Timeline />,
+          "#2e7d32",
+          "+5.2%"
+        )}
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        {renderKPICard(
+          "Total Participants",
+          tournamentStats.totalParticipants.toLocaleString(),
+          <People />,
+          "#ed6c02",
+          "+8.7%"
+        )}
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        {renderKPICard(
+          "Completion Rate",
+          `${tournamentStats.completionRate}%`,
+          <TrendingUp />,
+          "#9c27b0",
+          "+2.1%"
+        )}
+      </Grid>
+
+      <Grid size={{ xs: 12 }}>
+        <Paper sx={{ p: 3 }}>
+          <Typography variant="h6" sx={{ mb: 3 }}>
+            Tournament Overview
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Advanced tournament analytics and trends will be displayed here.
+          </Typography>
+        </Paper>
+      </Grid>
+    </Grid>
+  );
+
+  const renderTournamentList = () => (
+    <Grid container spacing={3}>
+      {tournaments.map((tournament) => (
+        <Grid size={{ xs: 12, md: 6, lg: 4 }} key={tournament.id}>
+          <Card
+            sx={{
+              height: "100%",
+              display: "flex",
+              flexDirection: "column",
+              cursor: "pointer",
+              "&:hover": { boxShadow: 4 },
+            }}
+            onClick={() => navigate(`/tournaments/${tournament.id}`)}
+          >
+            <CardContent sx={{ flexGrow: 1 }}>
+              {/* Tournament Header */}
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "flex-start",
+                  mb: 2,
+                }}
+              >
+                <Typography variant="h6" component="h3">
+                  {tournament.name}
+                </Typography>
+                <Box>
+                  <Chip
+                    label={tournament.status}
+                    color={getStatusColor(tournament.status)}
+                    size="small"
+                  />
+                  <IconButton
+                    size="small"
+                    onClick={(e) => handleMenuClick(e, tournament)}
+                    sx={{ ml: 1 }}
+                  >
+                    <MoreVert />
+                  </IconButton>
+                </Box>
+              </Box>
+
+              {/* Tournament Type */}
+              <Chip
+                label={tournament.tournament_type}
+                variant="outlined"
+                size="small"
+                sx={{ mb: 2 }}
+              />
+
+              {/* Description */}
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                {tournament.description || "No description available"}
+              </Typography>
+
+              <Divider sx={{ mb: 2 }} />
+
+              {/* Tournament Details */}
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Schedule fontSize="small" color="action" />
+                  <Typography variant="body2">
+                    {formatDateTime(tournament.start_time)}
+                  </Typography>
+                </Box>
+
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <LocationOn fontSize="small" color="action" />
+                  <Typography variant="body2">
+                    {tournament.location_name}
+                  </Typography>
+                </Box>
+
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <People fontSize="small" color="action" />
+                  <Typography variant="body2">
+                    {tournament.current_participants}/
+                    {tournament.max_participants} players
+                  </Typography>
+                  <LinearProgress
+                    variant="determinate"
+                    value={
+                      (tournament.current_participants /
+                        tournament.max_participants) *
+                      100
+                    }
+                    sx={{ flexGrow: 1, ml: 1 }}
+                  />
+                </Box>
+
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <AccountBalanceWallet fontSize="small" color="action" />
+                  <Typography variant="body2">
+                    {tournament.entry_fee_credits} credits
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    color="success.main"
+                    sx={{ ml: "auto" }}
+                  >
+                    Prize: {tournament.prize_pool_credits}
+                  </Typography>
+                </Box>
+              </Box>
+
+              {/* Organizer */}
+              <Box
+                sx={{ display: "flex", alignItems: "center", gap: 1, mt: 2 }}
+              >
+                <Avatar sx={{ width: 24, height: 24, fontSize: "0.75rem" }}>
+                  {tournament.organizer_username.charAt(0).toUpperCase()}
+                </Avatar>
+                <Typography variant="caption" color="text.secondary">
+                  by {tournament.organizer_username}
+                </Typography>
+              </Box>
+            </CardContent>
+
+            {/* Action Button */}
+            <Box sx={{ p: 2, pt: 0 }}>
+              <Button
+                variant="contained"
+                fullWidth
+                startIcon={
+                  tournament.is_registration_open ? <Add /> : <PlayArrow />
+                }
+                disabled={tournament.is_full && tournament.is_registration_open}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (tournament.is_registration_open) {
+                    handleRegister(tournament);
+                  } else {
+                    navigate(`/tournaments/${tournament.id}`);
+                  }
+                }}
+              >
+                {tournament.is_full
+                  ? "Full"
+                  : tournament.is_registration_open
+                    ? "Register"
+                    : tournament.status === "in_progress"
+                      ? "Watch Live"
+                      : "View Details"}
+              </Button>
+            </Box>
+          </Card>
+        </Grid>
+      ))}
+
+      {tournaments.length === 0 && !loading && (
+        <Grid size={{ xs: 12 }}>
+          <Box sx={{ textAlign: "center", py: 8 }}>
+            <EmojiEvents
+              sx={{ fontSize: 80, color: "text.secondary", mb: 2 }}
+            />
+            <Typography variant="h6" color="text.secondary">
+              No tournaments found
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+              Be the first to create a tournament!
+            </Typography>
+            <Button variant="contained" startIcon={<Add />}>
+              Create Tournament
+            </Button>
+          </Box>
+        </Grid>
+      )}
+    </Grid>
+  );
+
   if (loading) {
     return (
       <Box
         sx={{
-          minHeight: "60vh",
           display: "flex",
-          alignItems: "center",
           justifyContent: "center",
+          alignItems: "center",
+          py: 8,
         }}
       >
-        <CircularProgress size={60} />
+        <CircularProgress />
       </Box>
     );
   }
 
+  if (error) {
+    return (
+      <Alert severity="error" sx={{ mb: 2 }}>
+        {error}
+      </Alert>
+    );
+  }
+
   return (
-    <Box sx={{ pb: 4 }}>
+    <Box sx={{ p: 3 }}>
       {/* Header */}
       <Box
         sx={{
           display: "flex",
+          justifyContent: "space-between",
           alignItems: "center",
-          gap: 2,
           mb: 4,
-          flexWrap: "wrap",
         }}
       >
-        <IconButton
-          onClick={() => navigate("/dashboard")}
-          sx={{
-            background: "linear-gradient(45deg, #1976d2, #42a5f5)",
-            color: "white",
-            "&:hover": {
-              background: "linear-gradient(45deg, #1565c0, #1e88e5)",
-            },
-          }}
-        >
-          <ArrowBack />
-        </IconButton>
-
-        <Box sx={{ flexGrow: 1 }}>
-          <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
-            🏆 Tournaments
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Join exciting tournaments and compete with other players
+        <Box>
+          <IconButton onClick={() => navigate(-1)} sx={{ mr: 2 }}>
+            <ArrowBack />
+          </IconButton>
+          <Typography
+            variant="h4"
+            component="h1"
+            sx={{ display: "inline", fontWeight: "bold" }}
+          >
+            Tournament Management
           </Typography>
         </Box>
-
-        <Button
-          variant="contained"
-          startIcon={<Add />}
-          onClick={() => setShowCreateDialog(true)}
-          size="large"
-          sx={{
-            background: "linear-gradient(45deg, #2e7d32, #66bb6a)",
-            "&:hover": {
-              background: "linear-gradient(45deg, #1b5e20, #4caf50)",
-            },
-          }}
-        >
+        <Button variant="contained" startIcon={<Add />}>
           Create Tournament
         </Button>
       </Box>
 
-      {/* Error Alert */}
-      {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
-        </Alert>
-      )}
-
-      {/* Stats Cards */}
-      <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={4}>
-          <Paper sx={{ p: 2, textAlign: "center" }}>
-            <Typography
-              variant="h4"
-              sx={{ fontWeight: 700, color: "primary.main" }}
-            >
-              {tournaments.length}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Total Tournaments
-            </Typography>
-          </Paper>
-        </Grid>
-        <Grid item xs={4}>
-          <Paper sx={{ p: 2, textAlign: "center" }}>
-            <Typography
-              variant="h4"
-              sx={{ fontWeight: 700, color: "warning.main" }}
-            >
-              {
-                tournaments.filter(
-                  (t) =>
-                    t.status === "registration" || t.status === "in_progress"
-                ).length
-              }
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Active
-            </Typography>
-          </Paper>
-        </Grid>
-        <Grid item xs={4}>
-          <Paper sx={{ p: 2, textAlign: "center" }}>
-            <Typography
-              variant="h4"
-              sx={{ fontWeight: 700, color: "success.main" }}
-            >
-              {tournaments.filter((t) => isOrganizer(t)).length}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Your Tournaments
-            </Typography>
-          </Paper>
-        </Grid>
-      </Grid>
-
       {/* Tabs */}
-      <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
+      <Paper sx={{ mb: 3 }}>
         <Tabs
-          value={activeTab}
-          onChange={(_, newValue) => setActiveTab(newValue)}
+          value={currentTab}
+          onChange={(_, newValue) => setCurrentTab(newValue)}
+          variant="scrollable"
+          scrollButtons="auto"
         >
-          <Tab label="All Tournaments" />
-          <Tab label="Registration Open" />
-          <Tab label="In Progress" />
-          <Tab label="Completed" />
+          <Tab label="Overview" icon={<TrendingUp />} />
+          <Tab label="All Tournaments" icon={<EmojiEvents />} />
+          <Tab label="My Tournaments" icon={<Person />} />
         </Tabs>
-      </Box>
+      </Paper>
 
-      {/* Tournament Grid */}
-      <Grid container spacing={3}>
-        {filteredTournaments.map((tournament) => (
-          <Grid item xs={12} md={6} lg={4} key={tournament.id}>
-            <TournamentCard tournament={tournament} />
-          </Grid>
-        ))}
-      </Grid>
-
-      {filteredTournaments.length === 0 && !loading && (
+      {/* Tab Content */}
+      {currentTab === 0 && renderOverviewTab()}
+      {currentTab === 1 && renderTournamentList()}
+      {currentTab === 2 && (
         <Box sx={{ textAlign: "center", py: 8 }}>
-          <EmojiEvents sx={{ fontSize: 64, color: "text.secondary", mb: 2 }} />
-          <Typography variant="h6" color="text.secondary" gutterBottom>
-            No tournaments found
+          <Typography variant="h6" color="text.secondary">
+            My Tournaments
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Be the first to create a tournament!
+          <Typography variant="body2" color="text.secondary">
+            Tournaments you've created or are participating in will appear here.
           </Typography>
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            onClick={() => setShowCreateDialog(true)}
-          >
-            Create Tournament
-          </Button>
         </Box>
       )}
 
-      {/* Action Menu */}
+      {/* Floating Action Button */}
+      <Fab
+        color="primary"
+        aria-label="create tournament"
+        sx={{ position: "fixed", bottom: 16, right: 16 }}
+        onClick={() => alert("Create tournament dialog will open here")}
+      >
+        <Add />
+      </Fab>
+
+      {/* Context Menu */}
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}
       >
-        <MenuItem
-          onClick={() => {
-            handleViewTournament(selectedTournament!);
-            handleMenuClose();
-          }}
-        >
-          <Visibility sx={{ mr: 1 }} /> View Details
+        <MenuItem onClick={handleViewDetails}>
+          <Visibility sx={{ mr: 1 }} />
+          View Details
         </MenuItem>
-        {(selectedTournament?.current_participants ?? 0) > 0 && (
-          <MenuItem
-            onClick={() => {
-              handleViewBracket(selectedTournament!);
-              handleMenuClose();
-            }}
-          >
-            <Timeline sx={{ mr: 1 }} /> View Bracket
-          </MenuItem>
-        )}
-        {selectedTournament && isOrganizer(selectedTournament) && (
-          <>
-            <Divider />
-            <MenuItem
-              onClick={() => {
-                handleManageMatches(selectedTournament);
-                handleMenuClose();
-              }}
-            >
-              <SportsScore sx={{ mr: 1 }} /> Manage Matches
-            </MenuItem>
-            <MenuItem onClick={handleMenuClose}>
-              <Edit sx={{ mr: 1 }} /> Edit Tournament
-            </MenuItem>
-            <MenuItem onClick={handleMenuClose} sx={{ color: "error.main" }}>
-              <Delete sx={{ mr: 1 }} /> Delete
-            </MenuItem>
-          </>
-        )}
+        <MenuItem onClick={handleMenuClose}>
+          <Edit sx={{ mr: 1 }} />
+          Edit Tournament
+        </MenuItem>
+        <MenuItem onClick={handleMenuClose}>
+          <SportsScore sx={{ mr: 1 }} />
+          View Results
+        </MenuItem>
+        <Divider />
+        <MenuItem onClick={handleMenuClose} sx={{ color: "error.main" }}>
+          <Delete sx={{ mr: 1 }} />
+          Delete Tournament
+        </MenuItem>
       </Menu>
-
-      {/* Create Tournament Dialog */}
-      <Dialog
-        open={showCreateDialog}
-        onClose={() => setShowCreateDialog(false)}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle>Create New Tournament</DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={12}>
-              <TextField
-                label="Tournament Name"
-                value={newTournament.name}
-                onChange={(e) =>
-                  setNewTournament((prev) => ({
-                    ...prev,
-                    name: e.target.value,
-                  }))
-                }
-                fullWidth
-                required
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="Description"
-                value={newTournament.description}
-                onChange={(e) =>
-                  setNewTournament((prev) => ({
-                    ...prev,
-                    description: e.target.value,
-                  }))
-                }
-                fullWidth
-                multiline
-                rows={2}
-              />
-            </Grid>
-            <Grid item xs={6}>
-              <FormControl fullWidth>
-                <InputLabel>Tournament Type</InputLabel>
-                <Select
-                  value={newTournament.tournament_type}
-                  onChange={(e) =>
-                    setNewTournament((prev) => ({
-                      ...prev,
-                      tournament_type: e.target.value,
-                    }))
-                  }
-                >
-                  <MenuItem value="daily_challenge">Daily Challenge</MenuItem>
-                  <MenuItem value="weekly_challenge">Weekly Challenge</MenuItem>
-                  <MenuItem value="championship">Championship</MenuItem>
-                  <MenuItem value="beginner_friendly">
-                    Beginner Friendly
-                  </MenuItem>
-                  <MenuItem value="elite_series">Elite Series</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={6}>
-              <FormControl fullWidth>
-                <InputLabel>Format</InputLabel>
-                <Select
-                  value={newTournament.format}
-                  onChange={(e) =>
-                    setNewTournament((prev) => ({
-                      ...prev,
-                      format: e.target.value,
-                    }))
-                  }
-                >
-                  <MenuItem value="single_elimination">
-                    Single Elimination
-                  </MenuItem>
-                  <MenuItem value="double_elimination">
-                    Double Elimination
-                  </MenuItem>
-                  <MenuItem value="round_robin">Round Robin</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={6}>
-              <TextField
-                label="Start Time"
-                type="datetime-local"
-                value={newTournament.start_time}
-                onChange={(e) =>
-                  setNewTournament((prev) => ({
-                    ...prev,
-                    start_time: e.target.value,
-                  }))
-                }
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-              />
-            </Grid>
-            <Grid item xs={6}>
-              <TextField
-                label="Registration Deadline"
-                type="datetime-local"
-                value={newTournament.registration_deadline}
-                onChange={(e) =>
-                  setNewTournament((prev) => ({
-                    ...prev,
-                    registration_deadline: e.target.value,
-                  }))
-                }
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-              />
-            </Grid>
-            <Grid item xs={4}>
-              <TextField
-                label="Min Participants"
-                type="number"
-                value={newTournament.min_participants}
-                onChange={(e) =>
-                  setNewTournament((prev) => ({
-                    ...prev,
-                    min_participants: parseInt(e.target.value),
-                  }))
-                }
-                fullWidth
-                inputProps={{ min: 2, max: 64 }}
-              />
-            </Grid>
-            <Grid item xs={4}>
-              <TextField
-                label="Max Participants"
-                type="number"
-                value={newTournament.max_participants}
-                onChange={(e) =>
-                  setNewTournament((prev) => ({
-                    ...prev,
-                    max_participants: parseInt(e.target.value),
-                  }))
-                }
-                fullWidth
-                inputProps={{ min: 4, max: 64 }}
-              />
-            </Grid>
-            <Grid item xs={4}>
-              <TextField
-                label="Entry Fee (Credits)"
-                type="number"
-                value={newTournament.entry_fee_credits}
-                onChange={(e) =>
-                  setNewTournament((prev) => ({
-                    ...prev,
-                    entry_fee_credits: parseInt(e.target.value),
-                  }))
-                }
-                fullWidth
-                inputProps={{ min: 0 }}
-              />
-            </Grid>
-            <Grid item xs={4}>
-              <TextField
-                label="Min Level"
-                type="number"
-                value={newTournament.min_level}
-                onChange={(e) =>
-                  setNewTournament((prev) => ({
-                    ...prev,
-                    min_level: parseInt(e.target.value),
-                  }))
-                }
-                fullWidth
-                inputProps={{ min: 1, max: 10 }}
-              />
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowCreateDialog(false)}>Cancel</Button>
-          <Button
-            variant="contained"
-            onClick={handleCreateTournament}
-            disabled={creating || !newTournament.name}
-          >
-            {creating ? "Creating..." : "Create Tournament"}
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Box>
   );
 };

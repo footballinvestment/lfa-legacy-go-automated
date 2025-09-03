@@ -492,7 +492,13 @@ export class SocialService extends ApiService {
   }
 
   async getFriendRequests(): Promise<FriendRequest[]> {
+    console.log('🔍 Fetching INCOMING friend requests...');
     return this.get("/api/social/friend-requests");
+  }
+
+  async getSentFriendRequests(): Promise<FriendRequest[]> {
+    console.log('🔍 Fetching SENT friend requests...');
+    return this.get("/api/social/friend-requests/sent");
   }
 
   async getFriends(): Promise<Friend[]> {

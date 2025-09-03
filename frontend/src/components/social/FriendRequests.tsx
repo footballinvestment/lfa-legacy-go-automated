@@ -42,7 +42,8 @@ function TabPanel({ children, value, index }: TabPanelProps) {
 
 const FriendRequests: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);
-  const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
+  const [incomingRequests, setIncomingRequests] = useState<FriendRequest[]>([]);
+  const [sentRequests, setSentRequests] = useState<FriendRequest[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<number | null>(null);
@@ -51,9 +52,22 @@ const FriendRequests: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const requests = await socialService.getFriendRequests();
-      setFriendRequests(requests);
+      console.log('🔍 Loading both incoming and sent requests...');
+      
+      // Load both types
+      const [incoming, sent] = await Promise.all([
+        socialService.getFriendRequests(),      // Incoming
+        socialService.getSentFriendRequests()   // Sent - NEW!
+      ]);
+      
+      console.log('📊 Incoming requests:', incoming);
+      console.log('📊 Sent requests:', sent);
+      
+      setIncomingRequests(incoming);
+      setSentRequests(sent);
+      
     } catch (err: any) {
+      console.error('❌ Failed to load friend requests:', err);
       setError(err.message || "Failed to load friend requests");
     } finally {
       setLoading(false);
@@ -114,16 +128,8 @@ const FriendRequests: React.FC = () => {
     }
   };
 
-  // Filter requests by type
-  const incomingRequests = friendRequests.filter(
-    (req) => req.status === "pending" && req.to_user_id
-  );
-  const sentRequests = friendRequests.filter(
-    (req) => req.status === "pending" && req.from_user_id
-  );
-  const completedRequests = friendRequests.filter((req) =>
-    ["accepted", "declined"].includes(req.status)
-  );
+  // No need to filter - we have separate state for each type
+  const completedRequests: FriendRequest[] = []; // TODO: Implement history
 
   return (
     <Box>

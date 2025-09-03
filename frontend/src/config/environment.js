@@ -1,18 +1,18 @@
-// === Environment Configuration ===
+// === Environment Configuration - FIXED VERSION ===
 const config = {
   API_URL:
     process.env.REACT_APP_API_URL ||
-    "https://lfa-legacy-go-backend-376491487980.us-central1.run.app",
+    "http://localhost:8002", // FIXED: Default to local backend on port 8002
   NODE_ENV: process.env.NODE_ENV,
   DEBUG: process.env.REACT_APP_DEBUG === "true",
 };
 
-// Validation on app start
-if (!config.API_URL.includes("lfa-legacy-go-backend")) {
-  console.error("🚨 WRONG API_URL:", config.API_URL);
+// FIXED: Updated validation for local development
+if (config.NODE_ENV === "development" && !config.API_URL.includes("localhost:8002")) {
+  console.warn("⚠️ API_URL not localhost:8002 in development:", config.API_URL);
   if (config.DEBUG) {
     alert(
-      `Configuration Error: API URL is ${config.API_URL}. Expected: Google Cloud Run URL`
+      `Development Warning: API URL is ${config.API_URL}. Expected: http://localhost:8002`
     );
   }
 }

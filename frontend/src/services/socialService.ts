@@ -103,7 +103,7 @@ export const socialService = {
     action: "accept" | "decline"
   ): Promise<void> {
     await apiService.patch(`/social/friend-requests/${requestId}/`, {
-      status: action === "accept" ? "accepted" : "declined",
+      accept: action === "accept",
     });
   },
 

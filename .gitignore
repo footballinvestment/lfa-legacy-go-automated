@@ -39,3 +39,32 @@ Thumbs.db
 
 # Local Netlify folder
 .netlify
+
+# Claude artifacts and temporary files
+CLAUDE_AINAK/
+backend/CLAUDE_AINAK/
+frontend/CLAUDE_AINAK/
+docs/CLAUDE_AINAK/
+migrations/CLAUDE_AINAK/
+test/CLAUDE_AINAK/
+tests/CLAUDE_AINAK/
+*.md
+!README.md
+
+# Database files
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# Cloud SQL proxy
+cloud_sql_proxy
+
+# Validation and test artifacts
+claude_*.json
+claude_*.js
+claude_*.cjs
+validation_test.*
+*_output.txt
+process_list.txt

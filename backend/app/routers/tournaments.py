@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query, Background
 from sqlalchemy.orm import Session
 from typing import List, Dict, Any, Optional  # ✅ List import hozzáadva
 from datetime import datetime, timedelta
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, validator, ConfigDict
 from enum import Enum
 import uuid
 import logging
@@ -13,6 +13,7 @@ import logging
 from ..database import get_db
 from ..models.user import User
 from ..routers.auth import get_current_user
+from ..core.api_response import ResponseBuilder
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -96,6 +97,8 @@ class TournamentCreate(BaseModel):
 
 
 class Tournament(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
     id: int
     tournament_id: str
     name: str
@@ -127,6 +130,8 @@ class Tournament(BaseModel):
 
 
 class TournamentDetails(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
     tournament: Tournament
     participants: List[Dict[str, Any]]
     bracket: Optional[Dict[str, Any]] = None
@@ -346,108 +351,91 @@ async def get_tournaments(
         )
 
 
-@router.get("/{tournament_id}", response_model=TournamentDetails)
+@router.get("/{tournament_id}")
 async def get_tournament_details(
     tournament_id: int,
-    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """🔍 Get detailed tournament information"""
     try:
-        # In real implementation, query tournament and related data
-        # For now, return mock detailed data
-
-        mock_tournament = {
-            "id": tournament_id,
-            "tournament_id": f"tournament_{tournament_id}_details",
-            "name": "Weekly Championship",
-            "description": "Competitive weekly tournament for skilled players",
-            "tournament_type": TournamentType.KNOCKOUT,
-            "game_type": "GAME1",
-            "format": TournamentFormat.SINGLE_ELIMINATION,
-            "status": TournamentStatus.REGISTRATION,
-            "location_id": 1,
-            "location_name": "Central Sports Complex",
-            "start_time": datetime.utcnow() + timedelta(days=2),
-            "end_time": datetime.utcnow() + timedelta(days=2, hours=4),
-            "registration_deadline": datetime.utcnow() + timedelta(days=1),
-            "min_participants": 4,
-            "max_participants": 16,
-            "current_participants": 3,
-            "entry_fee_credits": 10,
-            "prize_pool_credits": 30,
-            "min_level": 1,
-            "max_level": 50,
-            "organizer_id": 1,
-            "organizer_username": "admin",
-            "winner_id": None,
-            "winner_username": None,
-            "is_registration_open": True,
-            "is_full": False,
-            "can_start": False,
-            "created_at": datetime.utcnow() - timedelta(days=3),
-        }
-
-        # Mock participants
-        participants = [
-            {
-                "user_id": 1,
-                "username": "player1",
-                "full_name": "Player One",
-                "level": 25,
-                "registration_time": datetime.utcnow() - timedelta(hours=24),
+        # Create simplified tournament details response directly as dict
+        tournament_details = {
+            "tournament": {
+                "id": tournament_id,
+                "tournament_id": f"tournament_{tournament_id}_details",
+                "name": "Weekly Championship",
+                "description": "Competitive weekly tournament for skilled players",
+                "tournament_type": "knockout",
+                "game_type": "GAME1",
+                "format": "single_elimination",
+                "status": "registration",
+                "location_id": 1,
+                "location_name": "Central Sports Complex",
+                "start_time": (datetime.utcnow() + timedelta(days=2)).isoformat(),
+                "end_time": (datetime.utcnow() + timedelta(days=2, hours=4)).isoformat(),
+                "registration_deadline": (datetime.utcnow() + timedelta(days=1)).isoformat(),
+                "min_participants": 4,
+                "max_participants": 16,
+                "current_participants": 3,
+                "entry_fee_credits": 10,
+                "prize_pool_credits": 30,
+                "min_level": 1,
+                "max_level": 50,
+                "organizer_id": 1,
+                "organizer_username": "admin",
+                "winner_id": None,
+                "winner_username": None,
+                "is_registration_open": True,
+                "is_full": False,
+                "can_start": False,
+                "created_at": (datetime.utcnow() - timedelta(days=3)).isoformat()
             },
-            {
-                "user_id": 2,
-                "username": "player2",
-                "full_name": "Player Two",
-                "level": 30,
-                "registration_time": datetime.utcnow() - timedelta(hours=12),
-            },
-        ]
-
-        # Check if current user is registered
-        user_participation = None
-        is_user_registered = any(p["user_id"] == current_user.id for p in participants)
-
-        if is_user_registered:
-            user_participation = {
-                "user_id": current_user.id,
-                "username": current_user.username,
-                "registration_time": datetime.utcnow() - timedelta(hours=6),
-                "status": ParticipantStatus.REGISTERED,
-            }
-
-        # Check if user can register
-        can_register, _ = can_user_register(mock_tournament, current_user)
-        can_register = can_register and not is_user_registered
-
-        return TournamentDetails(
-            tournament=Tournament(**mock_tournament),
-            participants=participants,
-            bracket=None,
-            current_round=0,
-            total_rounds=4,  # For 16 participants single elimination
-            user_participation=user_participation,
-            can_register=can_register,
-            can_withdraw=is_user_registered
-            and mock_tournament["status"] == TournamentStatus.REGISTRATION,
-            upcoming_matches=[],
-            completed_matches=[],
-            tournament_rules={
+            "participants": [
+                {
+                    "user_id": 1,
+                    "username": "player1",
+                    "full_name": "Player One",
+                    "level": 25,
+                    "registration_time": (datetime.utcnow() - timedelta(hours=24)).isoformat(),
+                },
+                {
+                    "user_id": 2,
+                    "username": "player2",
+                    "full_name": "Player Two",
+                    "level": 30,
+                    "registration_time": (datetime.utcnow() - timedelta(hours=12)).isoformat(),
+                }
+            ],
+            "bracket": None,
+            "current_round": 0,
+            "total_rounds": 4,
+            "user_participation": None,
+            "can_register": False,
+            "can_withdraw": False,
+            "upcoming_matches": [],
+            "completed_matches": [],
+            "tournament_rules": {
                 "format": "Single Elimination",
                 "match_duration": "30 minutes",
-                "late_policy": "10 minutes grace period",
-            },
+                "late_policy": "10 minutes grace period"
+            }
+        }
+        
+        return ResponseBuilder.success(
+            data=tournament_details,
+            message="Tournament details retrieved successfully"
         )
 
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"❌ Get tournament details error: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to retrieve tournament details",
+        import traceback
+        logger.error(f"Full traceback: {traceback.format_exc()}")
+        return ResponseBuilder.error(
+            error_code="TOURNAMENT_DETAILS_ERROR",
+            error_message=f"Failed to retrieve tournament details: {str(e)}",
+            status_code=500
         )
 
 

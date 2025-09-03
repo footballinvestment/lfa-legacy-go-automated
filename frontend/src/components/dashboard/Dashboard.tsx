@@ -38,7 +38,7 @@ import {
   Add,
   Assessment,
 } from "@mui/icons-material";
-import { useSafeAuth } from "../../contexts/AuthContext";
+import { useSafeAuth } from "../../SafeAuthContext";
 import { gameResultsService } from "../../services/gameResultsService";
 
 interface QuickAction {

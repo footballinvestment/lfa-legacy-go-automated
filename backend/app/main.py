@@ -90,6 +90,22 @@ app = FastAPI(
 # Setup enhanced OpenAPI documentation
 setup_enhanced_openapi(app)
 
+# WebSocket integration
+try:
+    import socketio
+    from app.websocket.chat_manager import sio
+    logger.info("🔌 Integrating WebSocket support...")
+    
+    # Mount Socket.IO app
+    socket_app = socketio.ASGIApp(sio, app)
+    logger.info("✅ WebSocket integration completed")
+except ImportError as e:
+    logger.warning(f"⚠️ WebSocket not available: {e}")
+    socket_app = app
+except Exception as e:
+    logger.error(f"❌ WebSocket integration failed: {e}")
+    socket_app = app
+
 # Production middleware stack (order matters!)
 logger.info("🔧 Setting up production middleware stack...")
 
@@ -203,6 +219,10 @@ def safe_import_router(router_path: str):
             from app.routers.cached_users import router
         elif router_path == "advanced_cache":
             from app.routers.advanced_cache import router
+        elif router_path == "chat":
+            from app.routers.chat import router
+        elif router_path == "moderation":
+            from app.routers.moderation import router
         else:
             raise ImportError(f"Unknown router: {router_path}")
 
@@ -238,6 +258,8 @@ health_router = safe_import_router("health")
 frontend_errors_router = safe_import_router("frontend_errors")
 cached_users_router = safe_import_router("cached_users")
 advanced_cache_router = safe_import_router("advanced_cache")
+chat_router = safe_import_router("chat")
+moderation_router = safe_import_router("moderation")
 
 # Include routers with production configuration
 if auth_router:
@@ -300,8 +322,33 @@ if advanced_cache_router:
     app.include_router(advanced_cache_router, tags=["Cache Analytics"])
     active_routers += 1
 
+if chat_router:
+    app.include_router(chat_router, tags=["Chat"])
+    active_routers += 1
+    logger.info("✅ Chat router registered with prefix /api/chat")
+
+if moderation_router:
+    app.include_router(moderation_router, tags=["Moderation"])
+    active_routers += 1
+    logger.info("✅ Moderation router registered with prefix /api/moderation")
+
 
 # Additional production endpoints
+@app.get("/ws/info", tags=["WebSocket"])
+async def websocket_info():
+    """WebSocket connection information"""
+    return ResponseBuilder.success(
+        data={
+            "websocket_available": True,
+            "endpoint": "/ws",
+            "protocol": "socket.io",
+            "transports": ["websocket", "polling"],
+            "cors_enabled": True,
+            "auth_required": True
+        },
+        message="WebSocket info retrieved successfully"
+    )
+
 @app.get("/api/health", tags=["Health"])
 async def frontend_health_check(request: Request):
     """Frontend compatible health check endpoint"""
