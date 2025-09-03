@@ -24,6 +24,7 @@ import Social from "./pages/Social";
 import TournamentDetails from "./pages/TournamentDetails";
 import GameResults from "./pages/GameResults";
 import AdminPanel from "./pages/AdminPanel";
+import VerifyEmail from "./pages/VerifyEmail";
 import Layout from "./components/layout/Layout";
 
 function App() {
@@ -42,6 +43,7 @@ function App() {
                 </PublicRoute>
               }
             />
+            <Route path="/verify-email" element={<VerifyEmail />} />
 
             {/* Protected Routes with Layout */}
             <Route

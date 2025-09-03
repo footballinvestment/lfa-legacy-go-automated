@@ -90,6 +90,7 @@ class User(Base):
     account_locked_until = Column(DateTime, nullable=True)
     mfa_enabled = Column(Boolean, default=False)
     force_password_reset = Column(Boolean, default=False)
+    email_verified = Column(Boolean, default=False)
     
     # ✅ JAVÍTÁS: last_purchase_date mező hozzáadva a credits funkcionalitáshoz
     last_purchase_date = Column(DateTime, nullable=True)

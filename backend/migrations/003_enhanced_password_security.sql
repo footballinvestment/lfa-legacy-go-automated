@@ -7,7 +7,8 @@ ADD COLUMN IF NOT EXISTS password_breach_checked BOOLEAN DEFAULT FALSE,
 ADD COLUMN IF NOT EXISTS failed_login_attempts INTEGER DEFAULT 0,
 ADD COLUMN IF NOT EXISTS account_locked_until TIMESTAMP NULL,
 ADD COLUMN IF NOT EXISTS mfa_enabled BOOLEAN DEFAULT FALSE,
-ADD COLUMN IF NOT EXISTS force_password_reset BOOLEAN DEFAULT FALSE;
+ADD COLUMN IF NOT EXISTS force_password_reset BOOLEAN DEFAULT FALSE,
+ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT FALSE;
 
 -- Performance indexes for security queries
 CREATE INDEX IF NOT EXISTS idx_users_account_locks ON users(account_locked_until) 

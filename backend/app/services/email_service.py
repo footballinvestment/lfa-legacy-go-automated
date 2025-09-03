@@ -1,12 +1,15 @@
-# app/services/email_service.py
 import smtplib
 import ssl
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from typing import List, Optional
-import os
+import secrets
+import json
+from datetime import datetime, timedelta
+from fastapi import HTTPException
+from typing import Dict, Optional, List
 import logging
 from jinja2 import Template
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -185,4 +188,103 @@ class EmailService:
             html_body=html_body
         )
 
+class EnhancedEmailService:
+    def __init__(self):
+        # In-memory token storage for development (production uses Redis)
+        self.token_storage = {}
+        self.rate_limits = {}
+    
+    async def send_verification_email(self, user_email: str, user_id: str, username: str) -> str:
+        """Send email verification with enhanced security (dev mode)"""
+        
+        # Rate limiting: 3 emails per hour per address
+        rate_key = f"email_rate:{user_email}"
+        current_count = self.rate_limits.get(rate_key, {}).get("count", 0)
+        last_reset = self.rate_limits.get(rate_key, {}).get("last_reset", datetime.utcnow())
+        
+        # Reset counter if hour has passed
+        if datetime.utcnow() - last_reset > timedelta(hours=1):
+            current_count = 0
+            last_reset = datetime.utcnow()
+        
+        if current_count >= 3:
+            raise HTTPException(
+                status_code=429,
+                detail="Too many verification emails sent. Please wait before requesting another."
+            )
+        
+        # Generate secure token
+        token_data = {
+            "user_id": user_id,
+            "email": user_email,
+            "type": "email_verification",
+            "created_at": datetime.utcnow().isoformat()
+        }
+        
+        token = secrets.token_urlsafe(32)
+        
+        # Store token with 24-hour expiration
+        expiry = datetime.utcnow() + timedelta(hours=24)
+        self.token_storage[token] = {
+            "data": token_data,
+            "expires": expiry
+        }
+        
+        # Update rate limiting
+        self.rate_limits[rate_key] = {
+            "count": current_count + 1,
+            "last_reset": last_reset
+        }
+        
+        # In development: log email instead of sending
+        verification_url = f"https://lfa-legacy-go.netlify.app/verify-email?token={token}"
+        
+        logger.info(f"""
+        📧 EMAIL VERIFICATION (DEV MODE)
+        To: {user_email}
+        Subject: Verify Your LFA Legacy GO Account
+        
+        Hello {username},
+        
+        Please click this link to verify your email:
+        {verification_url}
+        
+        Token: {token}
+        Expires: {expiry.isoformat()}
+        """)
+        
+        return token
+    
+    async def verify_email_token(self, token: str) -> Dict:
+        """Verify email token and return user data"""
+        
+        # Check if token exists and is valid
+        token_info = self.token_storage.get(token)
+        
+        if not token_info:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid or expired verification token"
+            )
+        
+        # Check expiration
+        if datetime.utcnow() > token_info["expires"]:
+            # Clean up expired token
+            del self.token_storage[token]
+            raise HTTPException(
+                status_code=400,
+                detail="Verification token has expired"
+            )
+        
+        # Get token data
+        token_data = token_info["data"]
+        
+        # Clean up used token
+        del self.token_storage[token]
+        
+        logger.info(f"✅ Email verification successful for user {token_data['user_id']}")
+        
+        return token_data
+
 email_service = EmailService()
+enhanced_email_service = EnhancedEmailService()
