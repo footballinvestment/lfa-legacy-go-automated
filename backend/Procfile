@@ -1,6 +1,6 @@
 # Heroku Procfile for LFA Legacy GO Backend
 # Defines process types for Heroku deployment
 
-web: uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 2 --worker-class uvicorn.workers.UvicornWorker
+web: uvicorn app.main_minimal:app --host 0.0.0.0 --port $PORT
 worker: python -m app.tasks.background_worker
 release: python migrations/production_setup.py

@@ -31,11 +31,11 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:3000",           # Local development
-        "http://localhost:8080",           # Alternative local port
         "https://lfa-legacy-go.netlify.app",  # Production frontend
-        "https://lfa-legacy-go-backend-376491487980.us-central1.run.app",  # Production backend
-        "http://localhost:8001",           # Test port
+        "http://localhost:3000",              # Local development
+        "http://localhost:3001",              # Local development alternate
+        "http://localhost:8080",              # Alternative local port
+        "http://localhost:8001",              # Test port
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
