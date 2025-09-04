@@ -28,6 +28,11 @@ import VerifyEmail from "./pages/VerifyEmail";
 import Layout from "./components/layout/Layout";
 
 function App() {
+  console.log("🔴 APP COMPONENT MOUNTING");
+  console.log("🔴 About to render SafeAuthProvider");
+  console.log("🔴 SafeAuthProvider import:", { SafeAuthProvider });
+  console.log("🔴 React version:", React.version);
+  
   return (
     <ThemeProvider theme={lightAppTheme}>
       <CssBaseline />

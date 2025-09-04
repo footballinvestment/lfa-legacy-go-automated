@@ -425,18 +425,21 @@ export const SafeAuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, [state, login, register, logout, updateUser, clearError, refreshStats]);
 
+  const contextValue = {
+    state,
+    login,
+    register,
+    logout,
+    updateUser,
+    clearError,
+    refreshStats,
+  };
+
+  console.log("🔴 AuthProvider providing context value:", contextValue);
+
   return (
-    <SafeAuthContext.Provider
-      value={{
-        state,
-        login,
-        register,
-        logout,
-        updateUser,
-        clearError,
-        refreshStats,
-      }}
-    >
+    <SafeAuthContext.Provider value={contextValue}>
+      {console.log("🔴 AuthProvider rendering children")}
       {process.env.NODE_ENV === 'development' && (
         <div style={{
           position: 'fixed', 
