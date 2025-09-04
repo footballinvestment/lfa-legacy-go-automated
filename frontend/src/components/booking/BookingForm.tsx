@@ -34,6 +34,7 @@ import {
   AccountBalanceWallet,
 } from "@mui/icons-material";
 import { useSafeAuth } from "../../contexts/AuthContext";
+import config from "../../config/environment";
 
 interface AvailabilitySlot {
   time: string;
@@ -105,7 +106,7 @@ const BookingForm: React.FC = () => {
 
     try {
       const token = localStorage.getItem("auth_token");
-      const url = `http://localhost:8000/api/booking/availability?date=${selectedDate}&location_id=${locationId}&game_type=${gameType}`;
+      const url = `${config.API_URL}/api/booking/availability?date=${selectedDate}&location_id=${locationId}&game_type=${gameType}`;
 
       const response = await fetch(url, {
         headers: {
@@ -141,7 +142,7 @@ const BookingForm: React.FC = () => {
           return;
         }
 
-        const response = await fetch("http://localhost:8000/api/locations", {
+        const response = await fetch(`${config.API_URL}/api/locations`, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
@@ -221,7 +222,7 @@ const BookingForm: React.FC = () => {
 
       console.log("Sending booking data:", bookingData); // Debug log
 
-      const response = await fetch("http://localhost:8000/api/booking/create", {
+      const response = await fetch(`${config.API_URL}/api/booking/create`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

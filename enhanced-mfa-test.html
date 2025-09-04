@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced MFA Injection Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .mock-profile {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        #console-output {
+            background: #000;
+            color: #0f0;
+            padding: 10px;
+            font-family: monospace;
+            height: 300px;
+            overflow-y: scroll;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔒 Enhanced MFA Injection Test</h1>
+        <p><strong>Status:</strong> Testing DOM selector fallback strategies and emergency injection</p>
+        
+        <h2>Test Results:</h2>
+        <div id="test-results"></div>
+        
+        <!-- Mock Profile Page Structure -->
+        <h2>Mock Profile Page Structure:</h2>
+        <main class="mock-profile">
+            <h1>User Profile</h1>
+            <div class="profile-section">
+                <p><strong>Username:</strong> testuser</p>
+                <p><strong>Email:</strong> test@example.com</p>
+                <div class="account-info">
+                    <p><strong>Account Type:</strong> Premium</p>
+                </div>
+            </div>
+        </main>
+        
+        <!-- Alternative structure test -->
+        <h2>Alternative Structure (React-like):</h2>
+        <div id="root">
+            <div class="MuiBox-root">
+                <div class="profile-container">
+                    <h2>Profile Settings</h2>
+                    <p>Account Type: Standard</p>
+                </div>
+            </div>
+        </div>
+        
+        <h2>Console Output:</h2>
+        <div id="console-output"></div>
+        
+        <h2>Test Controls:</h2>
+        <button onclick="runManualTest()">🧪 Run Manual Test</button>
+        <button onclick="clearResults()">🗑️ Clear Results</button>
+    </div>
+
+    <!-- Include our enhanced scripts -->
+    <script src="http://127.0.0.1:3001/react-fallback.js"></script>
+    <script src="http://127.0.0.1:3001/mfa-inject.js"></script>
+
+    <script>
+        let testResults = [];
+        const resultsDiv = document.getElementById('test-results');
+        const consoleDiv = document.getElementById('console-output');
+        
+        // Capture console logs
+        const originalConsoleLog = console.log;
+        const originalConsoleError = console.error;
+        
+        console.log = function(...args) {
+            originalConsoleLog.apply(console, args);
+            consoleDiv.innerHTML += '<span style="color: #0f0;">' + args.join(' ') + '</span><br>';
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+        };
+        
+        console.error = function(...args) {
+            originalConsoleError.apply(console, args);
+            consoleDiv.innerHTML += '<span style="color: #f00;">' + args.join(' ') + '</span><br>';
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+        };
+        
+        function addTestResult(test, status, message) {
+            testResults.push({test, status, message});
+            const div = document.createElement('div');
+            div.className = `test-result ${status}`;
+            div.innerHTML = `<strong>${test}:</strong> ${message}`;
+            resultsDiv.appendChild(div);
+        }
+        
+        function clearResults() {
+            testResults = [];
+            resultsDiv.innerHTML = '';
+            consoleDiv.innerHTML = '';
+        }
+        
+        function runManualTest() {
+            console.log('🔄 Running manual MFA injection test...');
+            
+            // Test DOM selector strategies
+            const strategies = [
+                () => document.querySelector('main'),
+                () => Array.from(document.querySelectorAll('h1, h2, h3')).find(el => el.textContent.includes('Profile')),
+                () => Array.from(document.querySelectorAll('*')).find(el => el.textContent && el.textContent.includes('Account Type')),
+                () => document.querySelector('.MuiBox-root'),
+                () => document.querySelector('#root > div'),
+                () => document.body
+            ];
+            
+            strategies.forEach((strategy, index) => {
+                const result = strategy();
+                console.log(`Strategy ${index + 1} result:`, result ? result.tagName + '.' + (result.className || 'no-class') : 'null');
+            });
+            
+            // Force re-injection
+            const existingMFA = document.querySelector('.mfa-security-card');
+            if (existingMFA) {
+                existingMFA.remove();
+                console.log('Removed existing MFA section for re-test');
+            }
+            
+            // Trigger injection
+            if (typeof injectMFASection === 'function') {
+                const success = injectMFASection();
+                addTestResult('Manual Injection', success ? 'success' : 'error', success ? 'Successfully injected' : 'Failed to inject');
+            }
+        }
+        
+        // Auto-run tests after page loads
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                console.log('🚀 Enhanced MFA test page loaded');
+                
+                // Test 1: Script loading
+                if (typeof injectMFASection === 'function') {
+                    addTestResult('Script Loading', 'success', 'MFA injection function is available');
+                } else {
+                    addTestResult('Script Loading', 'error', 'MFA injection function not found');
+                }
+                
+                // Test 2: DOM selectors
+                setTimeout(() => {
+                    const mfaElements = document.querySelectorAll('.mfa-security-card');
+                    if (mfaElements.length > 0) {
+                        addTestResult('MFA Injection', 'success', `Found ${mfaElements.length} MFA section(s)`);
+                        
+                        // Test button functionality
+                        const buttons = document.querySelectorAll('button[onclick*="MFA"]');
+                        if (buttons.length > 0) {
+                            addTestResult('MFA Button', 'success', `Found ${buttons.length} working button(s)`);
+                        }
+                    } else {
+                        addTestResult('MFA Injection', 'warning', 'No MFA section found - might use emergency injection');
+                    }
+                }, 5000);
+                
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

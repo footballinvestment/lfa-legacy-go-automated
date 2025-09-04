@@ -2,6 +2,7 @@
 // LFA Legacy GO - Weather Widget Component (Fixed Version)
 
 import React, { useState, useEffect, useCallback } from "react";
+import config from "../../config/environment";
 import {
   Box,
   Card,
@@ -79,7 +80,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({
 
       // Fetch current weather
       const weatherResponse = await fetch(
-        `http://localhost:8000/api/weather/location/${locationId}/current`,
+        `${config.API_URL}/api/weather/location/${locationId}/current`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -97,7 +98,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({
       // Fetch alerts if enabled
       if (showAlerts) {
         const alertsResponse = await fetch(
-          `http://localhost:8000/api/weather/location/${locationId}/alerts`,
+          `${config.API_URL}/api/weather/location/${locationId}/alerts`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

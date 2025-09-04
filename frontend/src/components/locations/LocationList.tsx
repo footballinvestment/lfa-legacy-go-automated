@@ -2,6 +2,7 @@
 // LFA Legacy GO - Location Listing with Weather Integration
 
 import React, { useState, useEffect } from "react";
+import config from "../../config/environment";
 import { useNavigate } from "react-router-dom";
 import {
   Box,
@@ -78,7 +79,7 @@ const LocationList: React.FC = () => {
 
   const checkWeatherAvailability = async () => {
     try {
-      const response = await fetch("http://localhost:8000/api/weather/health");
+      const response = await fetch(`${config.API_URL}/api/weather/health`);
       if (response.ok) {
         const data = await response.json();
         setWeatherEnabled(data.api_service_available);
@@ -93,7 +94,7 @@ const LocationList: React.FC = () => {
       setLoading(true);
       const token = localStorage.getItem("auth_token");
 
-      const response = await fetch("http://localhost:8000/api/locations", {
+      const response = await fetch(`${config.API_URL}/api/locations`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
