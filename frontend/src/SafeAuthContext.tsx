@@ -167,7 +167,7 @@ export const SafeAuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           user_type: userData.user_type || "user", // ✅ ADMIN FIELD!
           is_active: userData.is_active !== false,
           is_admin: userData.user_type === "admin" || userData.user_type === "moderator" || userData.is_admin || false, // ✅ ADMIN FIELD!
-          mfa_enabled: Boolean(userData.mfa_enabled), // ✅ MFA FIELD!
+          mfa_enabled: Boolean(userData.mfa_enabled || false), // ✅ MFA FIELD! (fallback to false while backend deploys)
           created_at: userData.created_at || "",
           last_login: userData.last_login || undefined,
           last_activity: userData.last_activity || undefined,
