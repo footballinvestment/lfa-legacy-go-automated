@@ -106,11 +106,18 @@ const SafeAuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useSafeAuth = (): AuthContextType => {
   console.log("🔴 useSafeAuth HOOK CALLED");
+  console.log("🔴 AuthContext value:", SafeAuthContext);
+  console.log("🔴 useContext about to be called");
+  
   const context = useContext(SafeAuthContext);
-  console.log("🔴 Context from useContext:", context);
+  
+  console.log("🔴 useContext returned:", context);
+  console.log("🔴 Context defined?", context !== undefined);
+  
   if (context === undefined) {
-    console.error("🔴 CRITICAL: useSafeAuth used outside SafeAuthProvider!");
-    throw new Error("useSafeAuth must be used within a SafeAuthProvider");
+    console.error("🔴 CRITICAL: useAuth must be used within an AuthProvider");
+    console.error("🔴 This usually means AuthProvider is not wrapping the component tree");
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };
@@ -120,8 +127,12 @@ interface AuthProviderProps {
 }
 
 export const SafeAuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  console.log("🔴 AUTHPROVIDER COMPONENT MOUNTING");
+  console.log("🔴 AUTHPROVIDER COMPONENT MOUNTING - LIFECYCLE START");
+  console.log("🔴 AuthProvider props:", { children: !!children });
+  console.log("🔴 React environment check:", { React: !!React });
+  
   const [state, dispatch] = useReducer(authReducer, initialState);
+  console.log("🔴 useReducer initialized:", state);
 
   // Initialize auth state from stored token
   useEffect(() => {

@@ -30,7 +30,12 @@ import MFASetup from "../components/auth/MFASetup";
 
 const Profile: React.FC = () => {
   console.log("🔴 PROFILE COMPONENT RENDERING");
+  console.log("🔴 useSafeAuth hook about to be called");
+  
   const { state } = useSafeAuth();
+  
+  console.log("🔴 useSafeAuth returned:", state);
+  console.log("🔴 Auth state user:", state?.user);
   const [showMFASetup, setShowMFASetup] = useState(false);
 
   if (!state.user) {
