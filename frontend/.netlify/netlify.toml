@@ -7,15 +7,19 @@ plugins = []
 [functions."*"]
 
 [build]
-publish = "/Users/lovas.zoltan/Seafile/Football Investment/Projects/GanballGames/lfa-legacy-go/frontend"
+publish = "build"
 publishOrigin = "config"
 commandOrigin = "config"
-command = "echo 'Using pre-built files'"
+command = "NODE_ENV=production GENERATE_SOURCEMAP=false NODE_OPTIONS='--max-old-space-size=8192' npm run build"
 
 [build.environment]
 NODE_VERSION = "18"
+NODE_OPTIONS = "--max-old-space-size=8192"
+GENERATE_SOURCEMAP = "false"
+DISABLE_ESLINT_PLUGIN = "true"
+TSC_COMPILE_ON_ERROR = "true"
+SKIP_PREFLIGHT_CHECK = "true"
 REACT_APP_API_URL = "https://lfa-legacy-go-backend-376491487980.us-central1.run.app"
-REACT_APP_DEBUG = "true"
 
 [build.processing]
 
