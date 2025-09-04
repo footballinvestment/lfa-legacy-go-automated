@@ -29,6 +29,7 @@ import { useSafeAuth } from "../SafeAuthContext";
 import MFASetup from "../components/auth/MFASetup";
 
 const Profile: React.FC = () => {
+  console.log("🔴 PROFILE COMPONENT RENDERING");
   const { state } = useSafeAuth();
   const [showMFASetup, setShowMFASetup] = useState(false);
 

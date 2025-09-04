@@ -105,8 +105,11 @@ interface AuthContextType {
 const SafeAuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useSafeAuth = (): AuthContextType => {
+  console.log("🔴 useSafeAuth HOOK CALLED");
   const context = useContext(SafeAuthContext);
+  console.log("🔴 Context from useContext:", context);
   if (context === undefined) {
+    console.error("🔴 CRITICAL: useSafeAuth used outside SafeAuthProvider!");
     throw new Error("useSafeAuth must be used within a SafeAuthProvider");
   }
   return context;
@@ -117,6 +120,7 @@ interface AuthProviderProps {
 }
 
 export const SafeAuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  console.log("🔴 AUTHPROVIDER COMPONENT MOUNTING");
   const [state, dispatch] = useReducer(authReducer, initialState);
 
   // Initialize auth state from stored token
