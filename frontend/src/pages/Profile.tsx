@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -29,13 +29,50 @@ import { useSafeAuth } from "../SafeAuthContext";
 import MFASetup from "../components/auth/MFASetup";
 
 const Profile: React.FC = () => {
-  console.log("🔴 PROFILE COMPONENT RENDERING");
-  console.log("🔴 useSafeAuth hook about to be called");
+  console.log("🔴 PROFILE: Emergency auth bypass starting");
   
-  const { state } = useSafeAuth();
+  // Emergency fallback state
+  const [emergencyUser, setEmergencyUser] = useState(null);
   
-  console.log("🔴 useSafeAuth returned:", state);
-  console.log("🔴 Auth state user:", state?.user);
+  // Try normal context first
+  let normalContext;
+  try {
+    normalContext = useSafeAuth();
+    console.log("🔴 Normal context works:", normalContext);
+  } catch (error) {
+    console.error("🔴 Normal context failed:", error);
+    normalContext = null;
+  }
+  
+  // Manual user fetch if context fails
+  useEffect(() => {
+    if (!normalContext && !emergencyUser) {
+      console.log("🔴 EMERGENCY: Manual user fetch triggered");
+      const token = localStorage.getItem('auth_token');
+      if (token) {
+        fetch('https://lfa-legacy-go-backend-376491487980.us-central1.run.app/api/auth/me', {
+          headers: { 'Authorization': 'Bearer ' + token }
+        })
+        .then(r => r.json())
+        .then(userData => {
+          console.log("🔴 EMERGENCY: Manual fetch success:", userData);
+          const user = {
+            ...userData,
+            mfa_enabled: Boolean(userData.mfa_enabled || false)
+          };
+          setEmergencyUser(user);
+        })
+        .catch(error => {
+          console.error("🔴 EMERGENCY: Manual fetch failed:", error);
+        });
+      }
+    }
+  }, [normalContext, emergencyUser]);
+  
+  // Use whichever works
+  const state = normalContext?.state || { user: emergencyUser, loading: false, error: null };
+  
+  console.log("🔴 FINAL STATE:", state);
   const [showMFASetup, setShowMFASetup] = useState(false);
 
   if (!state.user) {

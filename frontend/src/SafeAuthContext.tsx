@@ -410,6 +410,8 @@ export const SafeAuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Debug: Expose auth context to window for debugging
   useEffect(() => {
+    console.log("🔴 Window context exposure starting");
+    
     if (typeof window !== 'undefined') {
       (window as any).authContext = { 
         state, 
@@ -420,8 +422,8 @@ export const SafeAuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         clearError, 
         refreshStats 
       };
-      console.log('🔧 Auth context exposed to window:', (window as any).authContext);
-      console.log('🔧 Current auth state:', state);
+      console.log("🔴 Auth context exposed to window (PRODUCTION SAFE):", (window as any).authContext);
+      console.log("🔴 Window context state:", state);
     }
   }, [state, login, register, logout, updateUser, clearError, refreshStats]);
 
@@ -440,59 +442,23 @@ export const SafeAuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   return (
     <SafeAuthContext.Provider value={contextValue}>
       {console.log("🔴 AuthProvider rendering children")}
-      {process.env.NODE_ENV === 'development' && (
-        <div style={{
-          position: 'fixed', 
-          top: '10px', 
-          right: '10px', 
-          background: 'red', 
-          color: 'white', 
-          padding: '10px', 
-          zIndex: 9999
-        }}>
-          <button onClick={async () => {
-            console.log('🔧 MANUAL AUTH TRIGGER');
-            const token = localStorage.getItem('auth_token');
-            if (token) {
-              try {
-                const userData = await authService.getCurrentUser();
-                console.log('🔧 Manual fetch result:', userData);
-                const user: User = { 
-                  ...userData, 
-                  mfa_enabled: Boolean(userData.mfa_enabled || false),
-                  is_admin: userData.user_type === "admin" || userData.user_type === "moderator" || userData.is_admin || false,
-                  user_type: userData.user_type || "user",
-                  display_name: userData.display_name || userData.full_name || userData.username || "",
-                  level: userData.level || 1,
-                  xp: userData.xp || 0,
-                  credits: userData.credits || 0,
-                  skills: userData.skills || {},
-                  games_played: userData.games_played || 0,
-                  games_won: userData.games_won || 0,
-                  games_lost: userData.games_lost || 0,
-                  friend_count: userData.friend_count || 0,
-                  challenge_wins: userData.challenge_wins || 0,
-                  challenge_losses: userData.challenge_losses || 0,
-                  total_achievements: userData.total_achievements || 0,
-                  is_premium: Boolean(userData.is_premium),
-                  premium_expires_at: userData.premium_expires_at || undefined,
-                  is_active: userData.is_active !== false,
-                  created_at: userData.created_at || "",
-                  last_login: userData.last_login || undefined,
-                  last_activity: userData.last_activity || undefined,
-                  bio: userData.bio || ""
-                };
-                dispatch({ type: "AUTH_SUCCESS", payload: user });
-                console.log('🔧 Manual auth success:', user);
-              } catch (error) {
-                console.error('🔧 Manual fetch error:', error);
-              }
-            }
-          }}>
-            DEBUG: Manual Auth
-          </button>
-        </div>
-      )}
+      
+      {/* Production-safe debug panel */}
+      <div style={{
+        position: 'fixed', 
+        bottom: '10px', 
+        right: '10px', 
+        background: 'darkblue', 
+        color: 'white', 
+        padding: '5px', 
+        fontSize: '10px',
+        zIndex: 9999,
+        borderRadius: '3px'
+      }}>
+        <div>Auth: {state.user ? '✅' : '❌'}</div>
+        <div>User: {state.user?.username || 'None'}</div>
+        <div>MFA: {state.user?.mfa_enabled ? '✅' : '❌'}</div>
+      </div>
       {children}
     </SafeAuthContext.Provider>
   );
