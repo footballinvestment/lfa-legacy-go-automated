@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Frontend MFA Integration Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+        .test { background: #f5f5f5; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .success { color: #27ae60; }
+        .error { color: #e74c3c; }
+        iframe { width: 100%; height: 600px; border: 1px solid #ccc; }
+        button { background: #3498db; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>🔐 Frontend MFA Integration Test</h1>
+    
+    <div class="test">
+        <h2>Step 1: Load Frontend Application</h2>
+        <button onclick="loadFrontend()">Load LFA Legacy GO Frontend</button>
+        <div id="frontend-status"></div>
+    </div>
+    
+    <div class="test">
+        <h2>Step 2: Test Frontend in Frame</h2>
+        <iframe id="app-frame" src="https://lfa-legacy-go.netlify.app" style="display:none;"></iframe>
+        <button onclick="showFrame()">Show Frontend Frame</button>
+    </div>
+    
+    <div class="test">
+        <h2>Step 3: Manual Test Instructions</h2>
+        <ol>
+            <li>Click "Load LFA Legacy GO Frontend" above</li>
+            <li>Login with: <code>debugadmin</code> / <code>DebugAdmin2024!</code></li>
+            <li>Go to Profile page</li>
+            <li>Look for "Two-Factor Authentication" section</li>
+            <li>Click "Enable Two-Factor Authentication" button</li>
+            <li>Verify MFA setup dialog appears with QR code</li>
+            <li>Test backup codes display</li>
+        </ol>
+        
+        <div id="manual-test-result">
+            <h4>Expected Results:</h4>
+            <ul>
+                <li>✅ Login form loads and accepts debugadmin credentials</li>
+                <li>✅ Profile page shows MFA status (currently "Disabled")</li>
+                <li>✅ "Enable Two-Factor Authentication" button visible</li>
+                <li>✅ Clicking button opens MFA setup dialog</li>
+                <li>✅ QR code displays for scanning</li>
+                <li>✅ Backup codes shown (8 codes like F0EE48A9)</li>
+                <li>✅ TOTP input field works for 6-digit codes</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="test">
+        <h2>Step 4: Backend API Verification</h2>
+        <button onclick="testMFAAPI()">Test MFA API Directly</button>
+        <div id="api-test-result"></div>
+    </div>
+
+    <script>
+        function loadFrontend() {
+            window.open('https://lfa-legacy-go.netlify.app', '_blank');
+            document.getElementById('frontend-status').innerHTML = 
+                '<p class="success">✅ Frontend opened in new tab. Please test manually.</p>';
+        }
+        
+        function showFrame() {
+            document.getElementById('app-frame').style.display = 'block';
+        }
+        
+        async function testMFAAPI() {
+            const resultDiv = document.getElementById('api-test-result');
+            resultDiv.innerHTML = '<p>Testing MFA API endpoints...</p>';
+            
+            try {
+                // Test login first
+                const loginResponse = await fetch('https://lfa-legacy-go-backend-376491487980.us-central1.run.app/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: 'debugadmin',
+                        password: 'DebugAdmin2024!'
+                    })
+                });
+                
+                if (!loginResponse.ok) {
+                    throw new Error('Login failed');
+                }
+                
+                const loginData = await loginResponse.json();
+                const token = loginData.access_token;
+                
+                // Test MFA setup
+                const mfaResponse = await fetch('https://lfa-legacy-go-backend-376491487980.us-central1.run.app/api/auth/mfa/setup-totp', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!mfaResponse.ok) {
+                    throw new Error('MFA setup failed');
+                }
+                
+                const mfaData = await mfaResponse.json();
+                
+                resultDiv.innerHTML = `
+                    <h4 class="success">✅ Backend MFA API Working</h4>
+                    <p><strong>Login:</strong> ✅ Success</p>
+                    <p><strong>MFA Setup:</strong> ✅ Success</p>
+                    <p><strong>Secret Generated:</strong> ${mfaData.secret}</p>
+                    <p><strong>QR Code:</strong> ${mfaData.qr_code ? '✅ Generated' : '❌ Missing'}</p>
+                    <p><strong>Backup Codes:</strong> ${mfaData.backup_codes?.length || 0} codes</p>
+                    
+                    <h4>Next Step:</h4>
+                    <p>Frontend MFA integration is ready for testing. Backend APIs confirmed working.</p>
+                `;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">❌ API Test Failed: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

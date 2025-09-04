@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MFA Integration Test - LFA Legacy GO</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .test-section { background: #f5f5f5; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .success { color: #27ae60; }
+        .error { color: #e74c3c; }
+        .info { color: #3498db; }
+        pre { background: #2c3e50; color: #ecf0f1; padding: 10px; border-radius: 3px; overflow-x: auto; }
+        button { background: #3498db; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #2980b9; }
+        img { max-width: 300px; border: 2px solid #ccc; }
+    </style>
+</head>
+<body>
+    <h1>🔐 MFA Integration Test - LFA Legacy GO</h1>
+    
+    <div class="test-section">
+        <h2>1. Login Test</h2>
+        <button onclick="testLogin()">Test Login</button>
+        <div id="login-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. MFA Setup Test</h2>
+        <button onclick="testMFASetup()">Setup MFA</button>
+        <div id="mfa-setup-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. QR Code Display</h2>
+        <div id="qr-code"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>4. MFA Enable Test</h2>
+        <input type="text" id="totp-code" placeholder="Enter TOTP code from authenticator" />
+        <button onclick="testMFAEnable()">Enable MFA</button>
+        <div id="mfa-enable-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>5. MFA Verification Test</h2>
+        <input type="text" id="verify-code" placeholder="Enter TOTP code" />
+        <button onclick="testMFAVerify()">Verify MFA</button>
+        <div id="mfa-verify-result"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://lfa-legacy-go-backend-376491487980.us-central1.run.app/api/auth';
+        let authToken = '';
+        let mfaSecret = '';
+        let mfaSetupToken = '';
+        
+        async function testLogin() {
+            const result = document.getElementById('login-result');
+            result.innerHTML = '<p class="info">Testing login...</p>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: 'debugadmin',
+                        password: 'DebugAdmin2024!'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    authToken = data.access_token;
+                    result.innerHTML = `
+                        <p class="success">✅ Login successful!</p>
+                        <pre>User: ${data.user.username}
+Email: ${data.user.email}
+Token: ${authToken.substring(0, 20)}...</pre>
+                    `;
+                } else {
+                    result.innerHTML = `<p class="error">❌ Login failed: ${data.detail}</p>`;
+                }
+            } catch (error) {
+                result.innerHTML = `<p class="error">🔥 Error: ${error.message}</p>`;
+            }
+        }
+        
+        async function testMFASetup() {
+            const result = document.getElementById('mfa-setup-result');
+            result.innerHTML = '<p class="info">Setting up MFA...</p>';
+            
+            if (!authToken) {
+                result.innerHTML = '<p class="error">❌ Please login first</p>';
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/mfa/setup-totp`, {
+                    method: 'POST',
+                    headers: { 
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json' 
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    mfaSecret = data.secret;
+                    mfaSetupToken = data.setup_token;
+                    
+                    result.innerHTML = `
+                        <p class="success">✅ MFA setup successful!</p>
+                        <pre>Secret: ${data.secret}
+Backup codes: ${data.backup_codes.join(', ')}
+Setup token: ${data.setup_token}</pre>
+                    `;
+                    
+                    // Display QR code
+                    const qrDiv = document.getElementById('qr-code');
+                    qrDiv.innerHTML = `
+                        <h3>🔳 Scan this QR code with Google Authenticator:</h3>
+                        <img src="${data.qr_code}" alt="MFA QR Code" />
+                        <p><strong>Secret key:</strong> ${data.secret}</p>
+                        <p><strong>Backup codes:</strong> ${data.backup_codes.join(', ')}</p>
+                    `;
+                } else {
+                    result.innerHTML = `<p class="error">❌ MFA setup failed: ${data.detail}</p>`;
+                }
+            } catch (error) {
+                result.innerHTML = `<p class="error">🔥 Error: ${error.message}</p>`;
+            }
+        }
+        
+        async function testMFAEnable() {
+            const result = document.getElementById('mfa-enable-result');
+            const code = document.getElementById('totp-code').value;
+            
+            if (!code) {
+                result.innerHTML = '<p class="error">❌ Please enter TOTP code</p>';
+                return;
+            }
+            
+            result.innerHTML = '<p class="info">Enabling MFA...</p>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/mfa/enable`, {
+                    method: 'POST',
+                    headers: { 
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json' 
+                    },
+                    body: JSON.stringify({
+                        method: 'totp',
+                        secret: mfaSecret,
+                        verification_code: code
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    result.innerHTML = `
+                        <p class="success">✅ MFA enabled successfully!</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    result.innerHTML = `<p class="error">❌ MFA enable failed: ${data.detail}</p>`;
+                }
+            } catch (error) {
+                result.innerHTML = `<p class="error">🔥 Error: ${error.message}</p>`;
+            }
+        }
+        
+        async function testMFAVerify() {
+            const result = document.getElementById('mfa-verify-result');
+            const code = document.getElementById('verify-code').value;
+            
+            if (!code) {
+                result.innerHTML = '<p class="error">❌ Please enter TOTP code</p>';
+                return;
+            }
+            
+            result.innerHTML = '<p class="info">Verifying MFA code...</p>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/mfa/verify`, {
+                    method: 'POST',
+                    headers: { 
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json' 
+                    },
+                    body: JSON.stringify({
+                        code: code
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    result.innerHTML = `
+                        <p class="success">✅ MFA verification successful!</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    result.innerHTML = `<p class="error">❌ MFA verification failed: ${data.detail}</p>`;
+                }
+            } catch (error) {
+                result.innerHTML = `<p class="error">🔥 Error: ${error.message}</p>`;
+            }
+        }
+        
+        // Auto-run login test
+        window.onload = () => {
+            testLogin();
+        };
+    </script>
+</body>
+</html>

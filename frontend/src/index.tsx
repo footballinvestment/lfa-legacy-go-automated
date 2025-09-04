@@ -1,8 +1,19 @@
 // src/index.tsx
 // LFA Legacy GO - Performance Optimized Entry Point
 
+console.log("Index.tsx loading...");
+
 import React from "react";
 import { createRoot } from "react-dom/client";
+
+console.log("React import:", typeof React);
+console.log("ReactDOM import:", typeof createRoot);
+
+// Force React to be available globally
+if (typeof window !== 'undefined') {
+  (window as any).React = React;
+  console.log("React forced to window");
+}
 import "./index.css";
 import App from "./App";
 import { setupGlobalErrorHandlers } from "./utils/errorHandler";

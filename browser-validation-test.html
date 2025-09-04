@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>🚨 EMERGENCY VALIDATION - Environment Fix Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f0f2f5; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background: #d4edda; border-color: #c3e6cb; color: #155724; }
+        .error { background: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+        .warning { background: #fff3cd; border-color: #ffeeba; color: #856404; }
+        .info { background: #d1ecf1; border-color: #bee5eb; color: #0c5460; }
+        button { padding: 10px 20px; margin: 5px; border: none; border-radius: 5px; cursor: pointer; }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .result { margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 3px; font-family: monospace; font-size: 12px; }
+        .url { font-weight: bold; color: #007bff; }
+        .localhost { color: #dc3545; font-weight: bold; }
+        .production { color: #28a745; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚨 EMERGENCY ENVIRONMENT VALIDATION TEST</h1>
+        <div class="info test-section">
+            <h3>📋 Test Purpose</h3>
+            <p>Verify that the Netlify frontend is now using the Google Cloud backend instead of localhost.</p>
+            <p><strong>Expected:</strong> All requests go to <span class="production">lfa-legacy-go-backend-376491487980.us-central1.run.app</span></p>
+            <p><strong>FAILURE:</strong> Any requests to <span class="localhost">localhost:8000</span></p>
+        </div>
+
+        <div class="test-section">
+            <h3>🔧 Quick Tests</h3>
+            <button class="btn-primary" onclick="checkEnvironmentVars()">1️⃣ Check Environment Variables</button>
+            <button class="btn-primary" onclick="testNetworkRequests()">2️⃣ Test Network Requests</button>
+            <button class="btn-primary" onclick="testFullLogin()">3️⃣ Full Login Test</button>
+            <button class="btn-danger" onclick="clearResults()">🧹 Clear Results</button>
+        </div>
+
+        <div id="testResults"></div>
+
+        <div class="test-section warning">
+            <h3>⚡ CRITICAL SUCCESS CRITERIA</h3>
+            <ul>
+                <li>✅ <strong>Environment</strong>: API_URL contains "lfa-legacy-go-backend"</li>
+                <li>✅ <strong>Network</strong>: NO requests to localhost:8000</li>
+                <li>✅ <strong>Login</strong>: Successful without CORS errors</li>
+                <li>✅ <strong>Friend Requests</strong>: Both endpoints accessible</li>
+            </ul>
+        </div>
+
+        <div class="test-section info">
+            <h3>🔗 Direct Links for Manual Testing</h3>
+            <p><strong>Frontend:</strong> <a href="https://lfa-legacy-go.netlify.app" target="_blank">https://lfa-legacy-go.netlify.app</a></p>
+            <p><strong>Backend Health:</strong> <a href="https://lfa-legacy-go-backend-376491487980.us-central1.run.app/api/health" target="_blank">Backend Health Check</a></p>
+        </div>
+    </div>
+
+    <script>
+        function addResult(title, content, status = 'info') {
+            const resultsDiv = document.getElementById('testResults');
+            const div = document.createElement('div');
+            div.className = `test-section ${status}`;
+            div.innerHTML = `<h3>${title}</h3><div class="result">${content}</div>`;
+            resultsDiv.appendChild(div);
+            return div;
+        }
+
+        function clearResults() {
+            document.getElementById('testResults').innerHTML = '';
+        }
+
+        function checkEnvironmentVars() {
+            const resultDiv = addResult('🔧 Environment Variables Check', 'Checking...', 'info');
+            
+            try {
+                // Check if we can access React environment config
+                const apiUrl = process?.env?.REACT_APP_API_URL || 'undefined';
+                const nodeEnv = process?.env?.NODE_ENV || 'undefined';
+                
+                let content = `
+                    <strong>Environment Variables:</strong><br>
+                    REACT_APP_API_URL: <span class="${apiUrl.includes('localhost') ? 'localhost' : 'production'}">${apiUrl}</span><br>
+                    NODE_ENV: ${nodeEnv}<br>
+                    <br>
+                `;
+                
+                // Check current origin and expected backend
+                content += `
+                    <strong>Current Context:</strong><br>
+                    Frontend Origin: ${window.location.origin}<br>
+                    Expected Backend: <span class="production">lfa-legacy-go-backend-376491487980.us-central1.run.app</span><br>
+                `;
+                
+                // Determine if this is correct
+                if (apiUrl.includes('lfa-legacy-go-backend')) {
+                    resultDiv.className = 'test-section success';
+                    content += '<br><strong>✅ ENVIRONMENT VARIABLES CORRECT!</strong>';
+                } else if (apiUrl.includes('localhost')) {
+                    resultDiv.className = 'test-section error';
+                    content += '<br><strong>❌ STILL USING LOCALHOST!</strong>';
+                } else {
+                    resultDiv.className = 'test-section warning';
+                    content += '<br><strong>⚠️ ENVIRONMENT VARIABLE NOT SET</strong>';
+                }
+                
+                resultDiv.innerHTML = `<h3>🔧 Environment Variables</h3><div class="result">${content}</div>`;
+                
+            } catch (error) {
+                resultDiv.className = 'test-section error';
+                resultDiv.innerHTML = `<h3>❌ Environment Check Failed</h3><div class="result">Error: ${error.message}</div>`;
+            }
+        }
+
+        async function testNetworkRequests() {
+            const resultDiv = addResult('🌐 Network Request Test', 'Testing API connectivity...', 'info');
+            
+            try {
+                // Monitor fetch calls
+                const originalFetch = window.fetch;
+                const fetchCalls = [];
+                
+                window.fetch = function(...args) {
+                    fetchCalls.push(args[0]);
+                    return originalFetch.apply(this, arguments);
+                };
+                
+                // Test a health check
+                const response = await fetch('/api/health');
+                const status = response.status;
+                
+                // Restore original fetch
+                window.fetch = originalFetch;
+                
+                let content = `
+                    <strong>Network Test Results:</strong><br>
+                    Request URL: ${fetchCalls[fetchCalls.length - 1] || 'None'}<br>
+                    Response Status: ${status}<br>
+                    <br>
+                `;
+                
+                // Check if requests go to localhost
+                const hasLocalhost = fetchCalls.some(url => 
+                    typeof url === 'string' && url.includes('localhost:8000')
+                );
+                
+                if (hasLocalhost) {
+                    resultDiv.className = 'test-section error';
+                    content += '<strong>❌ REQUESTS STILL GO TO LOCALHOST!</strong>';
+                } else {
+                    resultDiv.className = 'test-section success';
+                    content += '<strong>✅ NO LOCALHOST REQUESTS DETECTED!</strong>';
+                }
+                
+                resultDiv.innerHTML = `<h3>🌐 Network Request Test</h3><div class="result">${content}</div>`;
+                
+            } catch (error) {
+                resultDiv.className = 'test-section error';
+                resultDiv.innerHTML = `<h3>❌ Network Test Failed</h3><div class="result">Error: ${error.message}</div>`;
+            }
+        }
+
+        async function testFullLogin() {
+            const resultDiv = addResult('🔐 Full Authentication Test', 'Testing complete login flow...', 'info');
+            
+            try {
+                // Test login
+                const loginResponse = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: 'admin', password: 'admin123' })
+                });
+                
+                let content = `
+                    <strong>Login Test:</strong><br>
+                    Status: ${loginResponse.status}<br>
+                    URL: ${loginResponse.url}<br>
+                `;
+                
+                if (loginResponse.ok) {
+                    const loginData = await loginResponse.json();
+                    
+                    // Test friend requests
+                    const sentResponse = await fetch('/api/social/friend-requests/sent', {
+                        headers: { 'Authorization': `Bearer ${loginData.access_token}` }
+                    });
+                    
+                    content += `
+                        <br><strong>Friend Requests Test:</strong><br>
+                        Sent Requests Status: ${sentResponse.status}<br>
+                        Sent Requests URL: ${sentResponse.url}<br>
+                    `;
+                    
+                    // Check URLs
+                    const usesProduction = (loginResponse.url + sentResponse.url).includes('lfa-legacy-go-backend');
+                    const usesLocalhost = (loginResponse.url + sentResponse.url).includes('localhost:8000');
+                    
+                    if (usesProduction && !usesLocalhost) {
+                        resultDiv.className = 'test-section success';
+                        content += '<br><strong>🎉 COMPLETE SUCCESS - USING PRODUCTION BACKEND!</strong>';
+                    } else if (usesLocalhost) {
+                        resultDiv.className = 'test-section error';
+                        content += '<br><strong>❌ STILL USING LOCALHOST BACKEND!</strong>';
+                    } else {
+                        resultDiv.className = 'test-section warning';
+                        content += '<br><strong>⚠️ UNCLEAR BACKEND CONFIGURATION</strong>';
+                    }
+                    
+                } else {
+                    resultDiv.className = 'test-section error';
+                    content += '<br><strong>❌ LOGIN FAILED!</strong>';
+                }
+                
+                resultDiv.innerHTML = `<h3>🔐 Full Authentication Test</h3><div class="result">${content}</div>`;
+                
+            } catch (error) {
+                resultDiv.className = 'test-section error';
+                resultDiv.innerHTML = `<h3>❌ Login Test Failed</h3><div class="result">Error: ${error.message}<br><br><strong>This could indicate CORS or environment issues!</strong></div>`;
+            }
+        }
+
+        // Auto-run environment check on page load
+        window.onload = function() {
+            addResult('📋 Test Instructions', 'Run each test to verify the environment fix. The frontend should now use the Google Cloud backend instead of localhost.', 'info');
+            setTimeout(checkEnvironmentVars, 1000);
+        };
+    </script>
+</body>
+</html>

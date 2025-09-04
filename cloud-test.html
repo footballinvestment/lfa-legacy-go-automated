@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>LFA Legacy GO - Cloud Friend Request System Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f0f2f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background: #d4edda; border-color: #c3e6cb; }
+        .error { background: #f8d7da; border-color: #f5c6cb; }
+        .pending { background: #fff3cd; border-color: #ffeeba; }
+        button { padding: 10px 20px; margin: 5px; border: none; border-radius: 5px; cursor: pointer; background: #007bff; color: white; }
+        button:hover { background: #0056b3; }
+        .result { margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 3px; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌐 LFA Legacy GO - Cloud System Test</h1>
+        <p><strong>Frontend:</strong> https://lfa-legacy-go.netlify.app</p>
+        <p><strong>Backend:</strong> https://lfa-legacy-go-backend-376491487980.us-central1.run.app</p>
+
+        <div id="testResults"></div>
+
+        <button onclick="testCompleteSystem()">🧪 Run Complete Cloud Test</button>
+        <button onclick="testBackendDirect()">🔧 Test Backend Direct</button>
+        <button onclick="clearResults()">🧹 Clear Results</button>
+
+        <div id="instructions" class="test-section">
+            <h3>📋 Manual Testing Instructions</h3>
+            <ol>
+                <li><strong>Visit:</strong> <a href="https://lfa-legacy-go.netlify.app" target="_blank">https://lfa-legacy-go.netlify.app</a></li>
+                <li><strong>Login as admin:</strong> username: <code>admin</code>, password: <code>admin123</code></li>
+                <li><strong>Navigate to Social:</strong> Click "Social" in navigation</li>
+                <li><strong>Check Requests:</strong> Look for "Incoming (X)" and "Sent (Y)" tabs</li>
+                <li><strong>Test Sent Tab:</strong> Click "Sent" tab - should show outgoing friend requests</li>
+                <li><strong>Test with testuser:</strong> Open incognito, login as testuser/test123, check social</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://lfa-legacy-go-backend-376491487980.us-central1.run.app';
+        
+        function addResult(title, content, status = 'pending') {
+            const resultsDiv = document.getElementById('testResults');
+            const div = document.createElement('div');
+            div.className = `test-section ${status}`;
+            div.innerHTML = `<h3>${title}</h3><div class="result">${content}</div>`;
+            resultsDiv.appendChild(div);
+            return div;
+        }
+
+        function clearResults() {
+            document.getElementById('testResults').innerHTML = '';
+        }
+
+        async function testBackendDirect() {
+            const resultDiv = addResult('🔧 Direct Backend Health Test', 'Testing...', 'pending');
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/health`);
+                const data = await response.json();
+                
+                resultDiv.className = 'test-section success';
+                resultDiv.innerHTML = `
+                    <h3>✅ Backend Health Check</h3>
+                    <div class="result">Status: ${response.status}<br>Response: ${JSON.stringify(data, null, 2)}</div>
+                `;
+            } catch (error) {
+                resultDiv.className = 'test-section error';
+                resultDiv.innerHTML = `
+                    <h3>❌ Backend Health Check Failed</h3>
+                    <div class="result">Error: ${error.message}</div>
+                `;
+            }
+        }
+
+        async function testCompleteSystem() {
+            clearResults();
+            
+            // Test 1: Backend Health
+            const healthDiv = addResult('🏥 Backend Health', 'Testing...', 'pending');
+            try {
+                const healthResponse = await fetch(`${API_BASE}/api/health`, { mode: 'cors' });
+                const healthData = await healthResponse.json();
+                healthDiv.className = 'test-section success';
+                healthDiv.innerHTML = `<h3>✅ Backend Health</h3><div class="result">Status: ${healthResponse.status}</div>`;
+            } catch (error) {
+                healthDiv.className = 'test-section error';
+                healthDiv.innerHTML = `<h3>❌ Backend Health</h3><div class="result">Error: ${error.message}</div>`;
+            }
+
+            // Test 2: CORS Test
+            const corsDiv = addResult('🔗 CORS Configuration', 'Testing...', 'pending');
+            try {
+                const corsResponse = await fetch(`${API_BASE}/api/social/friend-requests/sent`, {
+                    method: 'GET',
+                    headers: { 'Authorization': 'Bearer user:admin' },
+                    mode: 'cors'
+                });
+                
+                if (corsResponse.status === 200) {
+                    corsDiv.className = 'test-section success';
+                    corsDiv.innerHTML = `<h3>✅ CORS Working</h3><div class="result">Status: ${corsResponse.status}</div>`;
+                } else {
+                    corsDiv.className = 'test-section error';
+                    corsDiv.innerHTML = `<h3>❌ CORS Issue</h3><div class="result">Status: ${corsResponse.status}</div>`;
+                }
+            } catch (error) {
+                corsDiv.className = 'test-section error';
+                corsDiv.innerHTML = `<h3>❌ CORS Failed</h3><div class="result">Error: ${error.message}</div>`;
+            }
+
+            // Test 3: Authentication Test
+            const authDiv = addResult('🔐 Authentication Test', 'Testing login...', 'pending');
+            try {
+                const loginResponse = await fetch(`${API_BASE}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: 'admin', password: 'admin123' }),
+                    mode: 'cors'
+                });
+
+                if (loginResponse.ok) {
+                    const loginData = await loginResponse.json();
+                    
+                    // Test 4: Friend Requests with Token
+                    const sentDiv = addResult('📤 Sent Friend Requests', 'Testing...', 'pending');
+                    const sentResponse = await fetch(`${API_BASE}/api/social/friend-requests/sent`, {
+                        headers: { 'Authorization': `Bearer ${loginData.access_token}` },
+                        mode: 'cors'
+                    });
+                    
+                    if (sentResponse.ok) {
+                        const sentData = await sentResponse.json();
+                        
+                        authDiv.className = 'test-section success';
+                        authDiv.innerHTML = `<h3>✅ Authentication Working</h3><div class="result">Login successful</div>`;
+                        
+                        sentDiv.className = 'test-section success';
+                        sentDiv.innerHTML = `<h3>✅ Sent Requests Working</h3><div class="result">Sent requests: ${JSON.stringify(sentData)}</div>`;
+                        
+                        // Test 5: Incoming Requests
+                        const incomingDiv = addResult('📥 Incoming Friend Requests', 'Testing...', 'pending');
+                        const incomingResponse = await fetch(`${API_BASE}/api/social/friend-requests`, {
+                            headers: { 'Authorization': `Bearer ${loginData.access_token}` },
+                            mode: 'cors'
+                        });
+                        
+                        if (incomingResponse.ok) {
+                            const incomingData = await incomingResponse.json();
+                            incomingDiv.className = 'test-section success';
+                            incomingDiv.innerHTML = `<h3>✅ Incoming Requests Working</h3><div class="result">Incoming requests: ${JSON.stringify(incomingData)}</div>`;
+                        } else {
+                            incomingDiv.className = 'test-section error';
+                            incomingDiv.innerHTML = `<h3>❌ Incoming Requests Failed</h3><div class="result">Status: ${incomingResponse.status}</div>`;
+                        }
+                        
+                    } else {
+                        sentDiv.className = 'test-section error';
+                        sentDiv.innerHTML = `<h3>❌ Sent Requests Failed</h3><div class="result">Status: ${sentResponse.status}</div>`;
+                    }
+                    
+                } else {
+                    authDiv.className = 'test-section error';
+                    authDiv.innerHTML = `<h3>❌ Authentication Failed</h3><div class="result">Status: ${loginResponse.status}</div>`;
+                }
+            } catch (error) {
+                authDiv.className = 'test-section error';
+                authDiv.innerHTML = `<h3>❌ Authentication Error</h3><div class="result">Error: ${error.message}</div>`;
+            }
+
+            // Final Summary
+            setTimeout(() => {
+                addResult('🎯 Test Complete', 'All tests finished. Check results above.', 'success');
+            }, 2000);
+        }
+    </script>
+</body>
+</html>

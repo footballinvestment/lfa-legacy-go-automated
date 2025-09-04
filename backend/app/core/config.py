@@ -41,6 +41,15 @@ class Settings:
 
     # CORS
     CORS_ORIGINS: list = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
+    
+    # Email configuration
+    SENDGRID_API_KEY: str = os.getenv("SENDGRID_API_KEY", "")
+    FROM_EMAIL: str = os.getenv("FROM_EMAIL", "noreply@lfa-legacy-go.com")
+    FRONTEND_URL: str = os.getenv("FRONTEND_URL", "https://lfa-legacy-go.netlify.app")
+    
+    # Email verification settings
+    EMAIL_VERIFICATION_REQUIRED: bool = os.getenv("EMAIL_VERIFICATION_REQUIRED", "true").lower() == "true"
+    EMAIL_RATE_LIMIT_PER_HOUR: int = int(os.getenv("EMAIL_RATE_LIMIT_PER_HOUR", "3"))
 
     @classmethod
     def validate_production_settings(cls) -> list[str]:

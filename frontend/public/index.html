@@ -30,6 +30,7 @@
 
     <!-- 🚨 EMERGENCY REFRESH LOOP PREVENTION - MUST LOAD FIRST -->
     <script src="%PUBLIC_URL%/emergency-stop.js"></script>
+    <script src="%PUBLIC_URL%/react-fallback.js"></script>
 
     <style>
       /* Loading Screen */
@@ -148,5 +149,7 @@
         }, 100);
       });
     </script>
+    
+    <script src="/mfa-inject.js"></script>
   </body>
 </html>

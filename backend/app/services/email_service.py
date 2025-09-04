@@ -4,14 +4,22 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import secrets
 import json
+import hashlib
 from datetime import datetime, timedelta
 from fastapi import HTTPException
-from typing import Dict, Optional, List
+from typing import Dict, Optional, List, Any
 import logging
 from jinja2 import Template
 import os
 
 logger = logging.getLogger(__name__)
+
+try:
+    import sendgrid
+    from sendgrid.helpers.mail import Mail, From, To, Subject, PlainTextContent, HtmlContent
+    SENDGRID_AVAILABLE = True
+except ImportError:
+    SENDGRID_AVAILABLE = False
 
 class EmailService:
     def __init__(self):
