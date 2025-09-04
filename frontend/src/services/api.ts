@@ -126,6 +126,7 @@ export interface User {
   user_type: string;
   is_active: boolean;
   is_admin?: boolean;
+  mfa_enabled?: boolean;
   created_at: string;
   last_login?: string;
   last_activity?: string;

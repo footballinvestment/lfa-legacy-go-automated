@@ -46,16 +46,44 @@ const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => {
 };
 
 const AuthForm: React.FC = () => {
-  const {
-    formData,
-    handleInputChange,
-    handleLogin,
-    handleRegister,
-    resetForm,
-    isLoading,
-    error,
-    clearError,
-  } = useSafeAuthForm();
+  const { state, login, register, clearError } = useSafeAuth();
+  const [formData, setFormData] = useState({
+    username: '',
+    password: '',
+    email: '',
+    full_name: '',
+    confirmPassword: ''
+  });
+
+  const isLoading = state.loading;
+  const error = state.error;
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleLogin = async () => {
+    return await login({ username: formData.username, password: formData.password });
+  };
+
+  const handleRegister = async () => {
+    return await register({
+      username: formData.username,
+      password: formData.password,
+      email: formData.email,
+      full_name: formData.full_name
+    });
+  };
+
+  const resetForm = () => {
+    setFormData({
+      username: '',
+      password: '',
+      email: '',
+      full_name: '',
+      confirmPassword: ''
+    });
+  };
 
   const [activeTab, setActiveTab] = useState(0);
   const [showPassword, setShowPassword] = useState(false);

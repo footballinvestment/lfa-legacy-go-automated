@@ -122,13 +122,19 @@ export const SafeAuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Initialize auth state from stored token
   useEffect(() => {
     const initializeAuth = async () => {
+      console.log('🚀 AUTH INITIALIZATION STARTED');
       const token = localStorage.getItem("auth_token");
+      console.log('🔑 Token exists:', !!token);
+      console.log('🔑 Token preview:', token ? `${token.substring(0, 20)}...` : 'null');
+      
       if (!token) {
+        console.log('🚫 No token found, skipping auth initialization');
         dispatch({ type: "AUTH_FAILURE", payload: "" });
         return;
       }
 
       try {
+        console.log('📡 Starting API call to getCurrentUser...');
         dispatch({ type: "AUTH_START" });
 
         // CRITICAL FIX: Safe API call with proper timeout
@@ -137,6 +143,10 @@ export const SafeAuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         const userData = await authService.getCurrentUser();
         clearTimeout(timeoutId);
+        
+        console.log('✅ API RESPONSE RECEIVED:', userData);
+        console.log('📊 User data keys:', Object.keys(userData || {}));
+        console.log('🔧 MFA enabled in response:', userData?.mfa_enabled);
 
         // CRITICAL FIX: Validate response before using
         if (!userData || typeof userData !== "object") {
@@ -173,7 +183,13 @@ export const SafeAuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           last_activity: userData.last_activity || undefined,
         };
 
+        console.log('👤 FINAL USER OBJECT CREATED:', safeUser);
+        console.log('🔧 Final MFA enabled value:', safeUser.mfa_enabled);
+        console.log('🔧 User type:', safeUser.user_type);
+        console.log('🔧 Is admin:', safeUser.is_admin);
+
         dispatch({ type: "AUTH_SUCCESS", payload: safeUser });
+        console.log('✅ AUTH_SUCCESS dispatched');
 
         // Safe session expiry calculation
         try {
@@ -186,12 +202,13 @@ export const SafeAuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           dispatch({ type: "SET_SESSION_EXPIRY", payload: expiry });
         }
       } catch (error) {
-        console.error("Auth initialization failed:", error);
+        console.error("❌ AUTH INITIALIZATION FAILED:", error);
         localStorage.removeItem("auth_token");
         dispatch({ type: "AUTH_FAILURE", payload: "Session expired" });
       }
     };
 
+    console.log('🔄 useEffect[initializeAuth] triggered');
     initializeAuth();
   }, []);
 
@@ -376,6 +393,23 @@ export const SafeAuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  // Debug: Expose auth context to window for debugging
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).authContext = { 
+        state, 
+        login, 
+        register, 
+        logout, 
+        updateUser, 
+        clearError, 
+        refreshStats 
+      };
+      console.log('🔧 Auth context exposed to window:', (window as any).authContext);
+      console.log('🔧 Current auth state:', state);
+    }
+  }, [state, login, register, logout, updateUser, clearError, refreshStats]);
+
   return (
     <SafeAuthContext.Provider
       value={{
@@ -388,6 +422,59 @@ export const SafeAuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         refreshStats,
       }}
     >
+      {process.env.NODE_ENV === 'development' && (
+        <div style={{
+          position: 'fixed', 
+          top: '10px', 
+          right: '10px', 
+          background: 'red', 
+          color: 'white', 
+          padding: '10px', 
+          zIndex: 9999
+        }}>
+          <button onClick={async () => {
+            console.log('🔧 MANUAL AUTH TRIGGER');
+            const token = localStorage.getItem('auth_token');
+            if (token) {
+              try {
+                const userData = await authService.getCurrentUser();
+                console.log('🔧 Manual fetch result:', userData);
+                const user: User = { 
+                  ...userData, 
+                  mfa_enabled: Boolean(userData.mfa_enabled || false),
+                  is_admin: userData.user_type === "admin" || userData.user_type === "moderator" || userData.is_admin || false,
+                  user_type: userData.user_type || "user",
+                  display_name: userData.display_name || userData.full_name || userData.username || "",
+                  level: userData.level || 1,
+                  xp: userData.xp || 0,
+                  credits: userData.credits || 0,
+                  skills: userData.skills || {},
+                  games_played: userData.games_played || 0,
+                  games_won: userData.games_won || 0,
+                  games_lost: userData.games_lost || 0,
+                  friend_count: userData.friend_count || 0,
+                  challenge_wins: userData.challenge_wins || 0,
+                  challenge_losses: userData.challenge_losses || 0,
+                  total_achievements: userData.total_achievements || 0,
+                  is_premium: Boolean(userData.is_premium),
+                  premium_expires_at: userData.premium_expires_at || undefined,
+                  is_active: userData.is_active !== false,
+                  created_at: userData.created_at || "",
+                  last_login: userData.last_login || undefined,
+                  last_activity: userData.last_activity || undefined,
+                  bio: userData.bio || ""
+                };
+                dispatch({ type: "AUTH_SUCCESS", payload: user });
+                console.log('🔧 Manual auth success:', user);
+              } catch (error) {
+                console.error('🔧 Manual fetch error:', error);
+              }
+            }
+          }}>
+            DEBUG: Manual Auth
+          </button>
+        </div>
+      )}
       {children}
     </SafeAuthContext.Provider>
   );
