@@ -89,8 +89,18 @@ class User(Base):
     failed_login_attempts = Column(Integer, default=0)
     account_locked_until = Column(DateTime, nullable=True)
     mfa_enabled = Column(Boolean, default=False)
+    mfa_method = Column(String(20), nullable=True)  # 'totp' or 'webauthn'
+    mfa_secret = Column(String(32), nullable=True)  # TOTP secret
+    mfa_backup_codes = Column(JSON, default=list)  # Backup codes list
+    mfa_enabled_at = Column(DateTime, nullable=True)
     force_password_reset = Column(Boolean, default=False)
     email_verified = Column(Boolean, default=False)
+    email_verified_at = Column(DateTime, nullable=True)
+    email_verification_token = Column(String(64), nullable=True)
+    email_verification_sent_at = Column(DateTime, nullable=True)
+    email_change_requested = Column(Boolean, default=False)
+    email_change_token = Column(String(64), nullable=True)
+    email_change_new_email = Column(String(255), nullable=True)
     
     # ✅ JAVÍTÁS: last_purchase_date mező hozzáadva a credits funkcionalitáshoz
     last_purchase_date = Column(DateTime, nullable=True)
@@ -270,6 +280,7 @@ class UserResponse(BaseModel):
     average_performance: Optional[float] = None
     last_activity: Optional[datetime] = None
     created_at: datetime
+    mfa_enabled: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 
