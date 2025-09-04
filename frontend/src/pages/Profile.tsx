@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Box,
   Typography,
@@ -10,6 +10,10 @@ import {
   Avatar,
   Chip,
   Divider,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  IconButton,
 } from "@mui/material";
 import {
   Person,
@@ -17,11 +21,16 @@ import {
   EmojiEvents,
   SportsScore,
   TrendingUp,
+  Security,
+  CheckCircle,
+  Close,
 } from "@mui/icons-material";
 import { useSafeAuth } from "../SafeAuthContext";
+import MFASetup from "../components/auth/MFASetup";
 
 const Profile: React.FC = () => {
   const { state } = useSafeAuth();
+  const [showMFASetup, setShowMFASetup] = useState(false);
 
   if (!state.user) {
     return <Typography>Loading...</Typography>;
@@ -316,7 +325,94 @@ const Profile: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
+
+        {/* Security Card */}
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Card>
+            <CardContent>
+              <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
+                <Security sx={{ mr: 2, color: "primary.main", fontSize: 28 }} />
+                <Box sx={{ flexGrow: 1 }}>
+                  <Typography variant="h6" gutterBottom>
+                    Account Security
+                  </Typography>
+                </Box>
+              </Box>
+
+              <Divider sx={{ mb: 3 }} />
+
+              {/* Email Verification Status */}
+              <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ flexGrow: 1 }}>
+                  Email Verification
+                </Typography>
+                <Chip
+                  icon={<CheckCircle />}
+                  label="Verified"
+                  color="success"
+                  size="small"
+                />
+              </Box>
+
+              {/* MFA Status */}
+              <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ flexGrow: 1 }}>
+                  Two-Factor Authentication
+                </Typography>
+                <Chip
+                  label={(state.user as any).mfa_enabled ? "Enabled" : "Disabled"}
+                  color={(state.user as any).mfa_enabled ? "success" : "warning"}
+                  size="small"
+                />
+              </Box>
+
+              {/* MFA Setup Button */}
+              {!(state.user as any).mfa_enabled && (
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  startIcon={<Security />}
+                  onClick={() => setShowMFASetup(true)}
+                  sx={{
+                    borderColor: 'primary.main',
+                    '&:hover': {
+                      borderColor: 'primary.dark',
+                      backgroundColor: 'primary.light'
+                    }
+                  }}
+                >
+                  Enable Two-Factor Authentication
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
       </Grid>
+
+      {/* MFA Setup Dialog */}
+      <Dialog 
+        open={showMFASetup} 
+        onClose={() => setShowMFASetup(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Typography variant="h6">Setup Two-Factor Authentication</Typography>
+          <IconButton onClick={() => setShowMFASetup(false)}>
+            <Close />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ p: 0 }}>
+          <MFASetup 
+            onComplete={() => {
+              setShowMFASetup(false);
+              // Refresh user data to show MFA as enabled
+              window.location.reload();
+            }}
+            onCancel={() => setShowMFASetup(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </Box>
   );
 };
