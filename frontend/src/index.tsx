@@ -15,11 +15,8 @@ if (typeof window !== 'undefined') {
   console.log("React forced to window");
 }
 
-// Environment debug logging
-console.log("🔧 Environment check:", {
-  NODE_ENV: process.env.NODE_ENV,
-  API_URL: process.env.REACT_APP_API_URL
-});
+// Environment debug logging (production ready)
+console.log("🔧 Environment loaded:", process.env.NODE_ENV);
 import "./index.css";
 import App from "./App";
 import { setupGlobalErrorHandlers } from "./utils/errorHandler";
