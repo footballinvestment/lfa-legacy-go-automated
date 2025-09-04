@@ -167,6 +167,7 @@ export const SafeAuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           user_type: userData.user_type || "user", // ✅ ADMIN FIELD!
           is_active: userData.is_active !== false,
           is_admin: userData.user_type === "admin" || userData.user_type === "moderator" || userData.is_admin || false, // ✅ ADMIN FIELD!
+          mfa_enabled: Boolean(userData.mfa_enabled), // ✅ MFA FIELD!
           created_at: userData.created_at || "",
           last_login: userData.last_login || undefined,
           last_activity: userData.last_activity || undefined,
@@ -237,6 +238,7 @@ export const SafeAuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         user_type: response.user.user_type || "user", // ✅ ADMIN FIELD!
         is_active: response.user.is_active !== false,
         is_admin: response.user.user_type === "admin" || response.user.user_type === "moderator" || response.user.is_admin || false, // ✅ ADMIN FIELD!
+        mfa_enabled: Boolean(response.user.mfa_enabled || false), // ✅ MFA FIELD!
         created_at: response.user.created_at || "",
         last_login: response.user.last_login || undefined,
         last_activity: response.user.last_activity || undefined,
@@ -305,6 +307,7 @@ export const SafeAuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         user_type: response.user.user_type || "user", // ✅ ADMIN FIELD!
         is_active: response.user.is_active !== false,
         is_admin: response.user.user_type === "admin" || response.user.user_type === "moderator" || response.user.is_admin || false, // ✅ ADMIN FIELD!
+        mfa_enabled: Boolean(response.user.mfa_enabled || false), // ✅ MFA FIELD!
         created_at: response.user.created_at || "",
         last_login: response.user.last_login || undefined,
         last_activity: response.user.last_activity || undefined,
