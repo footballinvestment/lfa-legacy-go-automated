@@ -1,16 +1,10 @@
 // frontend/src/SafeAuthContext.tsx
-// PRODUCTION READY - NO DEBUG LOGS - INFINITE LOOP FIXED
+// PRODUCTION READY - NO DEBUG LOGS VERSION
 
-import React, {
-  createContext,
-  useContext,
-  useReducer,
-  useEffect,
-  ReactNode,
-} from "react";
+import React, { createContext, useContext, useReducer, useEffect, ReactNode } from "react";
 import { authService, User } from "./services/api";
 
-// Define interfaces locally
+// Define LoginData and RegisterData interfaces locally to avoid import issues
 export interface LoginData {
   username: string;
   password: string;
@@ -102,20 +96,18 @@ export const useSafeAuth = (): AuthContextType => {
   return context;
 };
 
-interface SafeAuthProviderProps {
+interface AuthProviderProps {
   children: ReactNode;
 }
 
-export const SafeAuthProvider: React.FC<SafeAuthProviderProps> = ({
-  children,
-}) => {
+export const SafeAuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
   // Initialize auth state from stored token
   useEffect(() => {
     const initializeAuth = async () => {
       const token = localStorage.getItem("auth_token");
-
+      
       if (!token) {
         dispatch({ type: "AUTH_FAILURE", payload: "" });
         return;
@@ -134,8 +126,7 @@ export const SafeAuthProvider: React.FC<SafeAuthProviderProps> = ({
           username: userData.username || "",
           email: userData.email || "",
           full_name: userData.full_name || userData.name || "",
-          display_name:
-            userData.display_name || userData.full_name || userData.name || "",
+          display_name: userData.display_name || userData.full_name || userData.name || "",
           bio: userData.bio || "",
           level: userData.level || 1,
           xp: userData.xp || 0,
@@ -144,7 +135,7 @@ export const SafeAuthProvider: React.FC<SafeAuthProviderProps> = ({
           games_played: userData.games_played || 0,
           games_won: userData.games_won || 0,
           games_lost: userData.games_lost || 0,
-          win_rate: userData.win_rate || 0,
+          friend_count: userData.friend_count || 0,
           challenge_wins: userData.challenge_wins || 0,
           challenge_losses: userData.challenge_losses || 0,
           total_achievements: userData.total_achievements || 0,
@@ -161,12 +152,13 @@ export const SafeAuthProvider: React.FC<SafeAuthProviderProps> = ({
 
         dispatch({ type: "AUTH_SUCCESS", payload: safeUser });
 
-        // Set session expiry
+        // Safe session expiry calculation
         try {
           const expiry = new Date();
           expiry.setTime(expiry.getTime() + 43200 * 1000); // 12 hours default
           dispatch({ type: "SET_SESSION_EXPIRY", payload: expiry });
         } catch (expiryError) {
+          // Session expiry calculation failed, but auth is still successful
           const fallbackExpiry = new Date();
           fallbackExpiry.setTime(fallbackExpiry.getTime() + 43200 * 1000);
           dispatch({ type: "SET_SESSION_EXPIRY", payload: fallbackExpiry });
@@ -196,8 +188,7 @@ export const SafeAuthProvider: React.FC<SafeAuthProviderProps> = ({
         username: response.user.username || "",
         email: response.user.email || "",
         full_name: response.user.full_name || response.user.name || "",
-        display_name:
-          response.user.display_name || response.user.full_name || "",
+        display_name: response.user.display_name || response.user.full_name || "",
         bio: response.user.bio || "",
         level: response.user.level || 1,
         xp: response.user.xp || 0,
@@ -206,7 +197,7 @@ export const SafeAuthProvider: React.FC<SafeAuthProviderProps> = ({
         games_played: response.user.games_played || 0,
         games_won: response.user.games_won || 0,
         games_lost: response.user.games_lost || 0,
-        win_rate: response.user.win_rate || 0,
+        friend_count: response.user.friend_count || 0,
         challenge_wins: response.user.challenge_wins || 0,
         challenge_losses: response.user.challenge_losses || 0,
         total_achievements: response.user.total_achievements || 0,
@@ -230,8 +221,7 @@ export const SafeAuthProvider: React.FC<SafeAuthProviderProps> = ({
 
       return true;
     } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.detail || error.message || "Login failed";
+      const errorMessage = error.response?.data?.detail || error.message || "Login failed";
       dispatch({ type: "AUTH_FAILURE", payload: errorMessage });
       return false;
     }
@@ -243,7 +233,7 @@ export const SafeAuthProvider: React.FC<SafeAuthProviderProps> = ({
       const response = await authService.register(data);
 
       if (!response || !response.access_token || !response.user) {
-        throw new Error("Registration failed");
+        throw new Error("Invalid registration response");
       }
 
       localStorage.setItem("auth_token", response.access_token);
@@ -253,8 +243,7 @@ export const SafeAuthProvider: React.FC<SafeAuthProviderProps> = ({
         username: response.user.username || "",
         email: response.user.email || "",
         full_name: response.user.full_name || response.user.name || "",
-        display_name:
-          response.user.display_name || response.user.full_name || "",
+        display_name: response.user.display_name || response.user.full_name || "",
         bio: response.user.bio || "",
         level: response.user.level || 1,
         xp: response.user.xp || 0,
@@ -263,7 +252,7 @@ export const SafeAuthProvider: React.FC<SafeAuthProviderProps> = ({
         games_played: response.user.games_played || 0,
         games_won: response.user.games_won || 0,
         games_lost: response.user.games_lost || 0,
-        win_rate: response.user.win_rate || 0,
+        friend_count: response.user.friend_count || 0,
         challenge_wins: response.user.challenge_wins || 0,
         challenge_losses: response.user.challenge_losses || 0,
         total_achievements: response.user.total_achievements || 0,
@@ -286,8 +275,7 @@ export const SafeAuthProvider: React.FC<SafeAuthProviderProps> = ({
 
       return true;
     } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.detail || error.message || "Registration failed";
+      const errorMessage = error.response?.data?.detail || error.message || "Registration failed";
       dispatch({ type: "AUTH_FAILURE", payload: errorMessage });
       return false;
     }
@@ -343,9 +331,7 @@ export const SafeAuthProvider: React.FC<SafeAuthProviderProps> = ({
 };
 
 // Export additional components
-export const ProtectedRoute: React.FC<{ children: ReactNode }> = ({
-  children,
-}) => {
+export const ProtectedRoute: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { state } = useSafeAuth();
 
   if (state.loading) {
@@ -359,9 +345,7 @@ export const ProtectedRoute: React.FC<{ children: ReactNode }> = ({
   return <>{children}</>;
 };
 
-export const PublicRoute: React.FC<{ children: ReactNode }> = ({
-  children,
-}) => {
+export const PublicRoute: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { state } = useSafeAuth();
 
   if (state.loading) {
@@ -370,3 +354,5 @@ export const PublicRoute: React.FC<{ children: ReactNode }> = ({
 
   return <>{children}</>;
 };
+
+export default SafeAuthProvider;

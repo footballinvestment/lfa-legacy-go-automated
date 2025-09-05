@@ -1,6 +1,6 @@
 🔍 OPTIMALIZÁLT LFA LEGACY GO TUDÁSTÁR GYŰJTÉS
 ================================================
-📅 Generálás ideje: 2025 Sze  5 Pén 16:24:59 CEST
+📅 Generálás ideje: 2025 Sze  5 Pén 17:12:36 CEST
 🎯 Csak kritikus forráskódok
 
 ==== PROJEKT FŐKÖNYVTÁR STRUKTÚRA ====
@@ -251,11 +251,6 @@ import VerifyEmail from "./pages/VerifyEmail";
 import Layout from "./components/layout/Layout";
 
 function App() {
-  console.log("🔴 APP COMPONENT MOUNTING");
-  console.log("🔴 About to render SafeAuthProvider");
-  console.log("🔴 SafeAuthProvider import:", { SafeAuthProvider });
-  console.log("🔴 React version:", React.version);
-  
   return (
     <ThemeProvider theme={lightAppTheme}>
       <CssBaseline />
@@ -366,8 +361,6 @@ function App() {
 }
 
 export default App;
-/* Cache bust: 2025 Sze  4 Csü 16:37:31 CEST */
-/* FORCE REBUILD 1757012852 */
 
 
 ==== React Entry Point ==== (frontend/src/index.tsx)
@@ -10234,5 +10227,5 @@ exit 1
 📊 TUDÁSTÁR STATISZTIKÁK
 ========================
 📁 Fájlméret: .28 MB
-📄 Sorok száma:    10236
+📄 Sorok száma:    10229
 🎯 Optimalizálva Claude Code munkához
