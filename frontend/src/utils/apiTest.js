@@ -10,29 +10,39 @@ const API_BASE_URL = config.API_URL;
  * @returns {Promise<boolean>} True if API is accessible, false otherwise
  */
 export const verifyAPIConnectivity = async () => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/health`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      // Add timeout to prevent hanging
-      signal: AbortSignal.timeout(5000) // 5 second timeout
-    });
-    
-    if (response.ok) {
-      const data = await response.json();
-      return data.status === 'healthy' || data.status === 'ok';
+  const apiUrl = API_BASE_URL || 'http://localhost:8000';
+  
+  // Try multiple possible health endpoints
+  const healthEndpoints = ['/health', '/api/health', '/status', '/api/status'];
+  
+  for (const endpoint of healthEndpoints) {
+    try {
+      const response = await fetch(`${apiUrl}${endpoint}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        // Add timeout to prevent hanging
+        signal: AbortSignal.timeout(5000) // 5 second timeout
+      });
+      
+      if (response.ok) {
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`✅ API connectivity established via ${endpoint}`);
+        }
+        return true;
+      }
+    } catch (error) {
+      if (process.env.NODE_ENV === 'development') {
+        console.warn(`Health check failed for ${endpoint}:`, error.message);
+      }
     }
-    
-    return false;
-  } catch (error) {
-    // Log error in development only
-    if (process.env.NODE_ENV === 'development') {
-      console.warn('API connectivity check failed:', error.message);
-    }
-    return false;
   }
+  
+  if (process.env.NODE_ENV === 'development') {
+    console.error('❌ All health endpoints failed');
+  }
+  return false;
 };
 
 export default verifyAPIConnectivity;

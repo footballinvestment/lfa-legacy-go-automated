@@ -28,11 +28,6 @@ import VerifyEmail from "./pages/VerifyEmail";
 import Layout from "./components/layout/Layout";
 
 function App() {
-  console.log("🔴 APP COMPONENT MOUNTING");
-  console.log("🔴 About to render SafeAuthProvider");
-  console.log("🔴 SafeAuthProvider import:", { SafeAuthProvider });
-  console.log("🔴 React version:", React.version);
-  
   return (
     <ThemeProvider theme={lightAppTheme}>
       <CssBaseline />
@@ -143,5 +138,3 @@ function App() {
 }
 
 export default App;
-/* Cache bust: 2025 Sze  4 Csü 16:37:31 CEST */
-/* FORCE REBUILD 1757012852 */
