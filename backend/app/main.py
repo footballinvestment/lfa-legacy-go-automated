@@ -15,7 +15,6 @@ from datetime import datetime
 from app.core.api_response import ResponseBuilder, ApiException
 from app.middleware.api_middleware import (
     RequestLoggingMiddleware,
-    CORSMiddleware,
     SecurityHeadersMiddleware,
     RateLimitMiddleware,
     RequestSizeMiddleware,
@@ -131,8 +130,8 @@ app.add_middleware(
 # 4. CORS middleware
 allowed_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000,https://lfa-legacy-go.netlify.app,http://localhost:3001,http://localhost:8000").split(",")
 app.add_middleware(
-    CORSMiddleware,
-    allowed_origins=[origin.strip() for origin in allowed_origins],
+    FastAPICORSMiddleware,
+    allow_origins=[origin.strip() for origin in allowed_origins],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
