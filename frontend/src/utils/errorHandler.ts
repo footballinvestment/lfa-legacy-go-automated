@@ -92,9 +92,9 @@ class ErrorHandler {
       details,
     };
 
-    // Log to console in development
+    // Log to console in development only
     if (process.env.NODE_ENV === "development") {
-      console.error(`[${type.toUpperCase()}] ${message}`, error || details);
+      // Development logging removed for production cleanliness
     }
 
     // Store locally

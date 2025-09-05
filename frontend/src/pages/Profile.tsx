@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Box,
   Typography,
@@ -10,10 +10,6 @@ import {
   Avatar,
   Chip,
   Divider,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  IconButton,
 } from "@mui/material";
 import {
   Person,
@@ -23,57 +19,20 @@ import {
   TrendingUp,
   Security,
   CheckCircle,
-  Close,
 } from "@mui/icons-material";
 import { useSafeAuth } from "../SafeAuthContext";
 import MFASetup from "../components/auth/MFASetup";
 
 const Profile: React.FC = () => {
-  console.log("🔴 PROFILE: Emergency auth bypass starting");
-  
-  // Emergency fallback state
-  const [emergencyUser, setEmergencyUser] = useState(null);
-  
-  // Try normal context first
-  let normalContext;
-  try {
-    normalContext = useSafeAuth();
-    console.log("🔴 Normal context works:", normalContext);
-  } catch (error) {
-    console.error("🔴 Normal context failed:", error);
-    normalContext = null;
-  }
-  
-  // Manual user fetch if context fails
-  useEffect(() => {
-    if (!normalContext && !emergencyUser) {
-      console.log("🔴 EMERGENCY: Manual user fetch triggered");
-      const token = localStorage.getItem('auth_token');
-      if (token) {
-        fetch('https://lfa-legacy-go-backend-376491487980.us-central1.run.app/api/auth/me', {
-          headers: { 'Authorization': 'Bearer ' + token }
-        })
-        .then(r => r.json())
-        .then(userData => {
-          console.log("🔴 EMERGENCY: Manual fetch success:", userData);
-          const user = {
-            ...userData,
-            mfa_enabled: Boolean(userData.mfa_enabled || false)
-          };
-          setEmergencyUser(user);
-        })
-        .catch(error => {
-          console.error("🔴 EMERGENCY: Manual fetch failed:", error);
-        });
-      }
-    }
-  }, [normalContext, emergencyUser]);
-  
-  // Use whichever works
-  const state = normalContext?.state || { user: emergencyUser, loading: false, error: null };
-  
-  console.log("🔴 FINAL STATE:", state);
+  const { state, refreshStats } = useSafeAuth();
   const [showMFASetup, setShowMFASetup] = useState(false);
+
+  const handleMFASuccess = () => {
+    // Refresh user data to update mfa_enabled status
+    if (refreshStats) {
+      refreshStats();
+    }
+  };
 
   if (!state.user) {
     return <Typography>Loading...</Typography>;
@@ -226,100 +185,35 @@ const Profile: React.FC = () => {
                   }}
                 />
               </Box>
-
-              <Divider sx={{ my: 3 }} />
-
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
-                <Typography variant="body2" color="text.secondary">
-                  Current Ranking
-                </Typography>
-                <Chip
-                  icon={<TrendingUp />}
-                  label={`#${Math.floor(Math.random() * 100) + 1}`}
-                  color="warning"
-                  variant="outlined"
-                />
-              </Box>
-
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  mt: 2,
-                }}
-              >
-                <Typography variant="body2" color="text.secondary">
-                  Total Score
-                </Typography>
-                <Typography variant="h6" color="primary">
-                  {(
-                    (state.user.games_won || 0) * 10 +
-                    (state.user.games_played || 0) * 2
-                  ).toLocaleString()}
-                </Typography>
-              </Box>
             </CardContent>
           </Card>
         </Grid>
 
-        {/* Achievements Card */}
+        {/* Security Card */}
         <Grid size={{ xs: 12, md: 6 }}>
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                <EmojiEvents sx={{ mr: 1, verticalAlign: "middle" }} />
-                Achievements
+                Security Settings
               </Typography>
-
-              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 2 }}>
-                {state.user.games_played >= 1 && (
-                  <Chip
-                    icon={<SportsScore />}
-                    label="First Game"
-                    color="success"
-                    size="small"
-                  />
-                )}
-                {state.user.games_won >= 1 && (
-                  <Chip
-                    icon={<EmojiEvents />}
-                    label="First Win"
-                    color="warning"
-                    size="small"
-                  />
-                )}
-                {state.user.games_played >= 10 && (
-                  <Chip
-                    icon={<SportsScore />}
-                    label="Veteran Player"
-                    color="primary"
-                    size="small"
-                  />
-                )}
-                {winRate >= 70 && (
-                  <Chip
-                    icon={<TrendingUp />}
-                    label="Champion"
-                    color="error"
-                    size="small"
-                  />
-                )}
-                {state.user.games_played === 0 && (
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{ fontStyle: "italic" }}
-                  >
-                    Play your first game to unlock achievements!
+              
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography variant="body1">
+                    Two-Factor Authentication
                   </Typography>
-                )}
+                  <Typography variant="body2" color="text.secondary">
+                    {state.user?.mfa_enabled ? 'Enabled' : 'Disabled'}
+                  </Typography>
+                </Box>
+                
+                <Button
+                  variant={state.user?.mfa_enabled ? "outlined" : "contained"}
+                  color={state.user?.mfa_enabled ? "error" : "primary"}
+                  onClick={() => setShowMFASetup(true)}
+                >
+                  {state.user?.mfa_enabled ? 'Disable MFA' : 'Setup Two-Factor Authentication'}
+                </Button>
               </Box>
             </CardContent>
           </Card>
@@ -368,94 +262,14 @@ const Profile: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-
-        {/* Security Card */}
-        <Grid size={{ xs: 12, md: 6 }}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
-                <Security sx={{ mr: 2, color: "primary.main", fontSize: 28 }} />
-                <Box sx={{ flexGrow: 1 }}>
-                  <Typography variant="h6" gutterBottom>
-                    Account Security
-                  </Typography>
-                </Box>
-              </Box>
-
-              <Divider sx={{ mb: 3 }} />
-
-              {/* Email Verification Status */}
-              <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-                <Typography variant="body2" color="text.secondary" sx={{ flexGrow: 1 }}>
-                  Email Verification
-                </Typography>
-                <Chip
-                  icon={<CheckCircle />}
-                  label="Verified"
-                  color="success"
-                  size="small"
-                />
-              </Box>
-
-              {/* MFA Status */}
-              <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
-                <Typography variant="body2" color="text.secondary" sx={{ flexGrow: 1 }}>
-                  Two-Factor Authentication
-                </Typography>
-                <Chip
-                  label={(state.user as any).mfa_enabled ? "Enabled" : "Disabled"}
-                  color={(state.user as any).mfa_enabled ? "success" : "warning"}
-                  size="small"
-                />
-              </Box>
-
-              {/* MFA Setup Button */}
-              {!(state.user as any).mfa_enabled && (
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  startIcon={<Security />}
-                  onClick={() => setShowMFASetup(true)}
-                  sx={{
-                    borderColor: 'primary.main',
-                    '&:hover': {
-                      borderColor: 'primary.dark',
-                      backgroundColor: 'primary.light'
-                    }
-                  }}
-                >
-                  Enable Two-Factor Authentication
-                </Button>
-              )}
-            </CardContent>
-          </Card>
-        </Grid>
       </Grid>
 
-      {/* MFA Setup Dialog */}
-      <Dialog 
-        open={showMFASetup} 
+      {/* MFA Setup Modal */}
+      <MFASetup
+        open={showMFASetup}
         onClose={() => setShowMFASetup(false)}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Typography variant="h6">Setup Two-Factor Authentication</Typography>
-          <IconButton onClick={() => setShowMFASetup(false)}>
-            <Close />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent sx={{ p: 0 }}>
-          <MFASetup 
-            onComplete={() => {
-              setShowMFASetup(false);
-              // Refresh user data to show MFA as enabled
-              window.location.reload();
-            }}
-            onCancel={() => setShowMFASetup(false)}
-          />
-        </DialogContent>
-      </Dialog>
+        onSuccess={handleMFASuccess}
+      />
     </Box>
   );
 };
