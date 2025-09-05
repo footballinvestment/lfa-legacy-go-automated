@@ -12,6 +12,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.openapi.models import Example
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import select
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 
@@ -250,18 +251,10 @@ async def setup_totp_mfa(
         if hasattr(current_user, 'mfa_enabled') and current_user.mfa_enabled:
             raise HTTPException(status_code=400, detail="MFA already enabled for this account")
         
-        # Generate TOTP setup data
-        setup_data = mfa_service.setup_mfa_for_user(
-            str(current_user.id), 
-            current_user.email
-        )
-        
-        # Store temporary MFA data in user record (not enabled yet)
-        current_user.mfa_secret = setup_data["secret"]
-        current_user.mfa_backup_codes = setup_data["backup_codes"]
-        current_user.mfa_method = "totp"
-        # Don't set mfa_enabled=True yet - only after verification
-        db.commit()
+        # Use new database-aware MFA service
+        from ..services.mfa_service import MFAService
+        db_mfa_service = MFAService(db=db)
+        setup_data = await db_mfa_service.setup_totp_db(current_user.id, current_user.email)
         
         logger.info(f"🔐 TOTP MFA setup initiated for user {current_user.username}")
         
@@ -313,19 +306,20 @@ async def verify_totp_setup(
 ):
     """✅ Verify TOTP setup with authentication code"""
     try:
-        secret = request.get("secret")
         code = request.get("code")
         
-        if not secret or not code:
-            raise HTTPException(status_code=400, detail="Secret and code required")
+        if not code:
+            raise HTTPException(status_code=400, detail="Verification code required")
         
-        # Verify the TOTP code
-        is_valid = mfa_service.verify_mfa_setup(secret, code)
+        # Use new database-aware MFA service
+        from ..services.mfa_service import MFAService
+        db_mfa_service = MFAService(db=db)
+        is_valid = await db_mfa_service.verify_setup_db(current_user.id, code)
         
         if not is_valid:
             raise HTTPException(status_code=400, detail="Invalid verification code")
         
-        logger.info(f"✅ TOTP verification successful for user {current_user.username}")
+        logger.info(f"✅ TOTP verification successful for user {current_user.username} - MFA now enabled")
         
         return {
             "success": True,
@@ -731,7 +725,42 @@ async def login_for_access_token(
                 detail="User account is disabled",
             )
 
-        # Create access token
+        # MFA CHECK - CRITICAL ADDITION
+        if hasattr(user, 'mfa_enabled') and user.mfa_enabled:
+            # Import MFAFactor model
+            from ..models.user import MFAFactor
+            
+            # Check if user has active MFA factors
+            active_mfa = db.execute(
+                select(MFAFactor).where(
+                    MFAFactor.user_id == user.id,
+                    MFAFactor.is_active == True
+                )
+            ).scalar_one_or_none()
+            
+            if active_mfa:
+                # Return MFA pending token instead of full access token
+                mfa_token_expires = timedelta(minutes=10)  # Short expiry for MFA
+                mfa_pending_token = create_access_token(
+                    data={
+                        "sub": str(user.id), 
+                        "mfa_pending": True,
+                        "username": user.username
+                    }, 
+                    expires_delta=mfa_token_expires
+                )
+                
+                logger.info(f"🔐 MFA required for user {user.username}")
+                
+                return LoginResponse(
+                    access_token=mfa_pending_token,
+                    token_type="mfa_pending",
+                    expires_in=600,  # 10 minutes
+                    user=UserResponse.model_validate(user),
+                    mfa_required=True
+                )
+        
+        # Normal login flow (no MFA or MFA not configured)
         access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = create_access_token(
             data={"sub": str(user.id)}, expires_delta=access_token_expires
@@ -895,7 +924,42 @@ async def login(user_data: UserLogin, request: Request, db: Session = Depends(ge
                 detail="User account is disabled",
             )
 
-        # Create access token
+        # MFA CHECK - CRITICAL ADDITION
+        if hasattr(user, 'mfa_enabled') and user.mfa_enabled:
+            # Import MFAFactor model
+            from ..models.user import MFAFactor
+            
+            # Check if user has active MFA factors
+            active_mfa = db.execute(
+                select(MFAFactor).where(
+                    MFAFactor.user_id == user.id,
+                    MFAFactor.is_active == True
+                )
+            ).scalar_one_or_none()
+            
+            if active_mfa:
+                # Return MFA pending token instead of full access token
+                mfa_token_expires = timedelta(minutes=10)  # Short expiry for MFA
+                mfa_pending_token = create_access_token(
+                    data={
+                        "sub": str(user.id), 
+                        "mfa_pending": True,
+                        "username": user.username
+                    }, 
+                    expires_delta=mfa_token_expires
+                )
+                
+                logger.info(f"🔐 MFA required for user {user.username}")
+                
+                return LoginResponse(
+                    access_token=mfa_pending_token,
+                    token_type="mfa_pending",
+                    expires_in=600,  # 10 minutes
+                    user=UserResponse.model_validate(user),
+                    mfa_required=True
+                )
+        
+        # Normal login flow (no MFA or MFA not configured)
         access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = create_access_token(
             data={"sub": str(user.id)}, expires_delta=access_token_expires
@@ -1196,6 +1260,76 @@ async def register_simple(
     """🆕 Simple user registration (legacy compatibility)"""
     # This is just an alias for the main register endpoint
     return await register(user_data, request, db)
+
+
+# =============================================================================
+# MFA COMPLETION ENDPOINT
+# =============================================================================
+
+@router.post("/mfa/complete")
+async def complete_mfa_login(
+    request: dict,
+    db: Session = Depends(get_db)
+):
+    """🔐 Complete login after MFA verification"""
+    try:
+        # Get temp token and code from request
+        temp_token = request.get("access_token") or request.get("token")
+        code = request.get("code")
+        
+        if not temp_token or not code:
+            raise HTTPException(status_code=400, detail="Token and code required")
+        
+        # Verify temp token
+        try:
+            payload = jwt.decode(temp_token, SECRET_KEY, algorithms=[ALGORITHM])
+            if not payload.get("mfa_pending"):
+                raise HTTPException(status_code=401, detail="Invalid token type")
+            user_id = int(payload.get("sub"))
+        except jwt.PyJWTError:
+            raise HTTPException(status_code=401, detail="Invalid or expired token")
+        
+        # Get user
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Verify MFA code using new service
+        from ..services.mfa_service import MFAService
+        mfa_service = MFAService(db=db)
+        is_valid = await mfa_service.verify_login_db(user_id, code)
+        
+        if not is_valid:
+            raise HTTPException(status_code=400, detail="Invalid MFA code")
+        
+        # Create real access token
+        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(
+            data={"sub": str(user.id), "mfa_verified": True}, 
+            expires_delta=access_token_expires
+        )
+        
+        # Update last login
+        user.last_login = datetime.utcnow()
+        user.last_activity = datetime.utcnow()
+        user.increment_login()
+        db.commit()
+        
+        logger.info(f"✅ MFA login completed for user {user.username}")
+        
+        return {
+            "success": True,
+            "access_token": access_token,
+            "token_type": "bearer",
+            "expires_in": ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+            "user": UserResponse.model_validate(user)
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ MFA completion error: {str(e)}")
+        raise HTTPException(status_code=500, detail="MFA completion failed")
 
 
 # Export router

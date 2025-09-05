@@ -113,6 +113,7 @@ class User(Base):
 
     # Relationships - EGYSZERŰSÍTETT (moderation relationships eltávolítva a konfliktus elkerülésére)
     sessions = relationship("UserSession", back_populates="user")
+    mfa_factors = relationship("MFAFactor", back_populates="user", cascade="all, delete-orphan")
     
     # Chat system relationships
     chat_messages = relationship("ChatMessage", back_populates="user")
@@ -328,7 +329,16 @@ class LoginResponse(BaseModel):
     token_type: str = "bearer"
     expires_in: int
     user: UserResponse
+    mfa_required: bool = False
 
+    model_config = ConfigDict(from_attributes=True)
+
+
+class MFACodeRequest(BaseModel):
+    """MFA code verification request"""
+    
+    code: str = Field(..., min_length=6, max_length=8)
+    
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -339,3 +349,25 @@ class TokenData(BaseModel):
     user_id: Optional[int] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class MFAFactor(Base):
+    """MFA Factor model for managing user authentication factors"""
+    __tablename__ = "user_mfa_factors"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    factor_type = Column(String(50), nullable=False)
+    secret_key = Column(String(255))
+    public_key = Column(Text)
+    credential_id = Column(String(255))
+    backup_codes = Column(JSON, default=list)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    last_used_at = Column(DateTime)
+    
+    # Relationships
+    user = relationship("User", back_populates="mfa_factors")
+    
+    def __repr__(self):
+        return f"<MFAFactor(id={self.id}, user_id={self.user_id}, type={self.factor_type})>"

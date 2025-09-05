@@ -5,13 +5,16 @@ import base64
 from datetime import datetime, timedelta
 from typing import Dict, Optional, List
 from fastapi import HTTPException
+from sqlalchemy.orm import Session
+from sqlalchemy import select, update
 import secrets
 import logging
 
 logger = logging.getLogger(__name__)
 
 class MFAService:
-    def __init__(self):
+    def __init__(self, db: Session = None):
+        self.db = db
         self.app_name = "LFA Legacy GO"
         self.issuer_name = "LFA Legacy GO"
     
@@ -126,6 +129,127 @@ class MFAService:
         new_codes = [secrets.token_hex(4).upper() for _ in range(8)]
         logger.info(f"🔑 Generated new backup codes for user {user_id}")
         return new_codes
+
+    # New database-aware methods
+    async def setup_totp_db(self, user_id: int, user_email: str) -> Dict:
+        """Setup TOTP for user using database storage"""
+        if not self.db:
+            raise HTTPException(status_code=500, detail="Database session not available")
+        
+        from ..models.user import MFAFactor, User
+        
+        # Check if user already has TOTP enabled
+        existing_factor = self.db.execute(
+            select(MFAFactor).where(
+                MFAFactor.user_id == user_id,
+                MFAFactor.factor_type == "totp",
+                MFAFactor.is_active == True
+            )
+        ).scalar_one_or_none()
+        
+        if existing_factor:
+            raise HTTPException(status_code=400, detail="TOTP already enabled for this user")
+        
+        # Generate secret and QR code
+        secret = self.generate_totp_secret()
+        qr_code = self.generate_qr_code(secret, user_email)
+        backup_codes = [secrets.token_hex(4).upper() for _ in range(8)]
+        
+        # Store in database (inactive until verified)
+        mfa_factor = MFAFactor(
+            user_id=user_id,
+            factor_type="totp",
+            secret_key=secret,
+            backup_codes=backup_codes,
+            is_active=False  # Will be activated after verification
+        )
+        
+        self.db.add(mfa_factor)
+        self.db.commit()
+        
+        logger.info(f"🔐 TOTP setup created for user {user_id}")
+        
+        return {
+            "qr_code": qr_code,
+            "manual_entry_key": secret,
+            "backup_codes": backup_codes
+        }
+    
+    async def verify_setup_db(self, user_id: int, code: str) -> bool:
+        """Verify and activate TOTP setup"""
+        if not self.db:
+            raise HTTPException(status_code=500, detail="Database session not available")
+        
+        from ..models.user import MFAFactor, User
+        
+        # Get inactive TOTP factor
+        factor = self.db.execute(
+            select(MFAFactor).where(
+                MFAFactor.user_id == user_id,
+                MFAFactor.factor_type == "totp",
+                MFAFactor.is_active == False
+            )
+        ).scalar_one_or_none()
+        
+        if not factor:
+            raise HTTPException(status_code=400, detail="No pending TOTP setup found")
+        
+        # Verify the code
+        if not self.verify_totp_token(factor.secret_key, code):
+            raise HTTPException(status_code=400, detail="Invalid verification code")
+        
+        # Activate the factor
+        factor.is_active = True
+        
+        # Enable MFA for the user
+        self.db.execute(
+            update(User).where(User.id == user_id).values(
+                mfa_enabled=True,
+                mfa_enabled_at=datetime.utcnow()
+            )
+        )
+        
+        self.db.commit()
+        
+        logger.info(f"✅ TOTP activated for user {user_id}")
+        return True
+    
+    async def verify_login_db(self, user_id: int, code: str) -> bool:
+        """Verify TOTP code for login"""
+        if not self.db:
+            raise HTTPException(status_code=500, detail="Database session not available")
+        
+        from ..models.user import MFAFactor
+        
+        # Get active TOTP factor
+        factor = self.db.execute(
+            select(MFAFactor).where(
+                MFAFactor.user_id == user_id,
+                MFAFactor.factor_type == "totp",
+                MFAFactor.is_active == True
+            )
+        ).scalar_one_or_none()
+        
+        if not factor:
+            raise HTTPException(status_code=400, detail="TOTP not configured")
+        
+        # Check if it's a backup code
+        if len(code) == 8 and code.upper() in factor.backup_codes:
+            # Remove used backup code
+            factor.backup_codes.remove(code.upper())
+            factor.last_used_at = datetime.utcnow()
+            self.db.commit()
+            logger.info(f"✅ Backup code used for user {user_id}")
+            return True
+        
+        # Verify TOTP code
+        if self.verify_totp_token(factor.secret_key, code):
+            factor.last_used_at = datetime.utcnow()
+            self.db.commit()
+            logger.info(f"✅ TOTP verified for user {user_id}")
+            return True
+        
+        return False
 
 
 class WebAuthnService:
