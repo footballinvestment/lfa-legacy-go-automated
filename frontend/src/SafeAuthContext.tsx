@@ -1,13 +1,7 @@
 // frontend/src/SafeAuthContext.tsx
 // PRODUCTION READY - NO DEBUG LOGS - INFINITE LOOP FIXED
 
-import React, {
-  createContext,
-  useContext,
-  useReducer,
-  useEffect,
-  ReactNode,
-} from "react";
+import React, { createContext, useContext, useReducer, useEffect, ReactNode } from "react";
 import { authService, User } from "./services/api";
 
 // Define interfaces locally
@@ -106,16 +100,14 @@ interface SafeAuthProviderProps {
   children: ReactNode;
 }
 
-export const SafeAuthProvider: React.FC<SafeAuthProviderProps> = ({
-  children,
-}) => {
+export const SafeAuthProvider: React.FC<SafeAuthProviderProps> = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
   // Initialize auth state from stored token
   useEffect(() => {
     const initializeAuth = async () => {
       const token = localStorage.getItem("auth_token");
-
+      
       if (!token) {
         dispatch({ type: "AUTH_FAILURE", payload: "" });
         return;
@@ -134,8 +126,7 @@ export const SafeAuthProvider: React.FC<SafeAuthProviderProps> = ({
           username: userData.username || "",
           email: userData.email || "",
           full_name: userData.full_name || userData.name || "",
-          display_name:
-            userData.display_name || userData.full_name || userData.name || "",
+          display_name: userData.display_name || userData.full_name || userData.name || "",
           bio: userData.bio || "",
           level: userData.level || 1,
           xp: userData.xp || 0,
@@ -196,8 +187,7 @@ export const SafeAuthProvider: React.FC<SafeAuthProviderProps> = ({
         username: response.user.username || "",
         email: response.user.email || "",
         full_name: response.user.full_name || response.user.name || "",
-        display_name:
-          response.user.display_name || response.user.full_name || "",
+        display_name: response.user.display_name || response.user.full_name || "",
         bio: response.user.bio || "",
         level: response.user.level || 1,
         xp: response.user.xp || 0,
@@ -230,8 +220,7 @@ export const SafeAuthProvider: React.FC<SafeAuthProviderProps> = ({
 
       return true;
     } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.detail || error.message || "Login failed";
+      const errorMessage = error.response?.data?.detail || error.message || "Login failed";
       dispatch({ type: "AUTH_FAILURE", payload: errorMessage });
       return false;
     }
@@ -253,8 +242,7 @@ export const SafeAuthProvider: React.FC<SafeAuthProviderProps> = ({
         username: response.user.username || "",
         email: response.user.email || "",
         full_name: response.user.full_name || response.user.name || "",
-        display_name:
-          response.user.display_name || response.user.full_name || "",
+        display_name: response.user.display_name || response.user.full_name || "",
         bio: response.user.bio || "",
         level: response.user.level || 1,
         xp: response.user.xp || 0,
@@ -286,8 +274,7 @@ export const SafeAuthProvider: React.FC<SafeAuthProviderProps> = ({
 
       return true;
     } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.detail || error.message || "Registration failed";
+      const errorMessage = error.response?.data?.detail || error.message || "Registration failed";
       dispatch({ type: "AUTH_FAILURE", payload: errorMessage });
       return false;
     }
@@ -343,9 +330,7 @@ export const SafeAuthProvider: React.FC<SafeAuthProviderProps> = ({
 };
 
 // Export additional components
-export const ProtectedRoute: React.FC<{ children: ReactNode }> = ({
-  children,
-}) => {
+export const ProtectedRoute: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { state } = useSafeAuth();
 
   if (state.loading) {
@@ -359,9 +344,7 @@ export const ProtectedRoute: React.FC<{ children: ReactNode }> = ({
   return <>{children}</>;
 };
 
-export const PublicRoute: React.FC<{ children: ReactNode }> = ({
-  children,
-}) => {
+export const PublicRoute: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { state } = useSafeAuth();
 
   if (state.loading) {
