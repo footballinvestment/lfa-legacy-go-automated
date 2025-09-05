@@ -1,7 +1,9 @@
 // API connectivity verification utility
 // LFA Legacy GO - API Test Helper
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+import config from '../config/environment';
+
+const API_BASE_URL = config.API_URL;
 
 /**
  * Verifies API connectivity by checking the health endpoint

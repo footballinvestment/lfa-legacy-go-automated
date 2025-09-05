@@ -1,3 +1,5 @@
+import config from '../config/environment';
+
 export class TokenManager {
   private static refreshTimer: NodeJS.Timeout | null = null;
   private static isRefreshing = false;
@@ -100,7 +102,7 @@ export class TokenManager {
       throw new Error('No refresh token available');
     }
 
-    const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/api/auth/refresh`, {
+    const response = await fetch(`${config.API_URL}/api/auth/refresh`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

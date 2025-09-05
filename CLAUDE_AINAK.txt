@@ -1,6 +1,6 @@
 🔍 OPTIMALIZÁLT LFA LEGACY GO TUDÁSTÁR GYŰJTÉS
 ================================================
-📅 Generálás ideje: 2025 Sze  4 Csü 21:21:49 CEST
+📅 Generálás ideje: 2025 Sze  5 Pén 07:10:12 CEST
 🎯 Csak kritikus forráskódok
 
 ==== PROJEKT FŐKÖNYVTÁR STRUKTÚRA ====
@@ -385,6 +385,9 @@ if (typeof window !== 'undefined') {
   (window as any).React = React;
   console.log("React forced to window");
 }
+
+// Environment debug logging (production ready)
+console.log("🔧 Environment loaded:", process.env.NODE_ENV);
 import "./index.css";
 import App from "./App";
 import { setupGlobalErrorHandlers } from "./utils/errorHandler";
@@ -8051,8 +8054,9 @@ import {
   BulkOperationResult,
   UserReport,
 } from "../types/moderation";
+import config from "../config/environment";
 
-const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8000";
+const API_BASE = config.API_URL;
 
 // Enhanced error types for better error handling
 interface ApiError extends Error {
@@ -8464,6 +8468,8 @@ export const socialService = {
 
 
 ==== Frontend Service: tokenManager.ts ==== (frontend/src/services/tokenManager.ts)
+import config from '../config/environment';
+
 export class TokenManager {
   private static refreshTimer: NodeJS.Timeout | null = null;
   private static isRefreshing = false;
@@ -8566,7 +8572,7 @@ export class TokenManager {
       throw new Error('No refresh token available');
     }
 
-    const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/api/auth/refresh`, {
+    const response = await fetch(`${config.API_URL}/api/auth/refresh`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -10226,5 +10232,5 @@ exit 1
 📊 TUDÁSTÁR STATISZTIKÁK
 ========================
 📁 Fájlméret: .28 MB
-📄 Sorok száma:    10228
+📄 Sorok száma:    10234
 🎯 Optimalizálva Claude Code munkához

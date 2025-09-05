@@ -9,8 +9,9 @@ import {
   BulkOperationResult,
   UserReport,
 } from "../types/moderation";
+import config from "../config/environment";
 
-const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8000";
+const API_BASE = config.API_URL;
 
 // Enhanced error types for better error handling
 interface ApiError extends Error {

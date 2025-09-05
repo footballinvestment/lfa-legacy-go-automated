@@ -487,7 +487,7 @@ export const useTournamentUpdates = (tournamentId: number) => {
     if (!tournamentId) return;
 
     // TODO: Implement WebSocket connection for real-time updates
-    // const ws = new WebSocket(`ws://localhost:8000/api/tournaments/${tournamentId}/updates`);
+    // const ws = new WebSocket(`${config.WS_URL || config.API_URL.replace('https://', 'wss://').replace('http://', 'ws://')}/api/tournaments/${tournamentId}/updates`);
     // ws.onopen = () => setIsConnected(true);
     // ws.onclose = () => setIsConnected(false);
     // ws.onmessage = (event) => {
