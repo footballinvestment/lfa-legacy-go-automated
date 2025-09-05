@@ -1,6 +1,6 @@
 🔍 OPTIMALIZÁLT LFA LEGACY GO TUDÁSTÁR GYŰJTÉS
 ================================================
-📅 Generálás ideje: 2025 Sze  5 Pén 07:22:55 CEST
+📅 Generálás ideje: 2025 Sze  5 Pén 09:31:30 CEST
 🎯 Csak kritikus forráskódok
 
 ==== PROJEKT FŐKÖNYVTÁR STRUKTÚRA ====
