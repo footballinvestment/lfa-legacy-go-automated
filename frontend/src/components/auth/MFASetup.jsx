@@ -24,6 +24,7 @@ import {
   CheckCircle,
   VpnKey
 } from '@mui/icons-material';
+import config from '../../config/environment';
 
 const MFASetup = ({ onComplete, onCancel }) => {
   const [activeStep, setActiveStep] = useState(0);
@@ -50,8 +51,8 @@ const MFASetup = ({ onComplete, onCancel }) => {
     setError('');
     
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/auth/mfa/setup-totp', {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`${config.API_URL}/api/auth/mfa/setup-totp`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -84,8 +85,8 @@ const MFASetup = ({ onComplete, onCancel }) => {
         throw new Error('WebAuthn not supported in this browser');
       }
 
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/auth/mfa/setup-webauthn', {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`${config.API_URL}/api/auth/mfa/setup-webauthn`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -128,7 +129,7 @@ const MFASetup = ({ onComplete, onCancel }) => {
           type: credential.type
         };
 
-        const verifyResponse = await fetch('/api/auth/mfa/verify-webauthn-setup', {
+        const verifyResponse = await fetch(`${config.API_URL}/api/auth/mfa/verify-webauthn-setup`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -163,8 +164,8 @@ const MFASetup = ({ onComplete, onCancel }) => {
     setError('');
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/auth/mfa/verify-totp-setup', {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`${config.API_URL}/api/auth/mfa/verify-totp-setup`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -190,8 +191,8 @@ const MFASetup = ({ onComplete, onCancel }) => {
 
   const completeMFASetup = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/auth/mfa/enable', {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`${config.API_URL}/api/auth/mfa/enable`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
