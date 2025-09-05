@@ -48,5 +48,5 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
 
 EXPOSE 8000
 
-# Start command - Use simplified main with enhanced auth
-CMD exec uvicorn app.main_simple:app --host 0.0.0.0 --port ${PORT:-8000}
+# Start command - Use main production app with MFA support
+CMD exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}
