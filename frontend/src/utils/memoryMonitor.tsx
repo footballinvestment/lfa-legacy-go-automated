@@ -104,7 +104,7 @@ class MemoryMonitor {
     if (memoryGrowth > this.leakThreshold && growthRate > 10000) {
       // 10KB/s growth
         memoryGrowth: this.formatBytes(memoryGrowth),
-        growthRate: `${this.formatBytes(growthRate)}/s`,
+        growthRate: `${this.formatBytes(growthRate)}/s`;
         timeSpan: `${(timeSpan / 1000).toFixed(1)}s`,
         currentUsage: this.formatBytes(newest.usedJSHeapSize),
       });

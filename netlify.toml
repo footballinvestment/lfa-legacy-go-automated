@@ -12,13 +12,13 @@
   SKIP_PREFLIGHT_CHECK = "true"
   REACT_APP_API_URL = "https://lfa-legacy-go-backend-376491487980.us-central1.run.app"
 
-# CRITICAL: Catch-all redirect for SPA
+# CRITICAL: SPA Routing for React Router
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
 
-# Debug headers
+# Security headers
 [[headers]]
   for = "/*"
   [headers.values]
@@ -27,5 +27,5 @@
     Referrer-Policy = "strict-origin-when-cross-origin"
     X-Content-Type-Options = "nosniff"
 
-# BUILD TRIGGER - Remove Emergency Mode - Force Cloud Build
-# Timestamp: Sze  6 Szo 08:40:44 CEST 2025
+# FORCE CLOUD BUILD - Bypass local memory issues
+# Timestamp: $(date)
