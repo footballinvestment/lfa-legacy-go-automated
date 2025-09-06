@@ -1,6 +1,6 @@
 [build]
   base = "frontend"  
-  publish = "frontend/build"
+  publish = "build"
   command = "npm run build"
 
 [build.environment]
@@ -25,3 +25,4 @@
     X-Frame-Options = "DENY"
     X-XSS-Protection = "1; mode=block"
     Referrer-Policy = "strict-origin-when-cross-origin"
+    X-Content-Type-Options = "nosniff"
