@@ -1,0 +1,27 @@
+[build]
+  base = "frontend"  
+  publish = "frontend/build"
+  command = "npm run build"
+
+[build.environment]
+  NODE_VERSION = "18"
+  NODE_OPTIONS = "--max-old-space-size=8192"
+  GENERATE_SOURCEMAP = "false"
+  DISABLE_ESLINT_PLUGIN = "true"
+  TSC_COMPILE_ON_ERROR = "true"
+  SKIP_PREFLIGHT_CHECK = "true"
+  REACT_APP_API_URL = "https://lfa-legacy-go-backend-376491487980.us-central1.run.app"
+
+# CRITICAL: Catch-all redirect for SPA
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Debug headers
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "strict-origin-when-cross-origin"
