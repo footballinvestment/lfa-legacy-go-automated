@@ -36,30 +36,25 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   // WebSocket connection and event handlers
   useEffect(() => {
     if (!user || !state.isAuthenticated) {
-      console.log('⚠️ User not authenticated, skipping chat connection');
       return;
     }
 
     const token = localStorage.getItem('auth_token');
     if (!token) {
-      console.error('❌ No auth token found');
       setConnectionError('Authentication required');
       return;
     }
 
-    console.log('🔌 Initializing chat connection for user:', user.username);
 
     // Connect to WebSocket
     try {
       ChatService.connect(token, user.id.toString(), user.username);
     } catch (error) {
-      console.error('❌ Failed to initialize chat connection:', error);
       setConnectionError('Failed to connect to chat server');
     }
 
     // Event listeners
     const handleAuthenticated = (data: ChatUser) => {
-      console.log('✅ Chat authenticated:', data);
       setIsConnected(true);
       setConnectionError(null);
       // Join the specified room after authentication
@@ -67,13 +62,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     };
 
     const handleAuthenticationFailed = (error: any) => {
-      console.error('❌ Chat authentication failed:', error);
       setConnectionError('Authentication failed');
       setIsConnected(false);
     };
 
     const handleMessage = (message: ChatMessage) => {
-      console.log('📨 Received message:', message);
       setMessages(prev => {
         // Prevent duplicate messages
         const isDuplicate = prev.some(msg => 
@@ -90,34 +83,28 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     };
 
     const handleConnectionError = (error: any) => {
-      console.error('❌ WebSocket connection error:', error);
       setConnectionError('Connection failed');
       setIsConnected(false);
     };
 
     const handleDisconnected = (reason: string) => {
-      console.warn('⚠️ Disconnected from chat:', reason);
       setIsConnected(false);
       setConnectionError('Disconnected from server');
     };
 
     const handleUserJoined = (data: any) => {
-      console.log('👤 User joined:', data);
       // Could update online users list here
     };
 
     const handleUserLeft = (data: any) => {
-      console.log('👋 User left:', data);
       // Could update online users list here
     };
 
     const handleRoomJoined = (data: any) => {
-      console.log('🏠 Joined room:', data);
       // Could load recent messages here
     };
 
     const handleError = (error: any) => {
-      console.error('❌ Chat error:', error);
       setConnectionError(error.message || 'An error occurred');
     };
 
@@ -134,7 +121,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
     // Cleanup function
     return () => {
-      console.log('🧹 Cleaning up chat connection');
       ChatService.off('authenticated', handleAuthenticated);
       ChatService.off('authentication_failed', handleAuthenticationFailed);
       ChatService.off('message', handleMessage);
@@ -157,7 +143,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       return;
     }
 
-    console.log('📤 Sending message:', messageText);
     ChatService.sendMessage(messageText, roomId);
     setNewMessage('');
   }, [newMessage, isConnected, roomId]);
@@ -172,7 +157,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       return;
     }
 
-    console.log('🔄 Attempting to reconnect...');
     setConnectionError(null);
     ChatService.reconnect(token, user.id.toString(), user.username);
   }, [user]);

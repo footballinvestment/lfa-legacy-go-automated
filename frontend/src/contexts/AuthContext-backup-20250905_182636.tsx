@@ -149,6 +149,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               timeoutPromise,
             ]);
           } catch (error) {
+            console.error("Auth initialization failed:", error);
             throw new Error("Authentication timeout or failed");
           }
 
@@ -159,6 +160,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             userData.constructor === Error ||
             userData.message
           ) {
+            console.error("Invalid user data type:", typeof userData, userData);
             throw new Error(
               "Invalid user data received - got: " + typeof userData
             );
@@ -191,6 +193,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             dispatch({ type: "SET_SESSION_EXPIRY", payload: expiry });
           }
         } catch (error) {
+          console.error("Auth initialization failed:", error);
           localStorage.removeItem("auth_token");
           dispatch({ type: "AUTH_FAILURE", payload: "Session expired" });
         }
@@ -205,6 +208,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // ✅ CRITICAL FIX: Fallback timeout to force loading state to false
   useEffect(() => {
     const fallbackTimeout = setTimeout(() => {
+      console.warn(
         "⚠️ Auth initialization timeout - forcing loading state to false"
       );
       dispatch({ type: "AUTH_FAILURE", payload: "Authentication timeout" });
@@ -297,6 +301,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // ✅ CLEAN: Only real API logout
       await authService.logout();
     } catch (error) {
+      console.error("Logout API call failed:", error);
     } finally {
       localStorage.removeItem("auth_token");
       dispatch({ type: "AUTH_LOGOUT" });
@@ -321,6 +326,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const userData = await authService.getCurrentUser();
       dispatch({ type: "UPDATE_USER", payload: userData });
     } catch (error) {
+      console.error("Failed to refresh user stats:", error);
     }
   };
 

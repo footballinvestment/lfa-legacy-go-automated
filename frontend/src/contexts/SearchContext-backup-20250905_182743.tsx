@@ -220,6 +220,7 @@ export const SearchProvider: React.FC<SearchProviderProps> = ({ children }) => {
           setSearchHistory(JSON.parse(historyData));
         }
       } catch (error) {
+        console.error("Failed to load search data:", error);
       }
     };
 
@@ -231,6 +232,7 @@ export const SearchProvider: React.FC<SearchProviderProps> = ({ children }) => {
     try {
       localStorage.setItem(key, JSON.stringify(data));
     } catch (error) {
+      console.error(`Failed to save ${key}:`, error);
     }
   }, []);
 
@@ -340,6 +342,7 @@ export const SearchProvider: React.FC<SearchProviderProps> = ({ children }) => {
       saveToPersistence("lfa-search-history", newHistory);
     } catch (err) {
       setError("Search failed. Please try again.");
+      console.error("Search error:", err);
     } finally {
       setIsSearching(false);
     }

@@ -75,12 +75,10 @@ const OptimizedDashboard: React.FC = () => {
   const refreshingUserRef = useRef(false);
   const mountedRef = useRef(true);
 
-  console.log("📊 OptimizedDashboard rendering");
 
   // Debounced API calls to prevent rapid successive calls
   const debouncedLoadStats = useDebounce(async () => {
     if (loadingStatsRef.current || !mountedRef.current) {
-      console.log("🚫 Stats loading skipped - already loading or unmounted");
       return;
     }
 
@@ -89,7 +87,6 @@ const OptimizedDashboard: React.FC = () => {
     setError(null);
 
     try {
-      console.log("📊 Loading dashboard stats (debounced)...");
 
       // TEMPORARILY DISABLE CORS-problematic tournaments call
       // const tournaments = await tournamentService.getTournaments();
@@ -107,10 +104,8 @@ const OptimizedDashboard: React.FC = () => {
       if (mountedRef.current) {
         setStats(mockStats);
         setIsStatsLoaded(true);
-        console.log("✅ Dashboard stats loaded (mock data to avoid CORS)");
       }
     } catch (err: any) {
-      console.error("❌ Dashboard stats loading error:", err);
       if (mountedRef.current) {
         setError(`Stats loading failed: ${err.message || "Unknown error"}`);
       }
@@ -124,7 +119,6 @@ const OptimizedDashboard: React.FC = () => {
 
   const debouncedRefreshStats = useDebounce(async () => {
     if (refreshingUserRef.current || !mountedRef.current) {
-      console.log(
         "🚫 User stats refresh skipped - already refreshing or unmounted"
       );
       return;
@@ -133,11 +127,8 @@ const OptimizedDashboard: React.FC = () => {
     refreshingUserRef.current = true;
 
     try {
-      console.log("🔄 Refreshing user stats (debounced)...");
       await refreshStats();
-      console.log("✅ User stats refreshed successfully");
     } catch (error) {
-      console.error("❌ User stats refresh failed:", error);
     } finally {
       refreshingUserRef.current = false;
     }
@@ -146,7 +137,6 @@ const OptimizedDashboard: React.FC = () => {
   // Load initial stats only once
   useEffect(() => {
     if (!isStatsLoaded) {
-      console.log("🚀 Initial dashboard stats load triggered");
       debouncedLoadStats();
     }
 
@@ -158,7 +148,6 @@ const OptimizedDashboard: React.FC = () => {
   // Optimized coupon success handler with debouncing
   const handleCouponSuccess = useCallback(
     async (response: CouponRedemptionResponse) => {
-      console.log("🎉 Coupon success handler triggered");
 
       setSuccessMessage(
         `🎉 ${response.coupon_name} redeemed! +${response.credits_awarded} credits`
@@ -179,7 +168,6 @@ const OptimizedDashboard: React.FC = () => {
   );
 
   const handleCreditBalanceUpdate = useCallback((newBalance: number) => {
-    console.log("Credit balance updated:", newBalance);
   }, []);
 
   // Memoized user stats to prevent unnecessary recalculations
@@ -220,7 +208,6 @@ const OptimizedDashboard: React.FC = () => {
 
   // Manual refresh handler with debouncing
   const handleManualRefresh = useCallback(() => {
-    console.log("🔄 Manual refresh triggered");
     debouncedLoadStats();
     debouncedRefreshStats();
   }, [debouncedLoadStats, debouncedRefreshStats]);

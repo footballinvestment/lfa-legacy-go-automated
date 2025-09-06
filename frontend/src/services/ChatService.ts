@@ -39,8 +39,7 @@ class ChatService {
     // Socket.IO uses HTTP protocol, not WebSocket protocol directly
     const apiUrl = config.API_URL;
     
-    console.log('🔌 Connecting to Socket.IO server:', apiUrl);
-    console.log('👤 User data:', { userId, username });
+    // Production: Silent connection
 
     this.socket = io(apiUrl, {
       transports: ['websocket', 'polling'],
@@ -61,17 +60,14 @@ class ChatService {
     
     // Enhanced authentication with user data
     this.socket.on('connect', () => {
-      console.log('✅ Connected to chat server');
       this.authenticate(token, userId, username);
     });
 
     this.socket.on('connect_error', (error) => {
-      console.error('❌ WebSocket connection failed:', error);
       this.triggerEvent('connection_error', error);
     });
 
     this.socket.on('disconnect', (reason) => {
-      console.warn('⚠️ WebSocket disconnected:', reason);
       this.isConnected = false;
       this.triggerEvent('disconnected', reason);
     });
@@ -82,7 +78,6 @@ class ChatService {
   private authenticate(token: string, userId: string, username?: string): void {
     if (!this.socket) return;
     
-    console.log('🔐 Authenticating user:', userId, username);
     
     this.socket.emit('authenticate', {
       token: token,
@@ -95,62 +90,51 @@ class ChatService {
     if (!this.socket) return;
 
     this.socket.on('authenticated', (data: ChatUser) => {
-      console.log('✅ Chat authenticated:', data);
       this.isConnected = true;
       this.currentUser = data;
       this.triggerEvent('authenticated', data);
     });
 
     this.socket.on('authentication_failed', (error: any) => {
-      console.error('❌ Authentication failed:', error);
       this.triggerEvent('authentication_failed', error);
     });
 
     this.socket.on('new_message', (message: ChatMessage) => {
-      console.log('💬 New message received:', message);
       this.triggerEvent('message', message);
     });
 
     this.socket.on('user_joined', (data: any) => {
-      console.log('👤 User joined:', data);
       this.triggerEvent('user_joined', data);
     });
 
     this.socket.on('user_left', (data: any) => {
-      console.log('👋 User left:', data);
       this.triggerEvent('user_left', data);
     });
 
     this.socket.on('room_joined', (data: any) => {
-      console.log('🏠 Joined room:', data);
       this.triggerEvent('room_joined', data);
     });
 
     this.socket.on('error', (error: any) => {
-      console.error('❌ Chat error:', error);
       this.triggerEvent('error', error);
     });
 
     // Server status events
     this.socket.on('server_message', (data: any) => {
-      console.log('📢 Server message:', data);
       this.triggerEvent('server_message', data);
     });
   }
 
   sendMessage(message: string, room: string = 'global_chat'): void {
     if (!this.socket || !this.isConnected) {
-      console.warn('⚠️ Cannot send message: not connected');
       this.triggerEvent('error', { message: 'Not connected to chat server' });
       return;
     }
 
     if (!message.trim()) {
-      console.warn('⚠️ Cannot send empty message');
       return;
     }
 
-    console.log('📤 Sending message:', { message, room });
     this.socket.emit('send_message', {
       message: message.trim(),
       room: room,
@@ -160,21 +144,17 @@ class ChatService {
 
   joinRoom(roomId: string): void {
     if (!this.socket || !this.isConnected) {
-      console.warn('⚠️ Cannot join room: not connected');
       return;
     }
 
-    console.log('🏠 Joining room:', roomId);
     this.socket.emit('join_room', { room: roomId });
   }
 
   leaveRoom(roomId: string): void {
     if (!this.socket || !this.isConnected) {
-      console.warn('⚠️ Cannot leave room: not connected');
       return;
     }
 
-    console.log('🚪 Leaving room:', roomId);
     this.socket.emit('leave_room', { room: roomId });
   }
 
@@ -202,7 +182,6 @@ class ChatService {
         try {
           callback(data);
         } catch (error) {
-          console.error(`Error in event listener for ${event}:`, error);
         }
       });
     }
@@ -220,7 +199,6 @@ class ChatService {
   // Disconnect
   disconnect(): void {
     if (this.socket) {
-      console.log('🔌 Disconnecting from chat server');
       this.socket.disconnect();
       this.socket = null;
     }
@@ -232,7 +210,6 @@ class ChatService {
 
   // Reconnect
   reconnect(token: string, userId: string, username?: string): void {
-    console.log('🔄 Reconnecting to chat server');
     this.disconnect();
     setTimeout(() => {
       this.connect(token, userId, username);

@@ -34,12 +34,10 @@ class MemoryMonitor {
 
   startMonitoring(intervalMs: number = 5000): void {
     if (this.isMonitoring) {
-      console.warn("Memory monitoring is already active");
       return;
     }
 
     if (!this.isMemoryAPISupported()) {
-      console.warn("Memory API not supported in this browser");
       return;
     }
 
@@ -51,7 +49,6 @@ class MemoryMonitor {
       this.analyzeMemoryTrends();
     }, intervalMs);
 
-    console.log("🧠 Memory monitoring started");
   }
 
   stopMonitoring(): void {
@@ -60,7 +57,6 @@ class MemoryMonitor {
       this.intervalId = undefined;
     }
     this.isMonitoring = false;
-    console.log("🧠 Memory monitoring stopped");
   }
 
   private isMemoryAPISupported(): boolean {
@@ -89,9 +85,7 @@ class MemoryMonitor {
 
     // Check for immediate memory issues
     if (snapshot.usedJSHeapSize > this.memoryThreshold) {
-      console.warn(
-        `High memory usage detected: ${this.formatBytes(snapshot.usedJSHeapSize)}`
-      );
+      // High memory usage detected - could trigger alerts here
     }
   }
 
@@ -109,7 +103,6 @@ class MemoryMonitor {
     // Detect potential memory leaks
     if (memoryGrowth > this.leakThreshold && growthRate > 10000) {
       // 10KB/s growth
-      console.warn("🚨 Potential memory leak detected!", {
         memoryGrowth: this.formatBytes(memoryGrowth),
         growthRate: `${this.formatBytes(growthRate)}/s`,
         timeSpan: `${(timeSpan / 1000).toFixed(1)}s`,
@@ -129,10 +122,7 @@ class MemoryMonitor {
       .sort((a, b) => b.memoryGrowth - a.memoryGrowth);
 
     if (longRunningComponents.length > 0) {
-      console.warn(
-        "Components that might be causing memory leaks:",
-        longRunningComponents
-      );
+      // Components that might be causing memory leaks - could log here  
     }
   }
 
@@ -160,14 +150,7 @@ class MemoryMonitor {
 
       // Log if component caused significant memory growth
       if (info.memoryGrowth > 10 * 1024 * 1024) {
-        // 10MB
-        console.warn(
-          `Component ${componentName} may have caused memory growth:`,
-          {
-            growth: this.formatBytes(info.memoryGrowth),
-            lifetime: `${((info.unmountTime - info.mountTime) / 1000).toFixed(1)}s`,
-          }
-        );
+        // Component caused significant memory growth - could log details here
       }
     }
   }
@@ -226,10 +209,8 @@ class MemoryMonitor {
   forceGarbageCollection(): void {
     if (process.env.NODE_ENV === "development" && "gc" in window) {
       (window as any).gc();
-      console.log("🗑️ Forced garbage collection");
       this.takeSnapshot();
     } else {
-      console.warn(
         'Garbage collection not available. Run Chrome with --js-flags="--expose-gc"'
       );
     }

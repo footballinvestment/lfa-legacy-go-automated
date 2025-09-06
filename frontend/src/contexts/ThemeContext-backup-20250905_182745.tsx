@@ -315,6 +315,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
         return { ...defaultConfig, ...parsedConfig };
       }
     } catch (error) {
+      console.error("Failed to load theme config:", error);
     }
     return defaultConfig;
   }, []);
@@ -324,6 +325,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     try {
       localStorage.setItem(THEME_STORAGE_KEY, JSON.stringify(newConfig));
     } catch (error) {
+      console.error("Failed to save theme config:", error);
     }
   }, []);
 
@@ -433,6 +435,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
         updateTheme(validatedConfig);
         return true;
       } catch (error) {
+        console.error("Failed to import config:", error);
         return false;
       }
     },

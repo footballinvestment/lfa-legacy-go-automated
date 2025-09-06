@@ -69,11 +69,13 @@ const usePWA = () => {
   // Handle beforeinstallprompt event
   useEffect(() => {
     const handleBeforeInstallPrompt = (event: Event) => {
+      console.log("PWA: Install prompt available");
       event.preventDefault();
       setInstallPrompt(event);
     };
 
     const handleAppInstalled = () => {
+      console.log("PWA: App installed");
       setInstallPrompt(null);
       setCapabilities((prev) => ({
         ...prev,
@@ -109,6 +111,7 @@ const usePWA = () => {
   // Install PWA
   const installPWA = useCallback(async (): Promise<boolean> => {
     if (!installPrompt) {
+      console.log("PWA: No install prompt available");
       return false;
     }
 
@@ -117,9 +120,11 @@ const usePWA = () => {
 
       // Show install prompt
       const result = await installPrompt.prompt();
+      console.log("PWA: Install prompt result:", result);
 
       // Wait for user choice
       const choiceResult = await installPrompt.userChoice;
+      console.log("PWA: User choice:", choiceResult.outcome);
 
       if (choiceResult.outcome === "accepted") {
         setInstallPrompt(null);
@@ -128,6 +133,7 @@ const usePWA = () => {
 
       return false;
     } catch (error) {
+      console.error("PWA: Install failed:", error);
       return false;
     } finally {
       setIsInstalling(false);
@@ -147,6 +153,7 @@ const usePWA = () => {
       setNotificationPermission(permission);
       return permission;
     } catch (error) {
+      console.error("PWA: Notification permission request failed:", error);
       return "denied";
     }
   }, []);
@@ -158,10 +165,12 @@ const usePWA = () => {
       options: NotificationOptions = {}
     ): Promise<boolean> => {
       if (!capabilities.supportsNotifications) {
+        console.log("PWA: Notifications not supported");
         return false;
       }
 
       if (notificationPermission !== "granted") {
+        console.log("PWA: Notification permission not granted");
         return false;
       }
 
@@ -186,6 +195,7 @@ const usePWA = () => {
 
         return true;
       } catch (error) {
+        console.error("PWA: Show notification failed:", error);
         return false;
       }
     },
@@ -207,6 +217,7 @@ const usePWA = () => {
         }
         return true;
       } catch (error) {
+        console.error("PWA: Set app badge failed:", error);
         return false;
       }
     },
@@ -217,6 +228,7 @@ const usePWA = () => {
   const shareContent = useCallback(
     async (data: ShareData): Promise<boolean> => {
       if (!capabilities.supportsShare) {
+        console.log("PWA: Web Share API not supported");
         return false;
       }
 
@@ -225,6 +237,7 @@ const usePWA = () => {
         return true;
       } catch (error) {
         if ((error as Error).name !== "AbortError") {
+          console.error("PWA: Share failed:", error);
         }
         return false;
       }
@@ -245,8 +258,10 @@ const usePWA = () => {
       try {
         const registration = await navigator.serviceWorker.ready;
         await (registration as any).sync.register(tag);
+        console.log("PWA: Background sync registered:", tag);
         return true;
       } catch (error) {
+        console.error("PWA: Background sync registration failed:", error);
         return false;
       }
     },
@@ -277,8 +292,10 @@ const usePWA = () => {
           applicationServerKey: urlBase64ToUint8Array(publicKey),
         });
 
+        console.log("PWA: Push subscription created");
         return subscription;
       } catch (error) {
+        console.error("PWA: Push subscription failed:", error);
         return null;
       }
     },
@@ -296,6 +313,7 @@ const usePWA = () => {
         const registration = await navigator.serviceWorker.ready;
         return await registration.pushManager.getSubscription();
       } catch (error) {
+        console.error("PWA: Get push subscription failed:", error);
         return null;
       }
     }, [capabilities]);
@@ -307,10 +325,12 @@ const usePWA = () => {
         const subscription = await getPushSubscription();
         if (subscription) {
           await subscription.unsubscribe();
+          console.log("PWA: Push subscription removed");
           return true;
         }
         return false;
       } catch (error) {
+        console.error("PWA: Push unsubscribe failed:", error);
         return false;
       }
     }, [getPushSubscription]);
@@ -329,6 +349,7 @@ const usePWA = () => {
       }
       return false;
     } catch (error) {
+      console.error("PWA: Update check failed:", error);
       return false;
     }
   }, [capabilities]);
@@ -348,6 +369,7 @@ const usePWA = () => {
       }
       return false;
     } catch (error) {
+      console.error("PWA: Update apply failed:", error);
       return false;
     }
   }, [capabilities]);

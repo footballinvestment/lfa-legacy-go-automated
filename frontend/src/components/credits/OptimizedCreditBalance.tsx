@@ -47,13 +47,11 @@ const OptimizedCreditBalance: React.FC<OptimizedCreditBalanceProps> = ({
   // Ref to prevent multiple simultaneous refreshes
   const isRefreshingRef = React.useRef(false);
 
-  console.log("💰 OptimizedCreditBalance rendering - balance:", balance);
 
   // Optimized refresh that uses SafeAuth instead of direct API call
   const refreshBalance = useCallback(
     async (showLoading = true) => {
       if (isRefreshingRef.current) {
-        console.log("🚫 CreditBalance refresh skipped - already refreshing");
         return;
       }
 
@@ -63,16 +61,13 @@ const OptimizedCreditBalance: React.FC<OptimizedCreditBalanceProps> = ({
       setError(null);
 
       try {
-        console.log("💰 Refreshing balance via SafeAuth context...");
 
         // Use the SafeAuth context refresh instead of direct API call
         await refreshStats();
 
         // The balance will be updated via the useEffect below
         setLastUpdated(new Date());
-        console.log("✅ CreditBalance refresh completed");
       } catch (err: any) {
-        console.error("❌ CreditBalance refresh failed:", err);
         setError("Unable to refresh balance");
       } finally {
         if (showLoading) setLoading(false);
@@ -87,7 +82,6 @@ const OptimizedCreditBalance: React.FC<OptimizedCreditBalanceProps> = ({
     const newBalance = state.user?.credits || 0;
 
     if (newBalance !== balance) {
-      console.log(
         "💰 Balance updated from context:",
         balance,
         "->",
@@ -110,7 +104,6 @@ const OptimizedCreditBalance: React.FC<OptimizedCreditBalanceProps> = ({
 
   // Manual refresh handler
   const handleManualRefresh = useCallback(() => {
-    console.log("💰 Manual refresh triggered");
     refreshBalance(true);
   }, [refreshBalance]);
 

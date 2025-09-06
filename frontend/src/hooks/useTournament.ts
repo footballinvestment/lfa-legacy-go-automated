@@ -27,7 +27,6 @@ export const useTournaments = () => {
       setError(
         err instanceof Error ? err.message : "Failed to fetch tournaments"
       );
-      console.error("Error fetching tournaments:", err);
     } finally {
       setLoading(false);
     }
@@ -69,7 +68,6 @@ export const useTournamentDetails = (tournamentId: number) => {
           ? err.message
           : "Failed to fetch tournament details"
       );
-      console.error("Error fetching tournament details:", err);
     } finally {
       setLoading(false);
     }
@@ -110,7 +108,6 @@ export const useTournamentRegistration = (tournamentId: number) => {
       setError(
         err instanceof Error ? err.message : "Failed to register for tournament"
       );
-      console.error("Error registering for tournament:", err);
       return false;
     } finally {
       setIsRegistering(false);
@@ -131,7 +128,6 @@ export const useTournamentRegistration = (tournamentId: number) => {
           ? err.message
           : "Failed to withdraw from tournament"
       );
-      console.error("Error withdrawing from tournament:", err);
       return false;
     } finally {
       setIsWithdrawing(false);
@@ -167,7 +163,6 @@ export const useTournamentCreation = () => {
         setError(
           err instanceof Error ? err.message : "Failed to create tournament"
         );
-        console.error("Error creating tournament:", err);
         return null;
       } finally {
         setIsCreating(false);
@@ -203,7 +198,6 @@ export const useTournamentBracket = (tournamentId: number) => {
           ? err.message
           : "Failed to fetch tournament bracket"
       );
-      console.error("Error fetching tournament bracket:", err);
     } finally {
       setLoading(false);
     }
@@ -245,7 +239,6 @@ export const useTournamentMatches = (tournamentId: number) => {
           ? err.message
           : "Failed to fetch tournament matches"
       );
-      console.error("Error fetching tournament matches:", err);
     } finally {
       setLoading(false);
     }
@@ -269,7 +262,6 @@ export const useTournamentMatches = (tournamentId: number) => {
         setError(
           err instanceof Error ? err.message : "Failed to update match status"
         );
-        console.error("Error updating match status:", err);
         return false;
       }
     },
@@ -290,7 +282,6 @@ export const useTournamentMatches = (tournamentId: number) => {
         setError(
           err instanceof Error ? err.message : "Failed to submit match result"
         );
-        console.error("Error submitting match result:", err);
         return false;
       }
     },
@@ -345,7 +336,6 @@ export const useTournamentStatistics = (tournamentId: number) => {
           ? err.message
           : "Failed to fetch tournament statistics"
       );
-      console.error("Error fetching tournament statistics:", err);
       setLoading(false);
     }
   }, [tournamentId]);
